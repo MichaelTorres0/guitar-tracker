@@ -1,0 +1,329 @@
+// Humidity logging, charting, and analysis functions
+import { STORAGE_KEYS, MAINTENANCE_TASKS } from './config.js';
+import { validateHumidity, validateTemperature, showFeedback, hideFeedback } from './validators.js';
+import { calculateNextDue } from './tasks.js';
+
+const HUMIDITY_KEY = STORAGE_KEYS.legacy.humidity;
+
+export function addHumidityReading() {
+    const date = document.getElementById('humidityDate').value;
+    const time = document.getElementById('humidityTime').value;
+    const humidityInput = document.getElementById('humidityValue').value;
+    const tempInput = document.getElementById('temperatureValue').value;
+    const location = document.getElementById('guitarLocation').value;
+
+    // Validate humidity
+    const humidityResult = validateHumidity(humidityInput);
+    if (!humidityResult.valid) {
+        showFeedback('humidityFeedback', humidityResult.error, 'error');
+        return;
+    }
+
+    // Validate temperature
+    const tempResult = validateTemperature(tempInput);
+    if (!tempResult.valid) {
+        showFeedback('humidityFeedback', tempResult.error, 'error');
+        return;
+    }
+
+    // Show warning if present but continue
+    if (humidityResult.warning) {
+        showFeedback('humidityFeedback', humidityResult.warning, 'warning');
+    } else {
+        hideFeedback('humidityFeedback');
+    }
+
+    if (!date || !time) {
+        showFeedback('humidityFeedback', 'Please enter date and time', 'error');
+        return;
+    }
+
+    const humidity = humidityResult.value;
+    const temp = tempResult.value;
+
+    const reading = {
+        id: Date.now(),
+        date,
+        time,
+        humidity,
+        temp,
+        location,
+        timestamp: new Date(`${date}T${time}`).toISOString()
+    };
+
+    let readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
+    readings.push(reading);
+    readings.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    localStorage.setItem(HUMIDITY_KEY, JSON.stringify(readings));
+
+    document.getElementById('humidityValue').value = '';
+    document.getElementById('temperatureValue').value = '';
+    showFeedback('logConfirmation', '✅ Reading logged successfully', 'success');
+
+    return reading;
+}
+
+export function addHumidityReadingSimplified() {
+    const humidity = parseFloat(document.getElementById('humidityValue').value);
+    const temp = parseFloat(document.getElementById('temperatureValue').value) || null;
+    const location = document.getElementById('guitarLocation').value;
+
+    if (isNaN(humidity) || humidity < 0 || humidity > 100) {
+        alert('Please enter a valid humidity percentage (0-100)');
+        return;
+    }
+
+    const now = new Date();
+    const reading = {
+        id: Date.now(),
+        date: now.toISOString().split('T')[0],
+        time: now.toTimeString().slice(0, 5),
+        humidity,
+        temp,
+        location,
+        timestamp: now.toISOString(),
+        source: 'manual'
+    };
+
+    let readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
+    readings.unshift(reading);
+    readings.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    localStorage.setItem(HUMIDITY_KEY, JSON.stringify(readings));
+
+    document.getElementById('humidityValue').value = '';
+    document.getElementById('temperatureValue').value = '';
+
+    // Show confirmation
+    const confirmation = document.getElementById('logConfirmation');
+    if (confirmation) {
+        confirmation.style.display = 'block';
+        setTimeout(() => {
+            confirmation.style.display = 'none';
+        }, 3000);
+    }
+
+    return reading;
+}
+
+export function deleteHumidityReading(id) {
+    let readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
+    readings = readings.filter(r => r.id !== id);
+    localStorage.setItem(HUMIDITY_KEY, JSON.stringify(readings));
+}
+
+export function renderHumidityTable() {
+    const readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
+    const tbody = document.getElementById('humidityTable');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    readings.slice(0, 20).forEach(reading => {
+        const date = new Date(reading.timestamp);
+        const dateStr = date.toLocaleDateString();
+        const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        let statusBadge = '<span class="badge badge-success">✓ Safe</span>';
+        if (reading.humidity > 55) {
+            statusBadge = '<span class="badge badge-danger">🔴 High Risk</span>';
+        } else if (reading.humidity < 40) {
+            statusBadge = '<span class="badge badge-warning">⚠️ Low</span>';
+        }
+
+        const row = `
+            <tr>
+                <td>${dateStr} ${timeStr}</td>
+                <td><strong>${reading.humidity}%</strong></td>
+                <td>${reading.temp}°F</td>
+                <td>${reading.location === 'case' ? 'Case' : 'Out'}</td>
+                <td>${statusBadge}</td>
+                <td><button class="btn-secondary delete-humidity-btn" data-id="${reading.id}" style="padding: 4px 8px; font-size: 12px;">×</button></td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+}
+
+export function checkForAlerts() {
+    const alerts = [];
+    const readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
+
+    if (readings.length > 0) {
+        const latest = readings[0];
+        if (latest.humidity > 55) {
+            alerts.push({
+                type: 'danger',
+                icon: '🔴',
+                title: 'CRITICAL: High Humidity Detected',
+                message: `RH is ${latest.humidity}% (danger threshold >55%). Bridge lifting risk active. Replace Humidipak immediately.`
+            });
+        } else if (latest.humidity < 40) {
+            alerts.push({
+                type: 'warning',
+                icon: '⚠️',
+                title: 'Low Humidity Warning',
+                message: `RH is ${latest.humidity}% (below safe 40-55% range). Fret sprout risk. Increase humidity.`
+            });
+        }
+
+        // 24h change check
+        if (readings.length > 1) {
+            const oneDayAgo = new Date(latest.timestamp);
+            oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+            const prevReading = readings.find(r => new Date(r.timestamp) <= oneDayAgo);
+            if (prevReading) {
+                const change = Math.abs(latest.humidity - prevReading.humidity);
+                if (change > 10) {
+                    alerts.push({
+                        type: 'warning',
+                        icon: '📊',
+                        title: 'Rapid Humidity Change',
+                        message: `RH changed ${change.toFixed(1)}% in 24h (alert threshold >10%). Monitor closely.`
+                    });
+                }
+            }
+        }
+    }
+
+    // Check overdue tasks
+    let overdueCount = 0;
+    for (let category in MAINTENANCE_TASKS) {
+        MAINTENANCE_TASKS[category].forEach(task => {
+            if (!task.completed && task.lastCompleted) {
+                const nextDue = calculateNextDue(task, category);
+                if (nextDue.includes('OVERDUE')) {
+                    overdueCount++;
+                }
+            }
+        });
+    }
+
+    if (overdueCount > 0) {
+        alerts.push({
+            type: 'info',
+            icon: '⏰',
+            title: 'Maintenance Overdue',
+            message: `${overdueCount} task(s) are overdue. Check Maintenance Tasks tab.`
+        });
+    }
+
+    renderAlerts(alerts);
+}
+
+function renderAlerts(alerts) {
+    const container = document.getElementById('alertContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    alerts.forEach(alert => {
+        const el = document.createElement('div');
+        el.className = `alert-banner ${alert.type}`;
+        el.innerHTML = `
+            <div class="alert-icon">${alert.icon}</div>
+            <div class="alert-content">
+                <h3>${alert.title}</h3>
+                <p style="font-size: 12px; margin: 0;">${alert.message}</p>
+            </div>
+        `;
+        container.appendChild(el);
+    });
+}
+
+export function drawHumidityChart() {
+    const readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
+    const chartContainer = document.getElementById('humidityChartContainer');
+    const canvas = document.getElementById('humidityChart');
+
+    if (!canvas || !chartContainer) return;
+
+    if (readings.length < 2) {
+        chartContainer.style.display = 'none';
+        return;
+    }
+
+    chartContainer.style.display = 'block';
+    const ctx = canvas.getContext('2d');
+    const width = canvas.parentElement.clientWidth - 40;
+    const height = 200;
+    canvas.width = width;
+    canvas.height = height;
+
+    // Get last 7 days of readings
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const recentReadings = readings
+        .filter(r => new Date(r.timestamp) >= sevenDaysAgo)
+        .reverse();
+
+    if (recentReadings.length < 2) {
+        chartContainer.style.display = 'none';
+        return;
+    }
+
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+
+    // Draw background zones
+    const padding = 40;
+    const chartWidth = width - padding * 2;
+    const chartHeight = height - padding * 2;
+
+    // Danger zone (55-65)
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.1)';
+    ctx.fillRect(padding, padding, chartWidth, chartHeight * 0.25);
+
+    // Caution zone high (50-55)
+    ctx.fillStyle = 'rgba(245, 158, 11, 0.1)';
+    ctx.fillRect(padding, padding + chartHeight * 0.25, chartWidth, chartHeight * 0.125);
+
+    // Safe zone (40-50)
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.1)';
+    ctx.fillRect(padding, padding + chartHeight * 0.375, chartWidth, chartHeight * 0.25);
+
+    // Caution zone low (30-40)
+    ctx.fillStyle = 'rgba(245, 158, 11, 0.1)';
+    ctx.fillRect(padding, padding + chartHeight * 0.625, chartWidth, chartHeight * 0.25);
+
+    // Draw line chart
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    const minHumidity = 30;
+    const maxHumidity = 65;
+    const range = maxHumidity - minHumidity;
+
+    recentReadings.forEach((reading, i) => {
+        const x = padding + (i / (recentReadings.length - 1)) * chartWidth;
+        const y = padding + (1 - (reading.humidity - minHumidity) / range) * chartHeight;
+
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
+        }
+    });
+    ctx.stroke();
+
+    // Draw points
+    recentReadings.forEach((reading, i) => {
+        const x = padding + (i / (recentReadings.length - 1)) * chartWidth;
+        const y = padding + (1 - (reading.humidity - minHumidity) / range) * chartHeight;
+
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = reading.humidity > 55 ? '#ef4444' :
+                       reading.humidity < 40 ? '#f59e0b' : '#10b981';
+        ctx.fill();
+    });
+
+    // Draw Y-axis labels
+    ctx.fillStyle = 'var(--color-text-light)';
+    ctx.font = '11px system-ui';
+    ctx.textAlign = 'right';
+    ctx.fillText('65%', padding - 5, padding + 10);
+    ctx.fillText('55%', padding - 5, padding + chartHeight * 0.285 + 4);
+    ctx.fillText('40%', padding - 5, padding + chartHeight * 0.715 + 4);
+    ctx.fillText('30%', padding - 5, height - padding + 4);
+}

@@ -3,9 +3,14 @@
  * Tests core functionality of the Taylor GS Mini Maintenance Tracker PWA
  */
 
-const { JSDOM } = require('jsdom');
-const fs = require('fs');
-const path = require('path');
+import { JSDOM } from "jsdom";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+import { setupWindow } from './test-setup.js';
 
 // Test results tracking
 let passed = 0;
@@ -55,23 +60,23 @@ function assertArrayLength(arr, length, message = '') {
     }
 }
 
+
 // Load and setup the DOM environment
 function setupDOM() {
     const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-    const dom = new JSDOM(html, {
-        runScripts: 'dangerously',
-        resources: 'usable',
+    // Remove the script tag to prevent module loading issues
+    const htmlWithoutScript = html.replace(/<script type="module".*?<\/script>/s, '');
+    
+    const dom = new JSDOM(htmlWithoutScript, {
+        runScripts: 'outside-only',
         pretendToBeVisual: true,
-        url: 'https://michaeltorres0.github.io/guitar-tracker/'
+        url: 'file://' + path.join(__dirname, '..') + '/'
     });
 
-    // Wait for scripts to execute
-    return new Promise((resolve) => {
-        // Give the scripts time to run
-        setTimeout(() => {
-            resolve(dom);
-        }, 500);
-    });
+    // Manually setup window with our modules
+    setupWindow(dom.window);
+    
+    return Promise.resolve(dom);
 }
 
 // ==================== TEST SUITES ====================
