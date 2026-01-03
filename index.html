@@ -14,706 +14,18 @@
     <meta name="theme-color" content="#3b82f6">
     <meta name="description" content="Track maintenance, humidity, and care for Taylor GS Mini Sapele acoustic guitar">
     <link rel="manifest" href="manifest.json">
-    <style>
-        :root {
-            --color-daily: #10b981;
-            --color-weekly: #3b82f6;
-            --color-6week: #f97316;
-            --color-quarterly: #ef4444;
-            --color-annual: #a855f7;
-            --color-bg: #f8fafc;
-            --color-surface: #ffffff;
-            --color-text: #1e293b;
-            --color-text-light: #64748b;
-            --color-border: #e2e8f0;
-            --color-primary: #3b82f6;
-            --color-success: #10b981;
-            --color-warning: #f59e0b;
-            --color-error: #ef4444;
-        }
 
-        [data-theme="dark"] {
-            --color-bg: #0f172a;
-            --color-surface: #1e293b;
-            --color-text: #f1f5f9;
-            --color-text-light: #cbd5e1;
-            --color-border: #334155;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--color-bg);
-            color: var(--color-text);
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        body {
-            padding: 16px;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .header h1 {
-            font-size: 28px;
-            font-weight: 700;
-        }
-
-        .theme-toggle {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            white-space: nowrap;
-        }
-
-        .btn-just-played {
-            background: linear-gradient(135deg, var(--color-success), var(--color-primary));
-            color: white;
-            padding: 16px 24px;
-            font-size: 16px;
-            font-weight: 700;
-            border-radius: 8px;
-            width: 100%;
-            margin-bottom: 20px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s;
-            min-height: 44px;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        }
-
-        .btn-just-played:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
-        }
-
-        .btn-just-played:active {
-            transform: translateY(0);
-        }
-
-        .string-life-container {
-            background: linear-gradient(135deg, var(--color-surface), var(--color-bg));
-            border: 1px solid var(--color-border);
-            border-radius: 8px;
-            padding: 16px;
-            margin-top: 20px;
-        }
-
-        .string-life-bar {
-            width: 100%;
-            height: 20px;
-            background: var(--color-border);
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 12px 0;
-            position: relative;
-        }
-
-        .string-life-fill {
-            height: 100%;
-            transition: width 0.4s, background-color 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .string-life-fill.safe {
-            background: linear-gradient(90deg, #10b981, #6ee7b7);
-        }
-
-        .string-life-fill.warning {
-            background: linear-gradient(90deg, #f59e0b, #fbbf24);
-        }
-
-        .string-life-fill.danger {
-            background: linear-gradient(90deg, #ef4444, #fca5a5);
-        }
-
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 12px;
-            }
-
-            .header > div {
-                display: flex;
-                flex-direction: column;
-            }
-
-            .theme-toggle {
-                width: 100%;
-            }
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 24px;
-            border-bottom: 2px solid var(--color-border);
-            overflow-x: auto;
-            flex-wrap: wrap;
-        }
-
-        .tab-btn {
-            padding: 12px 16px;
-            background: none;
-            border: none;
-            border-bottom: 3px solid transparent;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--color-text-light);
-            transition: all 0.3s;
-            white-space: nowrap;
-        }
-
-        .tab-btn.active {
-            color: var(--color-primary);
-            border-bottom-color: var(--color-primary);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .alert-banner {
-            background-color: var(--color-error);
-            color: white;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .alert-banner.warning {
-            background-color: var(--color-warning);
-        }
-
-        .alert-banner.info {
-            background-color: var(--color-primary);
-        }
-
-        .alert-banner.hidden {
-            display: none;
-        }
-
-        .alert-icon {
-            font-size: 20px;
-        }
-
-        .alert-content h3 {
-            margin-bottom: 4px;
-            font-size: 16px;
-        }
-
-        .grid-2 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .grid-3 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-        }
-
-        .card {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .card h3 {
-            font-size: 16px;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .task-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .task-item {
-            border: 1px solid var(--color-border);
-            border-radius: 6px;
-            padding: 12px;
-            background: var(--color-bg);
-            transition: all 0.2s;
-        }
-
-        .task-item.completed {
-            opacity: 0.6;
-            background: rgba(16, 185, 129, 0.05);
-        }
-
-        .task-header {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            margin-bottom: 8px;
-        }
-
-        .task-checkbox {
-            width: 20px;
-            height: 20px;
-            margin-top: 2px;
-            cursor: pointer;
-            accent-color: var(--color-primary);
-            flex-shrink: 0;
-        }
-
-        .task-info {
-            flex: 1;
-        }
-
-        .task-name {
-            font-weight: 600;
-            font-size: 14px;
-            margin-bottom: 4px;
-        }
-
-        .task-duration {
-            font-size: 12px;
-            color: var(--color-text-light);
-        }
-
-        .task-dates {
-            font-size: 11px;
-            color: var(--color-text-light);
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .expand-btn {
-            background: none;
-            border: none;
-            color: var(--color-primary);
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 0;
-            text-align: left;
-            width: 100%;
-        }
-
-        .expand-content {
-            display: none;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid var(--color-border);
-        }
-
-        .expand-content.show {
-            display: block;
-        }
-
-        .expand-section {
-            margin-bottom: 10px;
-        }
-
-        .expand-label {
-            font-weight: 600;
-            font-size: 12px;
-            color: var(--color-text);
-            margin-bottom: 4px;
-        }
-
-        .expand-text {
-            font-size: 12px;
-            color: var(--color-text-light);
-            line-height: 1.4;
-        }
-
-        .progress-section {
-            margin-bottom: 16px;
-        }
-
-        .progress-label {
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: var(--color-border);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            transition: width 0.3s;
-        }
-
-        .color-daily { background-color: var(--color-daily); }
-        .color-weekly { background-color: var(--color-weekly); }
-        .color-6week { background-color: var(--color-6week); }
-        .color-quarterly { background-color: var(--color-quarterly); }
-        .color-annual { background-color: var(--color-annual); }
-
-        .stat-card {
-            background: linear-gradient(135deg, var(--color-surface), var(--color-bg));
-            border: 1px solid var(--color-border);
-            border-radius: 8px;
-            padding: 16px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            margin: 8px 0;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: var(--color-text-light);
-        }
-
-        .humidity-display {
-            font-size: 32px;
-            font-weight: 700;
-            margin: 12px 0;
-        }
-
-        .humidity-display.safe { color: var(--color-success); }
-        .humidity-display.warning { color: var(--color-warning); }
-        .humidity-display.danger { color: var(--color-error); }
-
-        .humidity-status {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .form-group {
-            margin-bottom: 12px;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        input[type="text"],
-        input[type="number"],
-        input[type="date"],
-        input[type="time"],
-        select,
-        textarea {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid var(--color-border);
-            border-radius: 4px;
-            background: var(--color-bg);
-            color: var(--color-text);
-            font-size: 13px;
-            font-family: inherit;
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 8px;
-            margin-top: 12px;
-            flex-wrap: wrap;
-        }
-
-        button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background: var(--color-primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            opacity: 0.9;
-        }
-
-        .btn-success {
-            background: var(--color-success);
-            color: white;
-        }
-
-        .btn-secondary {
-            background: var(--color-border);
-            color: var(--color-text);
-        }
-
-        .btn-secondary:hover {
-            background: var(--color-border);
-            opacity: 0.8;
-        }
-
-        .btn-danger {
-            background: var(--color-error);
-            color: white;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-
-        th {
-            text-align: left;
-            padding: 10px;
-            border-bottom: 2px solid var(--color-border);
-            font-weight: 600;
-            background: var(--color-bg);
-        }
-
-        td {
-            padding: 10px;
-            border-bottom: 1px solid var(--color-border);
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .badge-success { background: rgba(16, 185, 129, 0.2); color: var(--color-success); }
-        .badge-warning { background: rgba(245, 158, 11, 0.2); color: var(--color-warning); }
-        .badge-danger { background: rgba(239, 68, 68, 0.2); color: var(--color-error); }
-
-        .checklist-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            padding: 10px;
-            margin-bottom: 8px;
-            border: 1px solid var(--color-border);
-            border-radius: 4px;
-            background: var(--color-bg);
-        }
-
-        .checklist-item input[type="checkbox"] {
-            margin-top: 4px;
-            cursor: pointer;
-        }
-
-        .checklist-content {
-            flex: 1;
-        }
-
-        .checklist-label {
-            font-weight: 600;
-            font-size: 13px;
-            margin-bottom: 2px;
-        }
-
-        .checklist-note {
-            font-size: 12px;
-            color: var(--color-text-light);
-        }
-
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-            margin-bottom: 16px;
-        }
-
-        .calendar-day {
-            aspect-ratio: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid var(--color-border);
-            border-radius: 4px;
-            font-size: 11px;
-            background: var(--color-bg);
-        }
-
-        .calendar-day.today {
-            background: var(--color-primary);
-            color: white;
-            font-weight: 600;
-        }
-
-        .calendar-day.upcoming {
-            background: rgba(59, 130, 246, 0.1);
-            color: var(--color-primary);
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .modal.show {
-            display: flex;
-        }
-
-        .modal-content {
-            background: var(--color-surface);
-            border-radius: 8px;
-            padding: 24px;
-            max-width: 500px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 16px;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: var(--color-text-light);
-        }
-
-        .threshold-panel {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1));
-            border-left: 4px solid var(--color-primary);
-            padding: 16px;
-            border-radius: 6px;
-            margin-bottom: 16px;
-        }
-
-        .threshold-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid var(--color-border);
-        }
-
-        .threshold-item:last-child {
-            border-bottom: none;
-        }
-
-        .threshold-label {
-            font-size: 13px;
-            font-weight: 600;
-        }
-
-        .threshold-value {
-            font-size: 12px;
-            color: var(--color-text-light);
-            background: var(--color-bg);
-            padding: 4px 8px;
-            border-radius: 4px;
-        }
-
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .tabs {
-                gap: 4px;
-            }
-
-            .tab-btn {
-                padding: 10px 12px;
-                font-size: 12px;
-            }
-
-            .grid-3 {
-                grid-template-columns: 1fr;
-            }
-
-            .task-dates {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <div class="container">
         <div class="header">
             <div>
-                <h1>🎸 Taylor GS Mini Maintenance Tracker</h1>
-                <p style="color: var(--color-text-light); font-size: 13px; margin-top: 4px;">Playing Schedule: 2.5 hrs/week | String Gauge: EJ17 Medium (.013-.056)</p>
+                <h1>Taylor GS Mini Maintenance Tracker</h1>
+                <p style="color: var(--color-text-light); font-size: 13px; margin-top: 4px;">Playing Schedule: 2.5 hrs/week | String Gauge: EJ16 Light (.012-.053)</p>
             </div>
-            <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+            <button class="theme-toggle">Dark Mode</button>
         </div>
 
         <!-- ALERTS SECTION -->
@@ -721,17 +33,17 @@
 
         <!-- TABS -->
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
-            <button class="tab-btn" onclick="switchTab('maintenance')">🔧 Maintenance Tasks</button>
-            <button class="tab-btn" onclick="switchTab('humidity')">💧 Humidity Log</button>
-            <button class="tab-btn" onclick="switchTab('inspection')">🔍 Inspections</button>
-            <button class="tab-btn" onclick="switchTab('inventory')">📦 Equipment</button>
-            <button class="tab-btn" onclick="switchTab('export')">⬇️ Export & Settings</button>
+            <button class="tab-btn active">Dashboard</button>
+            <button class="tab-btn">Maintenance Tasks</button>
+            <button class="tab-btn">Humidity Log</button>
+            <button class="tab-btn">Inspections</button>
+            <button class="tab-btn">Equipment</button>
+            <button class="tab-btn">Export & Settings</button>
         </div>
 
         <!-- DASHBOARD TAB -->
         <div id="dashboard" class="tab-content active">
-            <button class="btn-just-played" onclick="quickActionJustPlayed()">▶️ Just Played - Log Daily Tasks</button>
+            <button class="btn-just-played">▶️ Just Played - Log Daily Tasks</button>
 
             <div class="grid-3">
                 <div class="stat-card">
@@ -756,7 +68,7 @@
             </div>
 
             <div class="string-life-container">
-                <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">📊 String Life Calculator</h3>
+                <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">String Life Calculator</h3>
                 <div style="font-size: 12px; color: var(--color-text-light); margin-bottom: 12px;">Based on 2.5 hrs/week playing + daily cleaning</div>
                 <div class="string-life-bar">
                     <div class="string-life-fill safe" id="stringLifeFill" style="width: 0%"></div>
@@ -764,13 +76,13 @@
                 <div style="text-align: center; font-size: 13px; font-weight: 600;" id="stringLifeText">Strings at 0% life</div>
                 <div style="text-align: center; font-size: 12px; color: var(--color-text-light); margin-top: 4px;" id="stringLifeEstimate">—</div>
                 <div style="font-size: 11px; color: var(--color-text-light); margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-border);">
-                    <strong>ℹ️ How it works:</strong> Calculates remaining string life based on your playing schedule and cleaning habits. Adjust playing hours in settings to customize.
+                    <strong>How it works:</strong> Calculates remaining string life based on your playing schedule and cleaning habits.
                 </div>
             </div>
 
             <div class="grid-2" style="margin-top: 20px;">
                 <div class="card">
-                    <h3>🎯 Period Completion</h3>
+                    <h3>Period Completion</h3>
                     <div class="progress-section">
                         <div class="progress-label">
                             <span>Daily Tasks</span>
@@ -791,11 +103,11 @@
                     </div>
                     <div class="progress-section">
                         <div class="progress-label">
-                            <span>6-Week Tasks</span>
-                            <span id="sixweekPercent">0%</span>
+                            <span>8-Week Tasks</span>
+                            <span id="eightweekPercent">0%</span>
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill color-6week" id="sixweekBar" style="width: 0%"></div>
+                            <div class="progress-fill color-8week" id="eightweekBar" style="width: 0%"></div>
                         </div>
                     </div>
                     <div class="progress-section">
@@ -834,7 +146,7 @@
                             <span class="threshold-value">&lt; 40%</span>
                         </div>
                         <div class="threshold-item">
-                            <span class="threshold-label">🔴 High Risk</span>
+                            <span class="threshold-label">High Risk</span>
                             <span class="threshold-value">&gt; 55%</span>
                         </div>
                         <div class="threshold-item">
@@ -849,7 +161,7 @@
             </div>
 
             <div class="card" style="margin-top: 20px;">
-                <h3>📅 Upcoming Maintenance Calendar</h3>
+                <h3>Upcoming Maintenance Calendar</h3>
                 <div class="calendar-grid" id="maintenanceCalendar"></div>
             </div>
         </div>
@@ -863,7 +175,7 @@
         <div id="humidity" class="tab-content">
             <div class="grid-2">
                 <div class="card">
-                    <h3>📝 Log Humidity Reading</h3>
+                    <h3>Log Humidity Reading</h3>
                     <div class="form-group">
                         <label class="form-label">Relative Humidity (%)</label>
                         <input type="number" id="humidityValue" min="0" max="100" step="0.1" placeholder="e.g., 48.5">
@@ -879,14 +191,14 @@
                             <option value="out">Out of Case</option>
                         </select>
                     </div>
-                    <button class="btn-primary" onclick="addHumidityReadingSimplified()" style="width: 100%;">📍 Log Reading Now</button>
+                    <button class="btn-primary" style="width: 100%;">Log Reading Now</button>
                     <div id="logConfirmation" style="margin-top: 12px; padding: 10px; border-radius: 4px; background: rgba(16, 185, 129, 0.1); color: var(--color-success); font-size: 12px; font-weight: 600; display: none; text-align: center;">
                         ✅ Reading logged successfully
                     </div>
                 </div>
 
                 <div class="card">
-                    <h3>📊 Humidity Statistics</h3>
+                    <h3>Humidity Statistics</h3>
                     <div class="stat-card" style="margin-bottom: 12px;">
                         <div class="stat-label">Latest Reading</div>
                         <div class="stat-value" id="latestHumidity">—</div>
@@ -907,15 +219,15 @@
             </div>
 
             <div id="humidityChartContainer" class="card" style="margin-top: 20px; display: none;">
-                <h3>📈 7-Day Humidity Trend</h3>
+                <h3>7-Day Humidity Trend</h3>
                 <canvas id="humidityChart" style="max-height: 250px;"></canvas>
                 <div style="font-size: 11px; color: var(--color-text-light); margin-top: 12px; text-align: center;">
-                    🟢 Safe (40-50%) | 🟡 Caution (30-40%, 50-55%) | 🔴 Danger (55-65%)
+                    Safe (40-50%) | Caution (30-40%, 50-55%) | Danger (55-65%)
                 </div>
             </div>
 
             <div class="card" style="margin-top: 20px;">
-                <h3>📊 Humidity History</h3>
+                <h3>Humidity History</h3>
                 <div class="table-responsive">
                     <table>
                         <thead>
@@ -923,6 +235,7 @@
                                 <th>Date & Time</th>
                                 <th>RH %</th>
                                 <th>Temp °F</th>
+                                <th>Location</th>
                                 <th>Status</th>
                                 <th></th>
                             </tr>
@@ -936,26 +249,26 @@
         <!-- INSPECTIONS TAB -->
         <div id="inspection" class="tab-content">
             <div class="card">
-                <h3>🔍 Guided Inspection Checklists</h3>
-                
+                <h3>Guided Inspection Checklists</h3>
+
                 <div style="margin-top: 20px;">
                     <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Weekly: Bridge Wing Lift Check</h4>
                     <div id="bridgeCheckResult" style="font-size: 11px; color: var(--color-text-light); margin-bottom: 8px; padding: 6px; background: var(--color-bg); border-radius: 4px; display: none;"></div>
                     <div class="checklist-item">
-                        <input type="checkbox" id="bridgeCheck1" onchange="recordInspection('bridge', 'weekly')">
+                        <input type="checkbox" id="bridgeCheck1">
                         <div class="checklist-content">
                             <div class="checklist-label">Inspect bridge wings visually</div>
                             <div class="checklist-note">Look closely where bridge wings meet the top. Any gaps = emergency situation requiring immediate Humidipak replacement.</div>
                         </div>
                     </div>
                     <div class="checklist-item">
-                        <input type="checkbox" id="bridgeCheck2" onchange="recordInspection('bridge', 'weekly')">
+                        <input type="checkbox" id="bridgeCheck2">
                         <div class="checklist-content">
                             <div class="checklist-label">Gently press bridge wings</div>
                             <div class="checklist-note">Should feel firm and flush to top. Soft or gaps indicate humidity swelling and require action.</div>
                         </div>
                     </div>
-                    <button class="btn-secondary" onclick="openBridgeRecommendations()" style="width: 100%; margin-top: 12px;">If Detected → Recommended Actions</button>
+                    <button class="btn-secondary" style="width: 100%; margin-top: 12px;">If Detected → Bridge Recommendations</button>
                 </div>
 
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--color-border);">
@@ -964,27 +277,27 @@
                     <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Quarterly: Action & Buzzing Check</h4>
                     <div id="actionCheckResult" style="font-size: 11px; color: var(--color-text-light); margin-bottom: 8px; padding: 6px; background: var(--color-bg); border-radius: 4px; display: none;"></div>
                     <div class="checklist-item">
-                        <input type="checkbox" id="actionCheck1" onchange="recordInspection('action', 'quarterly')">
+                        <input type="checkbox" id="actionCheck1">
                         <div class="checklist-content">
                             <div class="checklist-label">Measure action at 12th fret</div>
                             <div class="checklist-note">Use straightedge or business card. High E string should be 1.5-2mm, low E string 2-2.5mm from fret top.</div>
                         </div>
                     </div>
                     <div class="checklist-item">
-                        <input type="checkbox" id="actionCheck2" onchange="recordInspection('action', 'quarterly')">
+                        <input type="checkbox" id="actionCheck2">
                         <div class="checklist-content">
                             <div class="checklist-label">Listen for buzzing</div>
                             <div class="checklist-note">Play each fret softly. If buzzing occurs consistently, neck relief may need adjustment.</div>
                         </div>
                     </div>
                     <div class="checklist-item">
-                        <input type="checkbox" id="actionCheck3" onchange="recordInspection('action', 'quarterly')">
+                        <input type="checkbox" id="actionCheck3">
                         <div class="checklist-content">
                             <div class="checklist-label">Check for dead spots</div>
                             <div class="checklist-note">Play chords across neck. Uneven sustain or sudden drops indicate action or intonation issues.</div>
                         </div>
                     </div>
-                    <button class="btn-secondary" onclick="openActionRecommendations()" style="width: 100%; margin-top: 12px;">If Detected → Recommended Actions</button>
+                    <button class="btn-secondary" style="width: 100%; margin-top: 12px;">If Detected → Action Recommendations</button>
                 </div>
 
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--color-border);">
@@ -993,34 +306,34 @@
                     <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Every String Change: Fret Feel Check</h4>
                     <div id="fretCheckResult" style="font-size: 11px; color: var(--color-text-light); margin-bottom: 8px; padding: 6px; background: var(--color-bg); border-radius: 4px; display: none;"></div>
                     <div class="checklist-item">
-                        <input type="checkbox" id="fretCheck1" onchange="recordInspection('fret', 'stringchange')">
+                        <input type="checkbox" id="fretCheck1">
                         <div class="checklist-content">
                             <div class="checklist-label">Slide finger down frets</div>
                             <div class="checklist-note">Should feel smooth and polished. Rough or gritty feel indicates tarnish or oxidation.</div>
                         </div>
                     </div>
                     <div class="checklist-item">
-                        <input type="checkbox" id="fretCheck2" onchange="recordInspection('fret', 'stringchange')">
+                        <input type="checkbox" id="fretCheck2">
                         <div class="checklist-content">
                             <div class="checklist-label">Inspect all 20 frets visually</div>
                             <div class="checklist-note">Look for dull appearance or roughness. Tarnished frets cause string degradation and gritty bends.</div>
                         </div>
                     </div>
                     <div class="checklist-item">
-                        <input type="checkbox" id="fretCheck3" onchange="recordInspection('fret', 'stringchange')">
+                        <input type="checkbox" id="fretCheck3">
                         <div class="checklist-content">
                             <div class="checklist-label">Check for fret sprout</div>
                             <div class="checklist-note">Look at fretboard edges. Sharp fret ends protruding indicate humidity drying. Requires professional truss rod adjustment.</div>
                         </div>
                     </div>
-                    <button class="btn-secondary" onclick="openFretRecommendations()" style="width: 100%; margin-top: 12px;">If Detected → Recommended Actions</button>
+                    <button class="btn-secondary" style="width: 100%; margin-top: 12px;">If Detected → Fret Recommendations</button>
                 </div>
 
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--color-border);">
 
                 <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px; margin-top: 20px;">Safety Alerts: Product Use</h4>
                 <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--color-error); padding: 12px; border-radius: 4px; margin-bottom: 12px;">
-                    <strong style="color: var(--color-error);">❌ DO NOT USE:</strong>
+                    <strong style="color: var(--color-error);">DO NOT USE:</strong>
                     <ul style="margin-top: 8px; padding-left: 20px; font-size: 13px; color: var(--color-text-light);">
                         <li>Lemon oil or generic wood oils (use only F-ONE)</li>
                         <li>Steel wool on body (scratches finish)</li>
@@ -1031,7 +344,7 @@
                     </ul>
                 </div>
                 <div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--color-success); padding: 12px; border-radius: 4px;">
-                    <strong style="color: var(--color-success);">✅ USE ONLY:</strong>
+                    <strong style="color: var(--color-success);">USE ONLY:</strong>
                     <ul style="margin-top: 8px; padding-left: 20px; font-size: 13px; color: var(--color-text-light);">
                         <li>GRIP Guards with FRINE for fret polishing</li>
                         <li>Guitar ONE Polish & Cleaner (all finishes)</li>
@@ -1045,8 +358,8 @@
         <!-- EQUIPMENT INVENTORY TAB -->
         <div id="inventory" class="tab-content">
             <div class="card">
-                <h3>📦 Equipment Inventory Checklist</h3>
-                
+                <h3>Equipment Inventory Checklist</h3>
+
                 <h4 style="font-size: 13px; font-weight: 600; margin-top: 16px; margin-bottom: 12px;">MusicNomad MN290 Work Station</h4>
                 <div id="inventoryChecklist"></div>
 
@@ -1081,23 +394,23 @@
         <div id="export" class="tab-content">
             <div class="grid-2">
                 <div class="card">
-                    <h3>⬇️ Export Data</h3>
+                    <h3>Export Data</h3>
                     <p style="font-size: 13px; color: var(--color-text-light); margin-bottom: 16px;">Export your maintenance history and humidity logs for backup or analysis.</p>
-                    <button class="btn-primary" onclick="exportAsCSV()" style="width: 100%; margin-bottom: 10px;">📊 Export as CSV</button>
-                    <button class="btn-secondary" onclick="exportAsJSON()" style="width: 100%;">💾 Backup as JSON</button>
+                    <button class="btn-primary" style="width: 100%; margin-bottom: 10px;">Export as CSV</button>
+                    <button class="btn-secondary" style="width: 100%;">Backup as JSON</button>
                 </div>
 
                 <div class="card">
-                    <h3>🔄 Reset & Manage</h3>
+                    <h3>Reset & Manage</h3>
                     <p style="font-size: 13px; color: var(--color-text-light); margin-bottom: 16px;">Reset tracking periods or clear all data.</p>
-                    <button class="btn-secondary" onclick="resetDailyTasks()" style="width: 100%; margin-bottom: 10px;">↻ Reset Daily Tasks</button>
-                    <button class="btn-secondary" onclick="resetWeeklyTasks()" style="width: 100%; margin-bottom: 10px;">↻ Reset Weekly Tasks</button>
-                    <button class="btn-danger" onclick="confirmReset()" style="width: 100%;">⚠️ Clear All Data</button>
+                    <button class="btn-secondary" style="width: 100%; margin-bottom: 10px;">Reset Daily Tasks</button>
+                    <button class="btn-secondary" style="width: 100%; margin-bottom: 10px;">Reset Weekly Tasks</button>
+                    <button class="btn-danger" style="width: 100%;">⚠️ Clear All Data</button>
                 </div>
             </div>
 
             <div class="card" style="margin-top: 20px;">
-                <h3>📋 Create Reminders (Manual Steps)</h3>
+                <h3>Create Reminders (Manual Steps)</h3>
                 <p style="font-size: 13px; color: var(--color-text-light); margin-bottom: 16px;">
                     Since this app runs in your browser, you can manually create reminders in:
                 </p>
@@ -1106,7 +419,7 @@
                     <ul style="margin-top: 8px; padding-left: 20px; font-size: 13px; color: var(--color-text-light); line-height: 1.6;">
                         <li><strong>Daily:</strong> "Guitar maintenance - String cleaning & case check" at 5:00 PM (after playing)</li>
                         <li><strong>Weekly:</strong> "Guitar inspection - Hardware, bridge, Humidipak check" every Sunday at 2:00 PM</li>
-                        <li><strong>Every 6 weeks:</strong> "String change & deep clean" with 2-week advance reminder</li>
+                        <li><strong>Every 8 weeks:</strong> "String change & deep clean" with 2-week advance reminder</li>
                         <li><strong>Quarterly:</strong> "Truss rod observation & structural inspection"</li>
                         <li><strong>Annual:</strong> "Taylor Refresh service appointment" ($115)</li>
                     </ul>
@@ -1121,7 +434,7 @@
             </div>
 
             <div class="card" style="margin-top: 20px;">
-                <h3>📖 Quick Reference: Your Maintenance Calendar</h3>
+                <h3>Quick Reference: Your Maintenance Calendar</h3>
                 <div style="font-size: 13px; color: var(--color-text-light); line-height: 1.8;">
                     <p><strong>After Every Session (5 min):</strong></p>
                     <ul style="padding-left: 20px; margin-bottom: 12px;">
@@ -1135,7 +448,7 @@
                         <li>Bridge wing monitoring</li>
                         <li>Humidipak packet check</li>
                     </ul>
-                    <p><strong>Every 6 Weeks (60 min):</strong></p>
+                    <p><strong>Every 8 Weeks (60 min):</strong></p>
                     <ul style="padding-left: 20px; margin-bottom: 12px;">
                         <li>String change & fret polishing (FRINE)</li>
                         <li>Fretboard conditioning (if dry)</li>
@@ -1161,12 +474,12 @@
     <!-- MODALS -->
     <div id="bridgeModal" class="modal">
         <div class="modal-content">
-            <button class="modal-close" onclick="closeBridgeModal()">&times;</button>
-            <div class="modal-header">🔴 Bridge Wing Lift Detected</div>
+            <button class="modal-close">&times;</button>
+            <div class="modal-header">Bridge Wing Lift Detected</div>
             <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--color-error);">EMERGENCY ACTION REQUIRED</h3>
             <div style="font-size: 13px; color: var(--color-text-light); line-height: 1.6;">
                 <p style="margin-bottom: 12px;"><strong>This is a critical situation.</strong> Bridge lifting indicates humidity swelling affecting the solid spruce top.</p>
-                
+
                 <h4 style="font-weight: 600; margin-top: 16px; margin-bottom: 8px;">Immediate Actions (Next 24 hours):</h4>
                 <ol style="padding-left: 20px;">
                     <li>Replace Humidipak packets immediately—don't wait</li>
@@ -1181,14 +494,14 @@
                 <h4 style="font-weight: 600; margin-top: 16px; margin-bottom: 8px;">String Tension Check:</h4>
                 <p>If not already done, consider switching to EJ16 Light (.012-.053) strings to reduce neck/top stress. Multiple techs report all GS Minis they repaired for bridge lift were on mediums long-term.</p>
             </div>
-            <button class="btn-primary" onclick="closeBridgeModal()" style="width: 100%; margin-top: 16px;">Understood</button>
+            <button class="btn-primary" style="width: 100%; margin-top: 16px;">Understood</button>
         </div>
     </div>
 
     <div id="actionModal" class="modal">
         <div class="modal-content">
-            <button class="modal-close" onclick="closeActionModal()">&times;</button>
-            <div class="modal-header">🔧 Action or Buzzing Issues Detected</div>
+            <button class="modal-close">&times;</button>
+            <div class="modal-header">Action or Buzzing Issues Detected</div>
             <div style="font-size: 13px; color: var(--color-text-light); line-height: 1.6;">
                 <h4 style="font-weight: 600; margin-bottom: 8px;">High Action Issues:</h4>
                 <ul style="padding-left: 20px; margin-bottom: 12px;">
@@ -1214,14 +527,14 @@
                     <strong>GS Mini-specific note:</strong> The 23.5" scale length requires specific setup parameters. Ensure your tech is familiar with GS Minis for optimal results.
                 </p>
             </div>
-            <button class="btn-primary" onclick="closeActionModal()" style="width: 100%; margin-top: 16px;">Got It</button>
+            <button class="btn-primary" style="width: 100%; margin-top: 16px;">Got It</button>
         </div>
     </div>
 
     <div id="fretModal" class="modal">
         <div class="modal-content">
-            <button class="modal-close" onclick="closeFretModal()">&times;</button>
-            <div class="modal-header">✨ Fret Condition Issues Detected</div>
+            <button class="modal-close">&times;</button>
+            <div class="modal-header">Fret Condition Issues Detected</div>
             <div style="font-size: 13px; color: var(--color-text-light); line-height: 1.6;">
                 <h4 style="font-weight: 600; margin-bottom: 8px;">Rough or Gritty Frets:</h4>
                 <ul style="padding-left: 20px; margin-bottom: 12px;">
@@ -1249,966 +562,11 @@
                     <strong>Preventive note:</strong> Your FRINE Kit is designed specifically for this. Regular quarterly polishing prevents excessive buildup and extends fret life.
                 </p>
             </div>
-            <button class="btn-primary" onclick="closeFretModal()" style="width: 100%; margin-top: 16px;">Thanks</button>
+            <button class="btn-primary" style="width: 100%; margin-top: 16px;">Thanks</button>
         </div>
     </div>
 
-    <script>
-        // DATA STRUCTURE & STORAGE
-        const DATA_KEY = 'guitarMaintenanceData';
-        const HUMIDITY_KEY = 'humidityReadings';
-
-        const MAINTENANCE_TASKS = {
-            daily: [
-                { id: 'daily-1', name: 'String Cleaning', duration: '5 min', frequency: 'After each session', why: 'Corrosion from finger oils creates abrasive particles that accelerate fret wear 3-5x. This doubles or triples string life.', how: 'Apply String Fuel to microfiber cloth, wipe each string from bridge to nut, both top and bottom. Clean under strings at fretboard surface.' },
-                { id: 'daily-2', name: 'Body Wipedown', duration: '5 min', frequency: 'After each session', why: 'Sweat is acidic and damages finish over time.', how: 'Use dry microfiber cloth on body, especially forearm rest area and back where guitar contacts your body.' },
-                { id: 'daily-3', name: 'Humidity Check & Case Storage', duration: '2 min', frequency: 'Before every case storage', why: 'Bridge lifting occurs when RH exceeds 55-60%. Early detection prevents catastrophic failure.', how: 'Check Inkbird hygrometer before closing case. Target: 45-50% RH. If above 55%, replace Humidipak packets immediately—don\'t wait.' }
-            ],
-            weekly: [
-                { id: 'weekly-1', name: 'Hardware Oxidation Check', duration: '5 min', frequency: 'Once per week', why: 'Early-stage tarnish wipes off easily; advanced oxidation compromises tuner function.', how: 'Inspect chrome tuners for white/green discoloration. Wipe with Guitar ONE Detailer on microfiber cloth if present.' },
-                { id: 'weekly-2', name: 'Bridge Wing Monitoring', duration: '3 min', frequency: 'Once per week', why: 'Visible gaps indicate humidity problems requiring immediate professional attention.', how: 'Look closely at bridge wings where they meet the top. Any lifting at the tips = emergency situation.' },
-                { id: 'weekly-3', name: 'Humidipak Packet Check', duration: '2 min', frequency: 'Once per week', why: 'Hard packets = no moisture = your guitar is drying out.', how: 'Squeeze packets through pouches—should feel gel-like/soft. Hard = replace immediately.' }
-            ],
-            sixweek: [
-                { id: '6w-1', name: 'String Removal & Fret Inspection', duration: '15 min', frequency: 'Every 6 weeks', why: 'Inspection during string change catches issues early.', how: 'Use GRIP String Winder and Cutter to remove old strings. Inspect all 20 frets for tarnish (dull appearance) or roughness.' },
-                { id: '6w-2', name: 'Fret Polishing (FRINE Kit)', duration: '20 min', frequency: 'Every 6 weeks', why: 'Tarnished frets cause gritty feeling during bends and damage strings.', how: 'Place GRIP fretboard guard over fret. Apply pea-sized FRINE polish. Rub back-and-forth until oxidation removes. Wipe residue. Repeat all 20 frets.' },
-                { id: '6w-3', name: 'Fretboard Conditioning (F-ONE)', duration: '5 min', frequency: 'Every 2nd or 3rd change', why: 'Prevents fret lift and buzzing.', how: 'Apply small amount F-ONE to cloth, wipe onto bare fretboard, let sit 3-5 min, wipe excess. ⚠️ WARNING: Over-oiling darkens ebony permanently.' },
-                { id: '6w-4', name: 'Nut & Saddle Lubrication', duration: '10 min', frequency: 'Every 6 weeks', why: 'Prevents tuning instability and string "ping".', how: 'Apply Tune-It lubricant to all 6 nut slots with toothpick amounts. Lubricate saddle both sides of each string. Clean old lubricant first.' },
-                { id: '6w-5', name: 'Bridge Pin Cleaning', duration: '5 min', frequency: 'Every 6 weeks', why: 'Dirty pins affect tone transfer and make removal difficult.', how: 'Remove with GRIP Puller, wipe down, or wash with mild soap if sticky. Dry completely before reinstalling.' },
-                { id: '6w-6', name: 'Full Body Detailing', duration: '10 min', frequency: 'Every 6 weeks', why: 'Removes accumulated sweat, oils, fingerprints that damage finish.', how: 'Spray Guitar ONE Detailer on microfiber cloth (never directly on guitar). Wipe entire body in circular motions. Pay special attention to forearm rest area.' },
-                { id: '6w-7', name: 'Hardware Polish', duration: '5 min', frequency: 'Every 6 weeks', why: 'Prevents corrosion that can seize tuners.', how: 'Wipe tuners, bridge pins, chrome parts with Guitar ONE Detailer or chrome polish if oxidation present.' },
-                { id: '6w-8', name: 'Restring', duration: '15 min', frequency: 'Every 6 weeks', why: 'Fresh strings maintain tone and playability.', how: 'Use GRIP String Winder for efficient installation. Stretch strings gently after installation. Retune multiple times over 24 hours.' }
-            ],
-            quarterly: [
-                { id: 'q-1', name: 'Humidipak Replacement', duration: '5 min', frequency: 'Every 12 weeks', why: 'Packets effective for 2-6 months. Don\'t push beyond effective life.', how: 'Replace both saddle pouch and headstock pouch packets. Monitor replacement frequency based on how quickly they harden.' },
-                { id: 'q-2', name: 'Truss Rod Observation', duration: '5 min', frequency: 'Every 12 weeks', why: 'Seasonal humidity changes affect neck relief.', how: 'Fret low E string at 1st and 14th frets simultaneously, observe gap at 7th fret. Tiny gap (business card thickness) = normal. Large gap or buzzing = needs professional adjustment.' },
-                { id: 'q-3', name: 'Complete Structural Inspection', duration: '10 min', frequency: 'Every 12 weeks', why: 'Early detection of problems prevents expensive repairs.', how: 'Check: all body joints (neck heel, bridge, binding) for cracks/separations, finish checking, soundhole for pick strike damage, fret sprout.' }
-            ],
-            annual: [
-                { id: 'annual-1', name: 'Taylor Refresh Service', duration: 'Professional', frequency: 'Once per year', why: 'The 23.5" scale length requires specific setup parameters. Professional service ensures optimal results.', how: 'Schedule with Taylor-authorized service center. Includes: humidity stabilization, fretboard cleaning, strings, truss rod adjustment, action optimization, detail, polish, intonation check. Cost: $115.' }
-            ]
-        };
-
-        const EQUIPMENT_ITEMS = [
-            'MusicNomad MN290 Ultimate Work Station (36" x 17" mat with gel cradle)',
-            'Guitar ONE Polish & Cleaner',
-            'F-ONE Fretboard Oil & Cleaner',
-            'String Fuel string cleaner',
-            'FRINE Fret Polishing Kit (5-piece micro-fine kit)',
-            'Tune-It nut/saddle lubricant',
-            'GRIP String Winder, Cutter, and Puller',
-            '26-piece guitar tech screwdriver/wrench set',
-            'Premium microfiber cloths',
-            'D\'Addario EJ17 Phosphor Bronze Medium (.013-.056)',
-            'Kyser Quick-Change Capo (KG6BA)',
-            'Levy\'s MSSC8 Cotton Strap + D\'Addario Flex Lock Blocks',
-            'Gator GC-GSMINI Molded Case',
-            'D\'Addario Humidipak Restore Kit',
-            'Inkbird ITH-10 Hygrometer'
-        ];
-
-        // INITIALIZE
-        function init() {
-            loadData();
-            renderMaintenanceTasks();
-            renderInventoryChecklist();
-            updateDashboard();
-            setDefaultDate();
-        }
-
-        function loadInspectionData() {
-            const saved = localStorage.getItem('inspectionData');
-            if (saved) {
-                inspectionData = JSON.parse(saved);
-            }
-        }
-
-        function loadData() {
-            const saved = localStorage.getItem(DATA_KEY);
-            if (saved) {
-                const data = JSON.parse(saved);
-                for (let category in data) {
-                    if (MAINTENANCE_TASKS[category]) {
-                        data[category].forEach(task => {
-                            const original = MAINTENANCE_TASKS[category].find(t => t.id === task.id);
-                            if (original) {
-                                original.completed = task.completed || false;
-                                original.lastCompleted = task.lastCompleted || null;
-                            }
-                        });
-                    }
-                }
-            }
-        }
-
-        function saveData() {
-            const data = {};
-            for (let category in MAINTENANCE_TASKS) {
-                data[category] = MAINTENANCE_TASKS[category].map(task => ({
-                    id: task.id,
-                    completed: task.completed || false,
-                    lastCompleted: task.lastCompleted || null
-                }));
-            }
-            localStorage.setItem(DATA_KEY, JSON.stringify(data));
-        }
-
-        function toggleTask(taskId) {
-            for (let category in MAINTENANCE_TASKS) {
-                const task = MAINTENANCE_TASKS[category].find(t => t.id === taskId);
-                if (task) {
-                    task.completed = !task.completed;
-                    if (task.completed) {
-                        task.lastCompleted = new Date().toISOString();
-                    }
-                    saveData();
-                    updateDashboard();
-                    renderMaintenanceTasks();
-                    checkForAlerts();
-                    return;
-                }
-            }
-        }
-
-        function renderMaintenanceTasks() {
-            const container = document.getElementById('maintenanceContainer');
-            container.innerHTML = '';
-
-            const categories = [
-                { key: 'daily', label: '🟢 Daily Tasks (After Each Session)', color: '--color-daily' },
-                { key: 'weekly', label: '🔵 Weekly Tasks', color: '--color-weekly' },
-                { key: 'sixweek', label: '🟠 6-Week Tasks (String Change & Deep Clean)', color: '--color-6week' },
-                { key: 'quarterly', label: '🔴 Quarterly Tasks (Every 12 Weeks)', color: '--color-quarterly' },
-                { key: 'annual', label: '🟣 Annual Tasks', color: '--color-annual' }
-            ];
-
-            categories.forEach(category => {
-                const tasks = MAINTENANCE_TASKS[category.key];
-                const completed = tasks.filter(t => t.completed).length;
-                const total = tasks.length;
-                const percent = Math.round((completed / total) * 100);
-
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.style.borderLeft = `4px solid var(${category.color})`;
-                card.innerHTML = `
-                    <h3>${category.label}</h3>
-                    <div class="progress-bar" style="margin-bottom: 16px;">
-                        <div class="progress-fill" style="background-color: var(${category.color}); width: ${percent}%"></div>
-                    </div>
-                    <div class="task-list" id="tasks-${category.key}"></div>
-                `;
-                container.appendChild(card);
-
-                const taskList = document.getElementById(`tasks-${category.key}`);
-                tasks.forEach(task => {
-                    const taskEl = document.createElement('div');
-                    taskEl.className = `task-item ${task.completed ? 'completed' : ''}`;
-                    const lastCompleted = task.lastCompleted ? new Date(task.lastCompleted).toLocaleDateString() : 'Never';
-                    const nextDue = calculateNextDue(task, category.key);
-                    
-                    taskEl.innerHTML = `
-                        <div class="task-header">
-                            <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')">
-                            <div class="task-info">
-                                <div class="task-name">${task.name}</div>
-                                <div class="task-duration">⏱️ ${task.duration}</div>
-                                <div class="task-dates">
-                                    <div><strong>Last:</strong> ${lastCompleted}</div>
-                                    <div><strong>Next Due:</strong> ${nextDue}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <button class="expand-btn" onclick="toggleExpand(this)">+ Why & How</button>
-                        <div class="expand-content">
-                            <div class="expand-section">
-                                <div class="expand-label">WHY</div>
-                                <div class="expand-text">${task.why}</div>
-                            </div>
-                            <div class="expand-section">
-                                <div class="expand-label">HOW</div>
-                                <div class="expand-text">${task.how}</div>
-                            </div>
-                        </div>
-                    `;
-                    taskList.appendChild(taskEl);
-                });
-            });
-        }
-
-        function calculateNextDue(task, category) {
-            if (!task.lastCompleted) {
-                return 'ASAP';
-            }
-
-            const lastDate = new Date(task.lastCompleted);
-            let nextDate = new Date(lastDate);
-
-            if (category === 'daily') {
-                nextDate.setDate(nextDate.getDate() + 1);
-            } else if (category === 'weekly') {
-                nextDate.setDate(nextDate.getDate() + 7);
-            } else if (category === 'sixweek') {
-                nextDate.setDate(nextDate.getDate() + 42);
-            } else if (category === 'quarterly') {
-                nextDate.setDate(nextDate.getDate() + 84);
-            } else if (category === 'annual') {
-                nextDate.setFullYear(nextDate.getFullYear() + 1);
-            }
-
-            const today = new Date();
-            if (nextDate <= today) {
-                return '⚠️ OVERDUE';
-            }
-            const daysUntil = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24));
-            return `${daysUntil} days`;
-        }
-
-        function toggleExpand(btn) {
-            const content = btn.nextElementSibling;
-            content.classList.toggle('show');
-            btn.textContent = content.classList.contains('show') ? '- Hide' : '+ Why & How';
-        }
-
-        function renderInventoryChecklist() {
-            const container = document.getElementById('inventoryChecklist');
-            container.innerHTML = '';
-            
-            EQUIPMENT_ITEMS.forEach((item, index) => {
-                const el = document.createElement('div');
-                el.className = 'checklist-item';
-                el.innerHTML = `
-                    <input type="checkbox" id="eq-${index}">
-                    <div class="checklist-content">
-                        <div class="checklist-label">${item}</div>
-                    </div>
-                `;
-                container.appendChild(el);
-            });
-        }
-
-        function addHumidityReading() {
-            const date = document.getElementById('humidityDate').value;
-            const time = document.getElementById('humidityTime').value;
-            const humidity = parseFloat(document.getElementById('humidityValue').value);
-            const temp = parseFloat(document.getElementById('temperatureValue').value);
-            const location = document.getElementById('guitarLocation').value;
-
-            if (!date || !time || isNaN(humidity) || isNaN(temp)) {
-                alert('Please fill in all fields');
-                return;
-            }
-
-            const reading = {
-                id: Date.now(),
-                date,
-                time,
-                humidity,
-                temp,
-                location,
-                timestamp: new Date(`${date}T${time}`).toISOString()
-            };
-
-            let readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
-            readings.push(reading);
-            readings.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            localStorage.setItem(HUMIDITY_KEY, JSON.stringify(readings));
-
-            document.getElementById('humidityValue').value = '';
-            document.getElementById('temperatureValue').value = '';
-            updateDashboard();
-            renderHumidityTable();
-            checkForAlerts();
-        }
-
-        function renderHumidityTable() {
-            const readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
-            const tbody = document.getElementById('humidityTable');
-            tbody.innerHTML = '';
-
-            readings.slice(0, 20).forEach(reading => {
-                const date = new Date(reading.timestamp);
-                const dateStr = date.toLocaleDateString();
-                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                
-                let statusBadge = '<span class="badge badge-success">✓ Safe</span>';
-                if (reading.humidity > 55) {
-                    statusBadge = '<span class="badge badge-danger">🔴 High Risk</span>';
-                } else if (reading.humidity < 40) {
-                    statusBadge = '<span class="badge badge-warning">⚠️ Low</span>';
-                }
-
-                const row = `
-                    <tr>
-                        <td>${dateStr} ${timeStr}</td>
-                        <td><strong>${reading.humidity}%</strong></td>
-                        <td>${reading.temp}°F</td>
-                        <td>${reading.location === 'case' ? 'Case' : 'Out'}</td>
-                        <td>${statusBadge}</td>
-                        <td><button class="btn-secondary" onclick="deleteHumidityReading(${reading.id})" style="padding: 4px 8px; font-size: 12px;">×</button></td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
-            });
-        }
-
-        function deleteHumidityReading(id) {
-            let readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
-            readings = readings.filter(r => r.id !== id);
-            localStorage.setItem(HUMIDITY_KEY, JSON.stringify(readings));
-            updateDashboard();
-            renderHumidityTable();
-        }
-
-        function updateDashboard() {
-            // Calculate overall completion
-            let totalTasks = 0, completedTasks = 0;
-            for (let category in MAINTENANCE_TASKS) {
-                MAINTENANCE_TASKS[category].forEach(task => {
-                    totalTasks++;
-                    if (task.completed) completedTasks++;
-                });
-            }
-            const overallPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-            document.getElementById('overallCompletion').textContent = overallPercent + '%';
-            document.getElementById('overallBar').style.width = overallPercent + '%';
-
-            // Period completion
-            updatePeriodCompletion('daily', '--color-daily');
-            updatePeriodCompletion('weekly', '--color-weekly');
-            updatePeriodCompletion('sixweek', '--color-6week');
-            updatePeriodCompletion('quarterly', '--color-quarterly');
-            updatePeriodCompletion('annual', '--color-annual');
-
-            // Humidity stats
-            const readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
-            if (readings.length > 0) {
-                const latest = readings[0];
-                const humidity = latest.humidity;
-                document.getElementById('currentHumidity').textContent = humidity + '%';
-                document.getElementById('latestHumidity').textContent = humidity + '%';
-                
-                const date = new Date(latest.timestamp);
-                document.getElementById('latestTime').textContent = date.toLocaleString();
-
-                let status = '✓ Safe (45-50%)';
-                let className = 'safe';
-                if (humidity > 55) {
-                    status = '🔴 DANGER (>55%)';
-                    className = 'danger';
-                } else if (humidity < 40) {
-                    status = '⚠️ Low (<40%)';
-                    className = 'warning';
-                } else if (humidity > 50) {
-                    status = '⚠️ Slightly High';
-                    className = 'warning';
-                }
-                document.getElementById('humidityStatus').textContent = status;
-                document.getElementById('currentHumidity').className = `humidity-display ${className}`;
-
-                // 24h change
-                const oneDayAgo = new Date(date.getTime() - 24 * 60 * 60 * 1000);
-                const prevReading = readings.find(r => new Date(r.timestamp) <= oneDayAgo);
-                if (prevReading) {
-                    const change = humidity - prevReading.humidity;
-                    const changeStr = change > 0 ? `+${change.toFixed(1)}%` : `${change.toFixed(1)}%`;
-                    document.getElementById('humidity24hChange').textContent = changeStr;
-                } else {
-                    document.getElementById('humidity24hChange').textContent = '—';
-                }
-
-                // 7-day range
-                const sevenDaysAgo = new Date(date.getTime() - 7 * 24 * 60 * 60 * 1000);
-                const recentReadings = readings.filter(r => new Date(r.timestamp) >= sevenDaysAgo).map(r => r.humidity);
-                if (recentReadings.length > 0) {
-                    const high = Math.max(...recentReadings);
-                    const low = Math.min(...recentReadings);
-                    document.getElementById('humidity7dHigh').textContent = high.toFixed(1) + '%';
-                    document.getElementById('humidity7dLow').textContent = low.toFixed(1) + '%';
-                }
-            }
-
-            // String change counter
-            let stringChangeDate = null;
-            for (let task of MAINTENANCE_TASKS.sixweek) {
-                if (task.id === '6w-8' && task.lastCompleted) {
-                    stringChangeDate = new Date(task.lastCompleted);
-                    break;
-                }
-            }
-
-            if (stringChangeDate) {
-                const today = new Date();
-                const daysSince = Math.floor((today - stringChangeDate) / (1000 * 60 * 60 * 24));
-                document.getElementById('daysSinceChange').textContent = daysSince + ' days';
-                
-                if (daysSince > 56) {
-                    document.getElementById('daysSinceChange').style.color = 'var(--color-error)';
-                } else if (daysSince > 42) {
-                    document.getElementById('daysSinceChange').style.color = 'var(--color-warning)';
-                } else {
-                    document.getElementById('daysSinceChange').style.color = 'var(--color-success)';
-                }
-            }
-
-            // Calendar
-            renderCalendar();
-        }
-
-        function updatePeriodCompletion(category, colorVar) {
-            const tasks = MAINTENANCE_TASKS[category];
-            const completed = tasks.filter(t => t.completed).length;
-            const total = tasks.length;
-            const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
-            
-            const camelCase = category.charAt(0).toUpperCase() + category.slice(1);
-            document.getElementById(category + 'Percent').textContent = percent + '%';
-            document.getElementById(category + 'Bar').style.width = percent + '%';
-        }
-
-        function renderCalendar() {
-            const container = document.getElementById('maintenanceCalendar');
-            container.innerHTML = '';
-
-            const today = new Date();
-            const month = today.getMonth();
-            const year = today.getFullYear();
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const startDate = new Date(firstDay);
-            startDate.setDate(startDate.getDate() - firstDay.getDay());
-
-            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            days.forEach(day => {
-                const header = document.createElement('div');
-                header.style.textAlign = 'center';
-                header.style.fontSize = '11px';
-                header.style.fontWeight = '600';
-                header.style.padding = '4px';
-                header.textContent = day;
-                container.appendChild(header);
-            });
-
-            const nextDueDates = getAllNextDueDates();
-            let current = new Date(startDate);
-
-            for (let i = 0; i < 42; i++) {
-                const dayEl = document.createElement('div');
-                dayEl.className = 'calendar-day';
-
-                if (current.toDateString() === today.toDateString()) {
-                    dayEl.classList.add('today');
-                    dayEl.textContent = current.getDate();
-                } else if (nextDueDates.some(d => d.toDateString() === current.toDateString())) {
-                    dayEl.classList.add('upcoming');
-                    dayEl.textContent = current.getDate();
-                } else if (current.getMonth() === month) {
-                    dayEl.textContent = current.getDate();
-                } else {
-                    dayEl.style.opacity = '0.3';
-                    dayEl.textContent = current.getDate();
-                }
-
-                container.appendChild(dayEl);
-                current.setDate(current.getDate() + 1);
-            }
-        }
-
-        function getAllNextDueDates() {
-            const dates = [];
-            const today = new Date();
-
-            for (let category in MAINTENANCE_TASKS) {
-                MAINTENANCE_TASKS[category].forEach(task => {
-                    if (!task.lastCompleted) {
-                        dates.push(today);
-                        return;
-                    }
-
-                    const lastDate = new Date(task.lastCompleted);
-                    let nextDate = new Date(lastDate);
-
-                    if (category === 'daily') {
-                        nextDate.setDate(nextDate.getDate() + 1);
-                    } else if (category === 'weekly') {
-                        nextDate.setDate(nextDate.getDate() + 7);
-                    } else if (category === 'sixweek') {
-                        nextDate.setDate(nextDate.getDate() + 42);
-                    } else if (category === 'quarterly') {
-                        nextDate.setDate(nextDate.getDate() + 84);
-                    } else if (category === 'annual') {
-                        nextDate.setFullYear(nextDate.getFullYear() + 1);
-                    }
-
-                    if (nextDate >= today && nextDate <= new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)) {
-                        dates.push(nextDate);
-                    }
-                });
-            }
-
-            return dates;
-        }
-
-        function checkForAlerts() {
-            const alerts = [];
-            const readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
-
-            if (readings.length > 0) {
-                const latest = readings[0];
-                if (latest.humidity > 55) {
-                    alerts.push({
-                        type: 'danger',
-                        icon: '🔴',
-                        title: 'CRITICAL: High Humidity Detected',
-                        message: `RH is ${latest.humidity}% (danger threshold >55%). Bridge lifting risk active. Replace Humidipak immediately.`
-                    });
-                } else if (latest.humidity < 40) {
-                    alerts.push({
-                        type: 'warning',
-                        icon: '⚠️',
-                        title: 'Low Humidity Warning',
-                        message: `RH is ${latest.humidity}% (below safe 40-55% range). Fret sprout risk. Increase humidity.`
-                    });
-                }
-
-                // 24h change check
-                if (readings.length > 1) {
-                    const oneDayAgo = new Date(latest.timestamp);
-                    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-                    const prevReading = readings.find(r => new Date(r.timestamp) <= oneDayAgo);
-                    if (prevReading) {
-                        const change = Math.abs(latest.humidity - prevReading.humidity);
-                        if (change > 10) {
-                            alerts.push({
-                                type: 'warning',
-                                icon: '📊',
-                                title: 'Rapid Humidity Change',
-                                message: `RH changed ${change.toFixed(1)}% in 24h (alert threshold >10%). Monitor closely.`
-                            });
-                        }
-                    }
-                }
-            }
-
-            // Check overdue tasks
-            let overdueCount = 0;
-            for (let category in MAINTENANCE_TASKS) {
-                MAINTENANCE_TASKS[category].forEach(task => {
-                    if (!task.completed && task.lastCompleted) {
-                        const nextDue = calculateNextDue(task, category);
-                        if (nextDue.includes('OVERDUE')) {
-                            overdueCount++;
-                        }
-                    }
-                });
-            }
-
-            if (overdueCount > 0) {
-                alerts.push({
-                    type: 'info',
-                    icon: '⏰',
-                    title: 'Maintenance Overdue',
-                    message: `${overdueCount} task(s) are overdue. Check Maintenance Tasks tab.`
-                });
-            }
-
-            renderAlerts(alerts);
-        }
-
-        function renderAlerts(alerts) {
-            const container = document.getElementById('alertContainer');
-            container.innerHTML = '';
-
-            alerts.forEach(alert => {
-                const el = document.createElement('div');
-                el.className = `alert-banner ${alert.type}`;
-                el.innerHTML = `
-                    <div class="alert-icon">${alert.icon}</div>
-                    <div class="alert-content">
-                        <h3>${alert.title}</h3>
-                        <p style="font-size: 12px; margin: 0;">${alert.message}</p>
-                    </div>
-                `;
-                container.appendChild(el);
-            });
-        }
-
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            
-            document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
-        }
-
-        function toggleTheme() {
-            const html = document.documentElement;
-            const current = html.getAttribute('data-theme');
-            const newTheme = current === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            document.querySelector('.theme-toggle').textContent = newTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
-        }
-
-        function openBridgeRecommendations() {
-            document.getElementById('bridgeModal').classList.add('show');
-        }
-
-        function closeBridgeModal() {
-            document.getElementById('bridgeModal').classList.remove('show');
-        }
-
-        function openActionRecommendations() {
-            document.getElementById('actionModal').classList.add('show');
-        }
-
-        function closeActionModal() {
-            document.getElementById('actionModal').classList.remove('show');
-        }
-
-        function openFretRecommendations() {
-            document.getElementById('fretModal').classList.add('show');
-        }
-
-        function closeFretModal() {
-            document.getElementById('fretModal').classList.remove('show');
-        }
-
-        function exportAsCSV() {
-            let csv = 'TAYLOR GS MINI MAINTENANCE TRACKER - CSV EXPORT\n\n';
-            csv += `Export Date: ${new Date().toLocaleDateString()}\n\n`;
-
-            csv += '=== MAINTENANCE TASKS ===\n';
-            for (let category in MAINTENANCE_TASKS) {
-                csv += `\n${category.toUpperCase()}\n`;
-                MAINTENANCE_TASKS[category].forEach(task => {
-                    csv += `"${task.name}","${task.duration}","${task.completed ? 'Yes' : 'No'}","${task.lastCompleted || 'Never'}"\n`;
-                });
-            }
-
-            csv += '\n\n=== HUMIDITY LOG ===\n';
-            csv += 'Date,Time,RH %,Temp °F,Location,Status\n';
-            const readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
-            readings.forEach(r => {
-                const date = new Date(r.timestamp);
-                csv += `"${date.toLocaleDateString()}","${date.toLocaleTimeString()}","${r.humidity}","${r.temp}","${r.location}"\n`;
-            });
-
-            downloadFile(csv, 'guitar-maintenance.csv', 'text/csv');
-        }
-
-        function exportAsJSON() {
-            const data = {
-                exportDate: new Date().toISOString(),
-                tasks: MAINTENANCE_TASKS,
-                humidity: JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]')
-            };
-
-            downloadFile(JSON.stringify(data, null, 2), 'guitar-maintenance-backup.json', 'application/json');
-        }
-
-        function downloadFile(content, filename, type) {
-            const blob = new Blob([content], { type });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        function resetDailyTasks() {
-            if (confirm('Reset all daily tasks? This will uncheck them for today.')) {
-                MAINTENANCE_TASKS.daily.forEach(task => {
-                    task.completed = false;
-                });
-                saveData();
-                updateDashboard();
-                renderMaintenanceTasks();
-            }
-        }
-
-        function resetWeeklyTasks() {
-            if (confirm('Reset all weekly tasks? This will uncheck them for this week.')) {
-                MAINTENANCE_TASKS.weekly.forEach(task => {
-                    task.completed = false;
-                });
-                saveData();
-                updateDashboard();
-                renderMaintenanceTasks();
-            }
-        }
-
-        function confirmReset() {
-            if (confirm('⚠️ This will DELETE ALL data including maintenance history and humidity logs. This cannot be undone. Are you sure?')) {
-                if (confirm('Really delete everything? Last chance!')) {
-                    localStorage.removeItem(DATA_KEY);
-                    localStorage.removeItem(HUMIDITY_KEY);
-                    location.reload();
-                }
-            }
-        }
-
-        // Quick Action - Just Played button
-        function quickActionJustPlayed() {
-            const now = new Date().toISOString();
-            MAINTENANCE_TASKS.daily.forEach(task => {
-                task.completed = true;
-                task.lastCompleted = now;
-            });
-            saveData();
-            updateDashboard();
-            renderMaintenanceTasks();
-            checkForAlerts();
-
-            // Show confirmation feedback
-            const btn = document.querySelector('.btn-just-played');
-            const originalText = btn.textContent;
-            btn.textContent = '✓ Daily Tasks Logged!';
-            btn.style.background = 'var(--color-success)';
-            setTimeout(() => {
-                btn.textContent = originalText;
-                btn.style.background = '';
-            }, 2000);
-        }
-
-        // Simplified humidity logging (auto-captures date/time)
-        function addHumidityReadingSimplified() {
-            const humidity = parseFloat(document.getElementById('humidityValue').value);
-            const temp = parseFloat(document.getElementById('temperatureValue').value) || null;
-            const location = document.getElementById('guitarLocation').value;
-
-            if (isNaN(humidity) || humidity < 0 || humidity > 100) {
-                alert('Please enter a valid humidity percentage (0-100)');
-                return;
-            }
-
-            const now = new Date();
-            const reading = {
-                id: Date.now(),
-                date: now.toISOString().split('T')[0],
-                time: now.toTimeString().slice(0, 5),
-                humidity,
-                temp,
-                location,
-                timestamp: now.toISOString(),
-                source: 'manual'
-            };
-
-            let readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
-            readings.unshift(reading);
-            readings.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            localStorage.setItem(HUMIDITY_KEY, JSON.stringify(readings));
-
-            document.getElementById('humidityValue').value = '';
-            document.getElementById('temperatureValue').value = '';
-
-            // Show confirmation
-            const confirmation = document.getElementById('logConfirmation');
-            confirmation.style.display = 'block';
-            setTimeout(() => {
-                confirmation.style.display = 'none';
-            }, 3000);
-
-            updateDashboard();
-            renderHumidityTable();
-            drawHumidityChart();
-            checkForAlerts();
-        }
-
-        // Inspection recording
-        let inspectionData = {};
-
-        function recordInspection(type, frequency) {
-            loadInspectionData();
-
-            const checkboxIds = {
-                bridge: ['bridgeCheck1', 'bridgeCheck2'],
-                action: ['actionCheck1', 'actionCheck2', 'actionCheck3'],
-                fret: ['fretCheck1', 'fretCheck2', 'fretCheck3']
-            };
-
-            const ids = checkboxIds[type] || [];
-            const allChecked = ids.every(id => document.getElementById(id).checked);
-
-            ids.forEach(id => {
-                const checkbox = document.getElementById(id);
-                if (!inspectionData[id]) {
-                    inspectionData[id] = { completed: false, lastCompleted: null };
-                }
-                inspectionData[id].completed = checkbox.checked;
-                if (checkbox.checked) {
-                    inspectionData[id].lastCompleted = new Date().toISOString();
-                }
-            });
-
-            saveInspectionData();
-
-            // Update result display
-            const resultId = type + 'CheckResult';
-            const resultEl = document.getElementById(resultId);
-            if (resultEl && allChecked) {
-                const nextDue = calculateInspectionDueDate(frequency);
-                resultEl.textContent = `✓ Completed: ${new Date().toLocaleDateString()} | Next Due: ${nextDue}`;
-                resultEl.style.display = 'block';
-                resultEl.style.color = 'var(--color-success)';
-            }
-        }
-
-        function saveInspectionData() {
-            localStorage.setItem('inspectionData', JSON.stringify(inspectionData));
-        }
-
-        function calculateInspectionDueDate(frequency) {
-            const now = new Date();
-            let nextDate = new Date(now);
-
-            switch(frequency) {
-                case 'weekly':
-                    nextDate.setDate(nextDate.getDate() + 7);
-                    break;
-                case 'quarterly':
-                    nextDate.setDate(nextDate.getDate() + 84);
-                    break;
-                case 'stringchange':
-                    nextDate.setDate(nextDate.getDate() + 56);
-                    break;
-                default:
-                    nextDate.setDate(nextDate.getDate() + 7);
-            }
-
-            return nextDate.toLocaleDateString();
-        }
-
-        // Set default date for forms
-        function setDefaultDate() {
-            const today = new Date().toISOString().split('T')[0];
-            const dateInputs = document.querySelectorAll('input[type="date"]');
-            dateInputs.forEach(input => {
-                if (!input.value) {
-                    input.value = today;
-                }
-            });
-        }
-
-        // Draw humidity chart
-        function drawHumidityChart() {
-            const readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
-            const chartContainer = document.getElementById('humidityChartContainer');
-            const canvas = document.getElementById('humidityChart');
-
-            if (readings.length < 2) {
-                chartContainer.style.display = 'none';
-                return;
-            }
-
-            chartContainer.style.display = 'block';
-            const ctx = canvas.getContext('2d');
-            const width = canvas.parentElement.clientWidth - 40;
-            const height = 200;
-            canvas.width = width;
-            canvas.height = height;
-
-            // Get last 7 days of readings
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            const recentReadings = readings
-                .filter(r => new Date(r.timestamp) >= sevenDaysAgo)
-                .reverse();
-
-            if (recentReadings.length < 2) {
-                chartContainer.style.display = 'none';
-                return;
-            }
-
-            // Clear canvas
-            ctx.clearRect(0, 0, width, height);
-
-            // Draw background zones
-            const padding = 40;
-            const chartWidth = width - padding * 2;
-            const chartHeight = height - padding * 2;
-
-            // Danger zone (55-65)
-            ctx.fillStyle = 'rgba(239, 68, 68, 0.1)';
-            ctx.fillRect(padding, padding, chartWidth, chartHeight * 0.25);
-
-            // Caution zone high (50-55)
-            ctx.fillStyle = 'rgba(245, 158, 11, 0.1)';
-            ctx.fillRect(padding, padding + chartHeight * 0.25, chartWidth, chartHeight * 0.125);
-
-            // Safe zone (40-50)
-            ctx.fillStyle = 'rgba(16, 185, 129, 0.1)';
-            ctx.fillRect(padding, padding + chartHeight * 0.375, chartWidth, chartHeight * 0.25);
-
-            // Caution zone low (30-40)
-            ctx.fillStyle = 'rgba(245, 158, 11, 0.1)';
-            ctx.fillRect(padding, padding + chartHeight * 0.625, chartWidth, chartHeight * 0.25);
-
-            // Draw line chart
-            ctx.strokeStyle = '#3b82f6';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-
-            const minHumidity = 30;
-            const maxHumidity = 65;
-            const range = maxHumidity - minHumidity;
-
-            recentReadings.forEach((reading, i) => {
-                const x = padding + (i / (recentReadings.length - 1)) * chartWidth;
-                const y = padding + (1 - (reading.humidity - minHumidity) / range) * chartHeight;
-
-                if (i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            });
-            ctx.stroke();
-
-            // Draw points
-            recentReadings.forEach((reading, i) => {
-                const x = padding + (i / (recentReadings.length - 1)) * chartWidth;
-                const y = padding + (1 - (reading.humidity - minHumidity) / range) * chartHeight;
-
-                ctx.beginPath();
-                ctx.arc(x, y, 4, 0, Math.PI * 2);
-                ctx.fillStyle = reading.humidity > 55 ? '#ef4444' :
-                               reading.humidity < 40 ? '#f59e0b' : '#10b981';
-                ctx.fill();
-            });
-
-            // Draw Y-axis labels
-            ctx.fillStyle = 'var(--color-text-light)';
-            ctx.font = '11px system-ui';
-            ctx.textAlign = 'right';
-            ctx.fillText('65%', padding - 5, padding + 10);
-            ctx.fillText('55%', padding - 5, padding + chartHeight * 0.285 + 4);
-            ctx.fillText('40%', padding - 5, padding + chartHeight * 0.715 + 4);
-            ctx.fillText('30%', padding - 5, height - padding + 4);
-        }
-
-        // LOAD THEME
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        document.querySelector('.theme-toggle').textContent = savedTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
-
-        // Load inspection data on page load
-        loadInspectionData();
-
-        // Expose key objects to window for testing and debugging
-        window.MAINTENANCE_TASKS = MAINTENANCE_TASKS;
-        window.EQUIPMENT_ITEMS = EQUIPMENT_ITEMS;
-        window.DATA_KEY = DATA_KEY;
-        window.HUMIDITY_KEY = HUMIDITY_KEY;
-
-        // INIT
-        init();
-        checkForAlerts();
-        renderHumidityTable();
-        drawHumidityChart();
-    </script>
+    <!-- Load app as ES module -->
+    <script type="module" src="js/app.js"></script>
 </body>
 </html>
