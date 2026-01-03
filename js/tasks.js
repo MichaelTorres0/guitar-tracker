@@ -6,6 +6,19 @@ export function toggleTask(taskId) {
     for (let category in MAINTENANCE_TASKS) {
         const task = MAINTENANCE_TASKS[category].find(t => t.id === taskId);
         if (task) {
+            // Check if task was already completed within its period
+            if (!task.completed && task.lastCompleted) {
+                const wasCompletedThisPeriod = isCompletedWithinPeriod(task, category);
+                if (wasCompletedThisPeriod) {
+                    const confirmLog = confirm(
+                        `This task was already completed ${getRelativeTimeAgo(task.lastCompleted)}. Log again?`
+                    );
+                    if (!confirmLog) {
+                        return null;
+                    }
+                }
+            }
+
             task.completed = !task.completed;
             if (task.completed) {
                 task.lastCompleted = new Date().toISOString();
@@ -15,6 +28,57 @@ export function toggleTask(taskId) {
         }
     }
     return null;
+}
+
+// Helper function to check if task was completed within its period
+export function isCompletedWithinPeriod(task, category) {
+    if (!task.lastCompleted) return false;
+
+    const lastDate = new Date(task.lastCompleted);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (category === 'daily') {
+        // Check if completed today
+        const completedDate = new Date(lastDate);
+        completedDate.setHours(0, 0, 0, 0);
+        return completedDate.getTime() === today.getTime();
+    } else if (category === 'weekly') {
+        // Check if completed within last 7 days
+        const daysDiff = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+        return daysDiff < 7;
+    } else if (category === 'eightweek') {
+        // Check if completed within last 56 days
+        const daysDiff = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+        return daysDiff < 56;
+    } else if (category === 'quarterly') {
+        // Check if completed within last 84 days
+        const daysDiff = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+        return daysDiff < 84;
+    } else if (category === 'annual') {
+        // Check if completed within last 365 days
+        const daysDiff = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+        return daysDiff < 365;
+    }
+    return false;
+}
+
+// Helper function to get relative time ago
+export function getRelativeTimeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffWeeks = Math.floor(diffDays / 7);
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+    if (diffWeeks < 4) return `${diffWeeks} week${diffWeeks !== 1 ? 's' : ''} ago`;
+    return date.toLocaleDateString();
 }
 
 export function quickActionJustPlayed() {
