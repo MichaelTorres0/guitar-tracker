@@ -2,6 +2,7 @@
   "name": "guitar-tracker",
   "version": "2.0.0",
   "description": "Taylor GS Mini Maintenance Tracker PWA",
+  "type": "module",
   "scripts": {
     "test": "node tests/test.js"
   },
