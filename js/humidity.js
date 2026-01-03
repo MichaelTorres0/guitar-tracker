@@ -111,14 +111,15 @@ export function deleteHumidityReading(id) {
     localStorage.setItem(HUMIDITY_KEY, JSON.stringify(readings));
 }
 
-export function renderHumidityTable() {
-    const readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
+export function renderHumidityTable(filteredReadings = null) {
+    const readings = filteredReadings || JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
     const tbody = document.getElementById('humidityTable');
     if (!tbody) return;
 
     tbody.innerHTML = '';
 
-    readings.slice(0, 20).forEach(reading => {
+    const displayReadings = filteredReadings ? readings : readings.slice(0, 20);
+    displayReadings.forEach(reading => {
         const date = new Date(reading.timestamp);
         const dateStr = date.toLocaleDateString();
         const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -228,6 +229,60 @@ function renderAlerts(alerts) {
         `;
         container.appendChild(el);
     });
+}
+
+// Filter state
+let activeFilters = null;
+
+// Filter humidity readings
+export function filterHumidityReadings(fromDate, toDate, location) {
+    let readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
+
+    if (fromDate) {
+        const from = new Date(fromDate);
+        from.setHours(0, 0, 0, 0);
+        readings = readings.filter(r => new Date(r.timestamp) >= from);
+    }
+
+    if (toDate) {
+        const to = new Date(toDate);
+        to.setHours(23, 59, 59, 999);
+        readings = readings.filter(r => new Date(r.timestamp) <= to);
+    }
+
+    if (location && location !== 'all') {
+        readings = readings.filter(r => r.location === location);
+    }
+
+    return readings;
+}
+
+// Apply filters and render table
+export function applyHumidityFilters() {
+    const fromDate = document.getElementById('filterDateFrom').value;
+    const toDate = document.getElementById('filterDateTo').value;
+    const location = document.getElementById('filterLocation').value;
+
+    activeFilters = { fromDate, toDate, location };
+    const filtered = filterHumidityReadings(fromDate, toDate, location);
+    renderHumidityTable(filtered);
+}
+
+// Clear filters
+export function clearHumidityFilters() {
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
+    document.getElementById('filterLocation').value = 'all';
+    activeFilters = null;
+    renderHumidityTable();
+}
+
+// Get filtered readings for export
+export function getFilteredReadings() {
+    if (!activeFilters) {
+        return JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
+    }
+    return filterHumidityReadings(activeFilters.fromDate, activeFilters.toDate, activeFilters.location);
 }
 
 export function drawHumidityChart() {

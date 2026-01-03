@@ -266,6 +266,90 @@
             background: rgba(16, 185, 129, 0.05);
         }
 
+        .task-item.completed-today {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 3px solid var(--color-success);
+        }
+
+        .task-item.completed-this-period {
+            background: rgba(59, 130, 246, 0.05);
+            border-left: 3px solid var(--color-primary);
+        }
+
+        .completion-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .completion-badge.today {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--color-success);
+        }
+
+        .completion-badge.this-week {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--color-primary);
+        }
+
+        .completion-badge.this-period {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--color-warning);
+        }
+
+        .last-completed-badge {
+            display: inline-block;
+            font-size: 11px;
+            color: var(--color-text-light);
+            padding: 2px 6px;
+            background: var(--color-bg);
+            border-radius: 4px;
+            margin-top: 4px;
+        }
+
+        .relative-time {
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .relative-time.recent {
+            color: var(--color-success);
+        }
+
+        .relative-time.overdue {
+            color: var(--color-error);
+        }
+
+        .offline-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--color-text-light);
+            padding: 6px 12px;
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+        }
+
+        .offline-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--color-success);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
         .task-header {
             display: flex;
             align-items: flex-start;
@@ -691,6 +775,7 @@
             border-radius: 4px;
         }
 
+        /* Tablet breakpoint */
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
@@ -706,11 +791,242 @@
                 font-size: 12px;
             }
 
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
             .grid-3 {
                 grid-template-columns: 1fr;
             }
 
             .task-dates {
                 grid-template-columns: 1fr;
+            }
+        }
+
+        /* Mobile breakpoint - iPhone SE and smaller */
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            /* Make tabs horizontally scrollable with snap */
+            .tabs {
+                overflow-x: auto;
+                overflow-y: hidden;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+                flex-wrap: nowrap;
+                padding-bottom: 8px;
+            }
+
+            .tabs::-webkit-scrollbar {
+                display: none;
+            }
+
+            .tab-btn {
+                scroll-snap-align: start;
+                min-height: 44px;
+                min-width: 120px;
+                padding: 12px 16px;
+                font-size: 13px;
+                flex-shrink: 0;
+            }
+
+            /* Ensure all touch targets are at least 44px */
+            button {
+                min-height: 44px;
+                min-width: 44px;
+                padding: 10px 16px;
+            }
+
+            .task-checkbox {
+                width: 24px;
+                height: 24px;
+                min-width: 24px;
+                min-height: 24px;
+            }
+
+            input[type="checkbox"] {
+                min-width: 20px;
+                min-height: 20px;
+                width: 20px;
+                height: 20px;
+            }
+
+            .theme-toggle {
+                min-height: 44px;
+                padding: 10px 16px;
+            }
+
+            /* Single column layouts on mobile */
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            /* Reduce padding on cards for more space */
+            .card {
+                padding: 16px;
+            }
+
+            /* Better button spacing on mobile */
+            .button-group {
+                flex-direction: column;
+            }
+
+            .button-group button {
+                width: 100%;
+            }
+
+            /* Stack task dates vertically */
+            .task-dates {
+                grid-template-columns: 1fr;
+                gap: 4px;
+            }
+
+            /* Better table scrolling */
+            .table-responsive {
+                -webkit-overflow-scrolling: touch;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px 6px;
+            }
+
+            /* Reduce stat card text size */
+            .stat-value {
+                font-size: 24px;
+            }
+
+            .humidity-display {
+                font-size: 28px;
+            }
+
+            /* Modal adjustments */
+            .modal {
+                padding: 16px;
+            }
+
+            .modal-content {
+                padding: 20px;
+                max-height: 85vh;
+            }
+
+            /* Form inputs larger on mobile */
+            input[type="text"],
+            input[type="number"],
+            input[type="date"],
+            input[type="time"],
+            select,
+            textarea {
+                padding: 10px;
+                font-size: 16px; /* Prevents iOS zoom */
+            }
+
+            /* Calendar grid more compact on mobile */
+            .calendar-grid {
+                gap: 2px;
+            }
+
+            .calendar-day {
+                font-size: 10px;
+            }
+        }
+
+        /* Extra small devices - iPhone SE 1st gen */
+        @media (max-width: 375px) {
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .tab-btn {
+                min-width: 100px;
+                padding: 12px 12px;
+                font-size: 12px;
+            }
+
+            .card {
+                padding: 12px;
+            }
+
+            body {
+                padding: 8px;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+                color: black;
+                padding: 0;
+            }
+
+            .header {
+                border-bottom: 2px solid black;
+                padding-bottom: 10px;
+                margin-bottom: 20px;
+            }
+
+            .theme-toggle,
+            .offline-indicator,
+            .tabs,
+            .btn-just-played,
+            #alertContainer,
+            .expand-btn,
+            button,
+            .modal,
+            .button-group {
+                display: none !important;
+            }
+
+            .tab-content {
+                display: block !important;
+                page-break-inside: avoid;
+            }
+
+            .card {
+                border: 1px solid #ccc;
+                page-break-inside: avoid;
+                margin-bottom: 20px;
+                box-shadow: none;
+            }
+
+            .task-item {
+                border: 1px solid #ddd;
+                page-break-inside: avoid;
+            }
+
+            .expand-content {
+                display: block !important;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            h2, h3 {
+                font-size: 18px;
+                margin-top: 16px;
+            }
+
+            table {
+                page-break-inside: avoid;
+            }
+
+            /* Show task checkboxes status */
+            input[type="checkbox"]:checked::after {
+                content: "✓";
             }
         }

@@ -23,7 +23,13 @@
                 <h1>🎸 Taylor GS Mini Maintenance Tracker</h1>
                 <p style="color: var(--color-text-light); font-size: 13px; margin-top: 4px;">Playing Schedule: 2.5 hrs/week | String Gauge: EJ16 Light (.012-.053)</p>
             </div>
-            <button class="theme-toggle">🌙 Dark Mode</button>
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                <div class="offline-indicator">
+                    <span class="offline-dot"></span>
+                    <span>Offline Ready</span>
+                </div>
+                <button class="theme-toggle">🌙 Dark Mode</button>
+            </div>
         </div>
 
         <!-- ALERTS SECTION -->
@@ -225,6 +231,34 @@
 
             <div class="card" style="margin-top: 20px;">
                 <h3>📊 Humidity History</h3>
+
+                <!-- Filter Controls -->
+                <div class="filter-controls" style="background: var(--color-bg); padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">From Date:</label>
+                            <input type="date" id="filterDateFrom" style="width: 100%;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">To Date:</label>
+                            <input type="date" id="filterDateTo" style="width: 100%;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Location:</label>
+                            <select id="filterLocation" style="width: 100%;">
+                                <option value="all">All Locations</option>
+                                <option value="case">In Case</option>
+                                <option value="out">Out of Case</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="button-group" style="margin-top: 0;">
+                        <button id="applyFilters" class="btn-primary">Apply Filters</button>
+                        <button id="clearFilters" class="btn-secondary">Clear</button>
+                        <button id="exportFiltered" class="btn-secondary">Export Filtered</button>
+                    </div>
+                </div>
+
                 <div class="table-responsive">
                     <table>
                         <thead>
@@ -390,15 +424,40 @@
         <div id="export" class="tab-content">
             <div class="grid-2">
                 <div class="card">
+                    <h3>💾 Backup & Restore</h3>
+                    <div id="backupStatus" style="background: var(--color-bg); padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 12px; color: var(--color-text-light);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span>Last backup:</span>
+                            <span id="lastBackupDate">Never</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Data size:</span>
+                            <span id="dataSize">Calculating...</span>
+                        </div>
+                    </div>
+                    <button id="createBackup" class="btn-primary" style="width: 100%; margin-bottom: 10px;">Create Backup</button>
+                    <div id="backupConfirmation" class="form-feedback success" style="display:none;">
+                        ✅ Backup created successfully!
+                    </div>
+
+                    <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--color-border);">
+
+                    <h4 style="font-size: 14px; margin-bottom: 12px;">Restore from Backup</h4>
+                    <p class="warning-text" style="font-size: 12px; color: var(--color-warning); margin-bottom: 12px;">⚠️ This will replace all current data</p>
+                    <input type="file" id="restoreFile" accept=".json" style="display:none;">
+                    <button id="restoreBackup" class="btn-secondary" style="width: 100%;">Choose Backup File...</button>
+                    <div id="restoreConfirmation" class="form-feedback" style="display:none;"></div>
+                </div>
+
+                <div class="card">
                     <h3>⬇️ Export Data</h3>
                     <p style="font-size: 13px; color: var(--color-text-light); margin-bottom: 16px;">Export your maintenance history and humidity logs for backup or analysis.</p>
                     <button id="exportCSV" class="btn-primary" style="width: 100%; margin-bottom: 10px;">📊 Export as CSV</button>
                     <button id="exportJSON" class="btn-secondary" style="width: 100%;">💾 Backup as JSON</button>
-                </div>
 
-                <div class="card">
-                    <h3>🔄 Reset & Manage</h3>
-                    <p style="font-size: 13px; color: var(--color-text-light); margin-bottom: 16px;">Reset tracking periods or clear all data.</p>
+                    <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--color-border);">
+
+                    <h4 style="font-size: 14px; margin-bottom: 12px;">Reset & Manage</h4>
                     <button id="resetDaily" class="btn-secondary" style="width: 100%; margin-bottom: 10px;">↻ Reset Daily Tasks</button>
                     <button id="resetWeekly" class="btn-secondary" style="width: 100%; margin-bottom: 10px;">↻ Reset Weekly Tasks</button>
                     <button id="resetAll" class="btn-danger" style="width: 100%;">⚠️ Clear All Data</button>

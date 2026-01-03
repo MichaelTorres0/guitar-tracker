@@ -1,6 +1,6 @@
 // UI rendering and interaction functions
 import { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS } from './config.js';
-import { calculateNextDue, getAllNextDueDates } from './tasks.js';
+import { calculateNextDue, getAllNextDueDates, isCompletedWithinPeriod, getRelativeTimeAgo } from './tasks.js';
 
 const HUMIDITY_KEY = STORAGE_KEYS.legacy.humidity;
 
@@ -39,9 +39,32 @@ export function renderMaintenanceTasks() {
         const taskList = document.getElementById(`tasks-${category.key}`);
         tasks.forEach(task => {
             const taskEl = document.createElement('div');
-            taskEl.className = `task-item ${task.completed ? 'completed' : ''}`;
+
+            // Determine task status classes
+            const isWithinPeriod = task.lastCompleted && isCompletedWithinPeriod(task, category.key);
+            let taskClasses = 'task-item';
+            if (task.completed) taskClasses += ' completed';
+            if (isWithinPeriod) {
+                if (category.key === 'daily') taskClasses += ' completed-today';
+                else taskClasses += ' completed-this-period';
+            }
+            taskEl.className = taskClasses;
+
             const lastCompleted = task.lastCompleted ? new Date(task.lastCompleted).toLocaleDateString() : 'Never';
+            const relativeTime = task.lastCompleted ? getRelativeTimeAgo(task.lastCompleted) : null;
             const nextDue = calculateNextDue(task, category.key);
+
+            // Generate completion badge
+            let completionBadge = '';
+            if (isWithinPeriod) {
+                if (category.key === 'daily') {
+                    completionBadge = '<div class="completion-badge today">✓ Completed Today</div>';
+                } else if (category.key === 'weekly') {
+                    completionBadge = '<div class="completion-badge this-week">✓ Completed This Week</div>';
+                } else {
+                    completionBadge = '<div class="completion-badge this-period">✓ Completed This Period</div>';
+                }
+            }
 
             taskEl.innerHTML = `
                 <div class="task-header">
@@ -49,6 +72,8 @@ export function renderMaintenanceTasks() {
                     <div class="task-info">
                         <div class="task-name">${task.name}</div>
                         <div class="task-duration">⏱️ ${task.duration}</div>
+                        ${completionBadge}
+                        ${relativeTime ? `<div class="last-completed-badge">Last completed: <span class="relative-time">${relativeTime}</span></div>` : ''}
                         <div class="task-dates">
                             <div><strong>Last:</strong> ${lastCompleted}</div>
                             <div><strong>Next Due:</strong> ${nextDue}</div>
