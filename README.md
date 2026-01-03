@@ -46,10 +46,11 @@ Each task includes expandable "Why" and "How" explanations.
 
 ## Technical Details
 
-- **Single HTML file** with embedded CSS and JavaScript
-- **localStorage** for offline-capable data persistence
+- **ES modules architecture** with separate CSS and JS files
+- **localStorage** for offline-capable data persistence (versioned schema v2)
 - **No external dependencies** (vanilla JavaScript)
 - **Mobile-first design** optimized for iPhone Safari
+- **62 tests** for validation and business logic
 
 ## Installation (Add to Home Screen)
 
@@ -81,20 +82,26 @@ See [CLAUDE.md](CLAUDE.md) for development guidelines.
 ### File Structure
 ```
 guitar-tracker/
-├── index.html      # Complete app (HTML + CSS + JS)
-├── manifest.json   # PWA manifest
-├── icon.png        # App icon (180x180px) - needs to be added
-├── CLAUDE.md       # Development guidelines
-└── README.md       # This file
+├── index.html           # HTML structure
+├── css/
+│   └── styles.css       # All styles
+├── js/
+│   ├── app.js           # Entry point, init
+│   ├── config.js        # Task definitions, thresholds
+│   ├── storage.js       # Data persistence, migration
+│   ├── validators.js    # Input validation
+│   ├── humidity.js      # Humidity features
+│   ├── tasks.js         # Task management
+│   ├── ui.js            # DOM rendering
+│   └── export.js        # Export functions
+├── tests/
+│   └── test.js          # Test suite
+├── test.html            # Test runner
+├── manifest.json        # PWA manifest
+├── CLAUDE.md            # Development guidelines
+├── SPECIFICATION.md     # Full feature specification
+└── README.md            # This file
 ```
-
-## Note: App Icon Required
-
-To complete the PWA setup, add an `icon.png` file (180x180px) to the repository root. Suggested designs:
-- Guitar silhouette on blue (#3b82f6) background
-- Acoustic guitar emoji style
-- Taylor headstock outline
-- Humidity gauge with guitar elements
 
 ## License
 

@@ -5,75 +5,119 @@ A Progressive Web App for tracking maintenance, humidity, and care for a Taylor 
 ## Quick Reference
 
 - **Live URL:** https://michaeltorres0.github.io/guitar-tracker/
-- **Single file app:** All code is in `index.html`
-- **Data storage:** localStorage only (offline-capable)
+- **Architecture:** ES modules with separate CSS
+- **Data storage:** localStorage with versioned schema (DATA_VERSION = 2)
 - **Target device:** iPhone Safari (iOS 16.4+)
 
 ## Architecture
 
-### Single HTML File Structure
+### ES Modules Structure
 ```
-index.html
-├── <head>
-│   ├── PWA meta tags
-│   └── Embedded CSS (700+ lines)
-├── <body>
-│   ├── Header with theme toggle
-│   ├── Alert container
-│   ├── Tab navigation (6 tabs)
-│   ├── Tab content sections
-│   └── Modals (3 emergency action modals)
-└── <script>
-    ├── Data structures (MAINTENANCE_TASKS, EQUIPMENT_ITEMS)
-    ├── localStorage functions
-    ├── Task rendering and toggle
-    ├── Humidity logging and charting
-    ├── Dashboard calculations
-    └── Export/reset functions
+guitar-tracker/
+├── index.html           # HTML structure, loads app.js as module
+├── css/
+│   └── styles.css       # All styles (extracted from embedded)
+├── js/
+│   ├── app.js           # Entry point, event wiring, init()
+│   ├── config.js        # MAINTENANCE_TASKS, EQUIPMENT_ITEMS, thresholds
+│   ├── storage.js       # localStorage operations, migration
+│   ├── validators.js    # Input validation (humidity, temperature)
+│   ├── humidity.js      # Humidity logging, analysis, charts
+│   ├── tasks.js         # Task toggle, calculations, string life
+│   ├── ui.js            # DOM rendering, tabs, modals, themes
+│   └── export.js        # CSV/JSON export functions
+├── tests/
+│   ├── test-setup.js    # Test framework setup
+│   └── test.js          # Test suite (62 tests)
+├── test.html            # Test runner page
+└── manifest.json        # PWA manifest
 ```
 
-### localStorage Keys
-- `guitarMaintenanceData` - Maintenance task states
-- `humidityReadings` - Humidity log entries
-- `inspectionData` - Inspection checkbox states
+### Module Responsibilities
+
+| Module | Purpose |
+|--------|---------|
+| `config.js` | Data constants, task definitions, humidity thresholds |
+| `storage.js` | Data persistence, v1→v2 migration, legacy compatibility |
+| `validators.js` | Input validation with error/warning feedback |
+| `humidity.js` | Humidity logging, chart rendering, alerts |
+| `tasks.js` | Task completion, string life calculator |
+| `ui.js` | DOM manipulation, tab switching, theme toggle |
+| `export.js` | CSV and JSON export generation |
+| `app.js` | Application init, event handler wiring |
+
+### localStorage Schema (v2)
+```javascript
+// Key: 'guitarTrackerData'
+{
+    version: 2,
+    guitars: [{ id, name, settings: { targetHumidity, stringChangeWeeks, ... } }],
+    activeGuitarId: 'default',
+    maintenanceStates: { daily: [...], weekly: [...], eightweek: [...], ... },
+    humidityReadings: [{ humidity, temp, timestamp, guitarId }],
+    inspectionData: { ... }
+}
+```
+
+### Legacy Keys (for migration)
+- `guitarMaintenanceData` - Old maintenance task states
+- `humidityReadings` - Old humidity log entries
+- `inspectionData` - Old inspection checkbox states
 - `theme` - Light/dark mode preference
 
 ## Critical Constraints
 
 1. **No external libraries** - Vanilla JS only (optional Chart.js for humidity)
-2. **Single HTML file** - Keep all CSS/JS embedded
+2. **ES modules** - Use `import`/`export`, no build step required
 3. **Mobile-first** - Test at 390px width (iPhone 14/15)
 4. **44pt touch targets** - iOS Human Interface Guidelines
 5. **Offline-first** - Must work 100% without network
-6. **Never lose data** - Robust localStorage error handling
+6. **Never lose data** - Robust localStorage error handling with migration
 
 ## Code Style
 
 ### JavaScript
+- ES modules with named exports
 - Vanilla JavaScript only, no frameworks
-- All functions are global (not modules)
-- localStorage operations use try/catch where needed
+- localStorage operations use try/catch
+- Validation before data persistence
 
 ### CSS
 - CSS custom properties for theming
 - Mobile-first responsive design
 - No horizontal scroll at 390px width
+- All styles in `css/styles.css`
 
 ### HTML
 - Semantic markup where possible
-- Inline onclick handlers (single-file constraint)
+- Event handlers wired in `app.js` (not inline onclick)
 
-## Key Functions
+## Key Functions (by module)
 
+### app.js
 | Function | Purpose |
 |----------|---------|
 | `init()` | Load data, render UI, check migration |
+
+### tasks.js
+| Function | Purpose |
+|----------|---------|
 | `toggleTask(taskId)` | Mark task complete/incomplete |
 | `quickActionJustPlayed()` | Complete all daily tasks |
+
+### humidity.js
+| Function | Purpose |
+|----------|---------|
 | `addHumidityReadingSimplified()` | Log humidity with auto-timestamp |
-| `updateDashboard()` | Recalculate all metrics |
-| `checkForAlerts()` | Scan for critical conditions |
 | `drawHumidityChart()` | Render 7-day trend canvas |
+| `checkForAlerts()` | Scan for critical conditions |
+
+### ui.js
+| Function | Purpose |
+|----------|---------|
+| `updateDashboard()` | Recalculate all metrics |
+| `renderMaintenanceTasks()` | Render task lists |
+| `switchTab()` | Handle tab navigation |
 
 ## Business Rules
 
@@ -100,14 +144,17 @@ index.html
 ### Before Editing
 1. Read this file and understand constraints
 2. Test current functionality in Safari
+3. Run tests: open `test.html` in browser
 
 ### While Editing
-- Keep all code in index.html
+- Modify appropriate module in `js/` directory
+- Maintain ES module import/export patterns
 - Test mobile viewport (390px)
 - Test both light and dark themes
 - Verify localStorage read/write
 
 ### After Editing
+- Run all 62 tests (test.html)
 - Test offline functionality
 - Verify no console errors
 - Check touch target sizes (44pt min)
