@@ -22,11 +22,23 @@ A Progressive Web App (PWA) for tracking maintenance, humidity, and care tasks f
 
 Each task includes expandable "Why" and "How" explanations.
 
+**NEW:** Enhanced task completion UX with:
+- Visual completion badges ("✓ Completed Today", "✓ Completed This Week")
+- Relative time display (e.g., "3 days ago")
+- Duplicate logging prevention with confirmation dialogs
+- Color-coded status indicators for tasks completed within their period
+
 ### Humidity Tracking
 - Simple logging form with auto-captured timestamps
 - 7-day trend chart with color-coded safety zones
 - 24-hour change tracking
 - Historical log with status badges
+
+**NEW:** Advanced filtering and export:
+- Filter by date range (from/to dates)
+- Filter by location (In Case / Out of Case)
+- Export filtered results to CSV
+- Clear filters with one click
 
 ### Inspections
 - **Weekly:** Bridge wing lift check (2 items)
@@ -44,6 +56,13 @@ Each task includes expandable "Why" and "How" explanations.
 - Task reset functions
 - Manual reminder setup guides
 
+**NEW:** Enhanced backup & restore:
+- Visual backup status (last backup date, data size)
+- One-click timestamped backup creation
+- File-based restore with validation
+- Preview backup contents before restoring
+- Automatic data safety checks
+
 ## Technical Details
 
 - **ES modules architecture** with separate CSS and JS files
@@ -51,6 +70,14 @@ Each task includes expandable "Why" and "How" explanations.
 - **No external dependencies** (vanilla JavaScript)
 - **Mobile-first design** optimized for iPhone Safari
 - **62 tests** for validation and business logic
+
+**NEW in v2.1:**
+- **Fully responsive** with breakpoints for 480px, 375px (iPhone SE)
+- **iOS HIG compliant** - all touch targets meet 44px minimum
+- **Horizontal scrollable tabs** with snap scrolling on mobile
+- **16px input font size** to prevent iOS auto-zoom
+- **Print-friendly CSS** for maintenance schedules
+- **Offline mode indicator** with pulsing green dot
 
 ## Installation (Add to Home Screen)
 
@@ -109,4 +136,4 @@ This project is for personal use.
 
 ## Version
 
-v2.0 - January 2026
+v2.1 - January 2026 (UX Improvements Update)
