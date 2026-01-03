@@ -22,6 +22,11 @@ export function toggleTask(taskId) {
             task.completed = !task.completed;
             if (task.completed) {
                 task.lastCompleted = new Date().toISOString();
+
+                // If this is the string change task, show brand prompt
+                if (taskId === '8w-8' && window.showStringBrandPrompt) {
+                    window.showStringBrandPrompt();
+                }
             }
             saveData();
             return task;

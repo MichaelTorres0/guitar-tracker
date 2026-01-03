@@ -41,12 +41,16 @@ guitar-tracker/
 │   ├── humidity.js      # Humidity logging, analysis, charts
 │   ├── tasks.js         # Task toggle, calculations, string life
 │   ├── ui.js            # DOM rendering, tabs, modals, themes
-│   └── export.js        # CSV/JSON export functions
+│   ├── export.js        # CSV/JSON export functions
+│   ├── onboarding.js    # First-time user onboarding wizard (v2.0)
+│   ├── sessions.js      # Playing session tracking & calculations (v2.0)
+│   └── stringHistory.js # String change history & average life (v2.0)
 ├── tests/
 │   ├── test-setup.js    # Test framework setup
 │   └── test.js          # Test suite (62 tests)
 ├── test.html            # Test runner page
-└── manifest.json        # PWA manifest
+├── manifest.json        # PWA manifest
+└── RELEASE_NOTES.md     # Version history and features (v2.0)
 ```
 
 ### Module Responsibilities
@@ -57,10 +61,13 @@ guitar-tracker/
 | `storage.js` | Data persistence, v1→v2 migration, legacy compatibility |
 | `validators.js` | Input validation with error/warning feedback |
 | `humidity.js` | Humidity logging, chart rendering, alerts |
-| `tasks.js` | Task completion, string life calculator |
-| `ui.js` | DOM manipulation, tab switching, theme toggle |
+| `tasks.js` | Task completion, string life calculator, string change hook |
+| `ui.js` | DOM manipulation, tab switching, theme toggle, dashboard updates |
 | `export.js` | CSV and JSON export generation |
-| `app.js` | Application init, event handler wiring |
+| `onboarding.js` | **v2.0** First-time user wizard, data collection, setup flow |
+| `sessions.js` | **v2.0** Playing session tracking, rolling averages, weekly hours |
+| `stringHistory.js` | **v2.0** String change history, brand tracking, average life calc |
+| `app.js` | Application init, event handler wiring, module initialization |
 
 ### localStorage Schema (v2)
 ```javascript
@@ -74,6 +81,14 @@ guitar-tracker/
     inspectionData: { ... }
 }
 ```
+
+### v2.0 Additional Keys
+- `onboardingComplete` - Boolean flag (prevents repeat onboarding)
+- `playingFrequency` - Enum: 'daily' | 'fewTimesWeek' | 'weekly' | 'occasionally'
+- `playingHoursPerWeek` - Number (dynamically calculated from sessions)
+- `hasHygrometer` - Boolean (equipment check from onboarding)
+- `playingSessions` - Array of `{ timestamp, duration }` objects
+- `stringChangeHistory` - Array of `{ date, brand, daysFromPrevious }` objects
 
 ### Legacy Keys (for migration)
 - `guitarMaintenanceData` - Old maintenance task states
