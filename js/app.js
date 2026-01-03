@@ -77,6 +77,25 @@ function setupEventHandlers() {
         });
     }
 
+    // Real-time humidity input feedback
+    const humidityInput = document.getElementById('humidityValue');
+    if (humidityInput) {
+        humidityInput.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            humidityInput.classList.remove('input-safe', 'input-warning', 'input-danger');
+
+            if (isNaN(value)) return;
+
+            if (value < 40) {
+                humidityInput.classList.add('input-warning');
+            } else if (value > 55) {
+                humidityInput.classList.add('input-danger');
+            } else {
+                humidityInput.classList.add('input-safe');
+            }
+        });
+    }
+
     // Humidity form - full
     const addHumidityBtn = document.getElementById('addHumidity');
     if (addHumidityBtn) {
@@ -231,6 +250,7 @@ window.checkForAlerts = checkForAlerts;
 window.exportAsCSV = exportAsCSV;
 window.exportAsJSON = exportAsJSON;
 window.migrateData = migrateData;
+window.switchTab = switchTab;
 
 // Initialize app
 init();

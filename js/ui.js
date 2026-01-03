@@ -155,11 +155,20 @@ export function updateDashboard() {
         const latestHumidityEl = document.getElementById('latestHumidity');
         const latestTimeEl = document.getElementById('latestTime');
 
-        if (currentHumidityEl) currentHumidityEl.textContent = humidity + '%';
-        if (latestHumidityEl) latestHumidityEl.textContent = humidity + '%';
+        if (currentHumidityEl) {
+            currentHumidityEl.textContent = humidity + '%';
+            currentHumidityEl.classList.remove('empty-state');
+        }
+        if (latestHumidityEl) {
+            latestHumidityEl.textContent = humidity + '%';
+            latestHumidityEl.classList.remove('empty-state');
+        }
 
         const date = new Date(latest.timestamp);
-        if (latestTimeEl) latestTimeEl.textContent = date.toLocaleString();
+        if (latestTimeEl) {
+            latestTimeEl.textContent = date.toLocaleString();
+            latestTimeEl.classList.remove('empty-state');
+        }
 
         let status = '✓ Safe (45-50%)';
         let className = 'safe';
@@ -186,8 +195,10 @@ export function updateDashboard() {
             const change = humidity - prevReading.humidity;
             const changeStr = change > 0 ? `+${change.toFixed(1)}%` : `${change.toFixed(1)}%`;
             humidity24hChangeEl.textContent = changeStr;
+            humidity24hChangeEl.classList.remove('empty-state');
         } else if (humidity24hChangeEl) {
-            humidity24hChangeEl.textContent = '—';
+            humidity24hChangeEl.innerHTML = '<span class="empty-state">Need 24h of data</span>';
+            humidity24hChangeEl.style.fontSize = '13px';
         }
 
         // 7-day range
@@ -198,9 +209,49 @@ export function updateDashboard() {
             const low = Math.min(...recentReadings);
             const humidity7dHighEl = document.getElementById('humidity7dHigh');
             const humidity7dLowEl = document.getElementById('humidity7dLow');
-            if (humidity7dHighEl) humidity7dHighEl.textContent = high.toFixed(1) + '%';
-            if (humidity7dLowEl) humidity7dLowEl.textContent = low.toFixed(1) + '%';
+            if (humidity7dHighEl) {
+                humidity7dHighEl.textContent = high.toFixed(1) + '%';
+                humidity7dHighEl.classList.remove('empty-state');
+            }
+            if (humidity7dLowEl) {
+                humidity7dLowEl.textContent = low.toFixed(1) + '%';
+                humidity7dLowEl.classList.remove('empty-state');
+            }
         }
+    } else {
+        // Empty states for humidity
+        const currentHumidityEl = document.getElementById('currentHumidity');
+        if (currentHumidityEl) {
+            currentHumidityEl.innerHTML = '<div class="empty-state">No readings yet<br><span class="empty-state-cta" onclick="switchTab(\'humidity\')">Log first reading →</span></div>';
+            currentHumidityEl.className = 'humidity-display';
+            currentHumidityEl.style.fontSize = '16px';
+        }
+
+        const latestHumidityEl = document.getElementById('latestHumidity');
+        if (latestHumidityEl) {
+            latestHumidityEl.innerHTML = '<span class="empty-state">No readings yet</span>';
+            latestHumidityEl.classList.add('empty-state');
+            latestHumidityEl.style.fontSize = '14px';
+        }
+
+        const latestTimeEl = document.getElementById('latestTime');
+        if (latestTimeEl) {
+            latestTimeEl.innerHTML = '<span class="empty-state-cta" onclick="switchTab(\'humidity\')">Log your first reading →</span>';
+        }
+
+        const humidityStatusEl = document.getElementById('humidityStatus');
+        if (humidityStatusEl) humidityStatusEl.textContent = '';
+
+        const humidity24hChangeEl = document.getElementById('humidity24hChange');
+        if (humidity24hChangeEl) {
+            humidity24hChangeEl.innerHTML = '<span class="empty-state">Need 24h of data</span>';
+            humidity24hChangeEl.style.fontSize = '13px';
+        }
+
+        const humidity7dHighEl = document.getElementById('humidity7dHigh');
+        const humidity7dLowEl = document.getElementById('humidity7dLow');
+        if (humidity7dHighEl) humidity7dHighEl.innerHTML = '<span class="empty-state">—</span>';
+        if (humidity7dLowEl) humidity7dLowEl.innerHTML = '<span class="empty-state">—</span>';
     }
 
     // String change counter
@@ -217,6 +268,8 @@ export function updateDashboard() {
         const today = new Date();
         const daysSince = Math.floor((today - stringChangeDate) / (1000 * 60 * 60 * 24));
         daysSinceChangeEl.textContent = daysSince + ' days';
+        daysSinceChangeEl.classList.remove('empty-state');
+        daysSinceChangeEl.style.fontSize = '';
 
         if (daysSince > 56) {
             daysSinceChangeEl.style.color = 'var(--color-error)';
@@ -224,6 +277,55 @@ export function updateDashboard() {
             daysSinceChangeEl.style.color = 'var(--color-warning)';
         } else {
             daysSinceChangeEl.style.color = 'var(--color-success)';
+        }
+    } else if (daysSinceChangeEl) {
+        // Empty state for string change
+        daysSinceChangeEl.innerHTML = '<div class="empty-state">Log your first string change<br><span class="empty-state-cta" onclick="switchTab(\'maintenance\')">Go to 8-Week Tasks →</span></div>';
+        daysSinceChangeEl.style.color = '';
+        daysSinceChangeEl.style.fontSize = '14px';
+    }
+
+    // String Life Calculator
+    const stringLifeTextEl = document.getElementById('stringLifeText');
+    const stringLifeFillEl = document.getElementById('stringLifeFill');
+    const stringLifeEstimateEl = document.getElementById('stringLifeEstimate');
+
+    if (stringChangeDate) {
+        const today = new Date();
+        const daysSince = Math.floor((today - stringChangeDate) / (1000 * 60 * 60 * 24));
+        const targetDays = 56; // 8 weeks
+        const percentage = Math.min(Math.round((daysSince / targetDays) * 100), 100);
+
+        if (stringLifeTextEl) stringLifeTextEl.textContent = `Strings at ${percentage}% life`;
+        if (stringLifeFillEl) {
+            stringLifeFillEl.style.width = percentage + '%';
+            if (percentage >= 100) {
+                stringLifeFillEl.className = 'string-life-fill danger';
+            } else if (percentage >= 85) {
+                stringLifeFillEl.className = 'string-life-fill warning';
+            } else {
+                stringLifeFillEl.className = 'string-life-fill safe';
+            }
+        }
+
+        const daysRemaining = Math.max(targetDays - daysSince, 0);
+        if (stringLifeEstimateEl) {
+            if (daysRemaining > 0) {
+                stringLifeEstimateEl.innerHTML = `Change recommended in ${daysRemaining} days`;
+            } else {
+                stringLifeEstimateEl.innerHTML = '<strong style="color: var(--color-error);">⚠️ String change overdue</strong>';
+            }
+            stringLifeEstimateEl.classList.remove('empty-state');
+        }
+    } else {
+        // Empty state for string life
+        if (stringLifeTextEl) stringLifeTextEl.innerHTML = '<span class="empty-state">Complete setup to start tracking</span>';
+        if (stringLifeFillEl) {
+            stringLifeFillEl.style.width = '0%';
+            stringLifeFillEl.className = 'string-life-fill safe';
+        }
+        if (stringLifeEstimateEl) {
+            stringLifeEstimateEl.innerHTML = '<span class="empty-state">Log a string change to activate calculator</span>';
         }
     }
 

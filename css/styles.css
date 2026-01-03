@@ -54,6 +54,13 @@
             font-weight: 700;
         }
 
+        .model-badge {
+            font-size: 0.85rem;
+            color: #4a5568;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
         .theme-toggle {
             background: var(--color-surface);
             border: 1px solid var(--color-border);
@@ -773,6 +780,97 @@
             background: var(--color-bg);
             padding: 4px 8px;
             border-radius: 4px;
+        }
+
+        /* Empty State Styling */
+        .empty-state {
+            color: #718096;
+            font-style: italic;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .empty-state-cta {
+            display: inline-block;
+            margin-top: 8px;
+            color: var(--color-primary);
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 12px;
+        }
+
+        .empty-state-cta:hover {
+            opacity: 0.8;
+        }
+
+        /* GS Mini Spec Indicators */
+        .gs-mini-spec::before {
+            content: "GS Mini";
+            font-size: 0.7rem;
+            background: #e2e8f0;
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+            color: #4a5568;
+            margin-right: 0.3rem;
+            font-weight: 600;
+        }
+
+        /* Humidity Reference Legend */
+        .humidity-reference {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            padding: 10px;
+            background: var(--color-bg);
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .ref-target {
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--color-success);
+        }
+
+        .ref-safe {
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--color-primary);
+        }
+
+        .ref-warning {
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--color-warning);
+        }
+
+        .ref-danger {
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--color-error);
+        }
+
+        /* Real-time Input Feedback */
+        .input-safe {
+            border-color: #48bb78 !important;
+            background-color: #f0fff4 !important;
+        }
+
+        .input-warning {
+            border-color: #ecc94b !important;
+            background-color: #fffff0 !important;
+        }
+
+        .input-danger {
+            border-color: #f56565 !important;
+            background-color: #fff5f5 !important;
         }
 
         /* Tablet breakpoint */
