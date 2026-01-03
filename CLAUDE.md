@@ -5,75 +5,99 @@ A Progressive Web App for tracking maintenance, humidity, and care for a Taylor 
 ## Quick Reference
 
 - **Live URL:** https://michaeltorres0.github.io/guitar-tracker/
-- **Single file app:** All code is in `index.html`
+- **Architecture:** Modular ES modules (separate files)
 - **Data storage:** localStorage only (offline-capable)
 - **Target device:** iPhone Safari (iOS 16.4+)
 
 ## Architecture
 
-### Single HTML File Structure
+### File Structure
 ```
-index.html
-├── <head>
-│   ├── PWA meta tags
-│   └── Embedded CSS (700+ lines)
-├── <body>
-│   ├── Header with theme toggle
-│   ├── Alert container
-│   ├── Tab navigation (6 tabs)
-│   ├── Tab content sections
-│   └── Modals (3 emergency action modals)
-└── <script>
-    ├── Data structures (MAINTENANCE_TASKS, EQUIPMENT_ITEMS)
-    ├── localStorage functions
-    ├── Task rendering and toggle
-    ├── Humidity logging and charting
-    ├── Dashboard calculations
-    └── Export/reset functions
+guitar-tracker/
+├── index.html              # HTML structure and entry point
+├── css/
+│   └── styles.css          # All application styles
+├── js/
+│   ├── app.js              # Main application entry point
+│   ├── config.js           # Constants, thresholds, task definitions
+│   ├── storage.js          # localStorage operations
+│   ├── validators.js       # Input validation
+│   ├── humidity.js         # Humidity analysis and logging
+│   ├── tasks.js            # Task management and calculations
+│   ├── ui.js               # UI rendering and DOM manipulation
+│   └── export.js           # CSV/JSON export functions
+├── tests/
+│   └── test.js             # Test suite
+├── manifest.json           # PWA manifest
+├── icon.png                # App icon (180x180)
+├── CLAUDE.md               # This file
+├── README.md               # User documentation
+└── SPECIFICATION.md        # Detailed specs and roadmap
 ```
 
+### Module Responsibilities
+
+| Module | Purpose |
+|--------|---------|
+| `config.js` | MAINTENANCE_TASKS, EQUIPMENT_ITEMS, thresholds, DATA_VERSION |
+| `storage.js` | load/save data, migration, error handling |
+| `validators.js` | Validate humidity, temperature, form inputs |
+| `humidity.js` | Add readings, analyze trends, chart data |
+| `tasks.js` | Toggle tasks, calculate next due, string life |
+| `ui.js` | Render components, handle tabs, modals, themes |
+| `export.js` | Generate CSV/JSON exports, download handling |
+| `app.js` | Initialize app, wire up event handlers |
+
 ### localStorage Keys
-- `guitarMaintenanceData` - Maintenance task states
+- `guitarMaintenanceData` - Maintenance task states (versioned)
 - `humidityReadings` - Humidity log entries
 - `inspectionData` - Inspection checkbox states
 - `theme` - Light/dark mode preference
 
 ## Critical Constraints
 
-1. **No external libraries** - Vanilla JS only (optional Chart.js for humidity)
-2. **Single HTML file** - Keep all CSS/JS embedded
+1. **No build step required** - ES modules work natively in browser
+2. **No external frameworks** - Vanilla JS only (optional Chart.js for humidity)
 3. **Mobile-first** - Test at 390px width (iPhone 14/15)
 4. **44pt touch targets** - iOS Human Interface Guidelines
-5. **Offline-first** - Must work 100% without network
-6. **Never lose data** - Robust localStorage error handling
+5. **Offline-first** - Must work 100% without network (after initial load)
+6. **Never lose data** - Robust localStorage error handling with try/catch
 
 ## Code Style
 
-### JavaScript
-- Vanilla JavaScript only, no frameworks
-- All functions are global (not modules)
-- localStorage operations use try/catch where needed
+### JavaScript (ES Modules)
+```javascript
+// Each module exports its public API
+export const ModuleName = {
+    publicFunction() { /* ... */ },
+    anotherFunction() { /* ... */ }
+};
+
+// Or export individual functions
+export function doSomething() { /* ... */ }
+
+// Import in other modules
+import { ModuleName } from './modulename.js';
+import { doSomething } from './other.js';
+```
+
+### Module Guidelines
+- Each file is a self-contained ES module
+- Use named exports (not default exports) for clarity
+- Keep modules focused on single responsibility
+- Import only what you need
+- Avoid circular dependencies
 
 ### CSS
-- CSS custom properties for theming
+- CSS custom properties for theming (--color-*)
 - Mobile-first responsive design
 - No horizontal scroll at 390px width
+- BEM-like naming for complex components
 
 ### HTML
 - Semantic markup where possible
-- Inline onclick handlers (single-file constraint)
-
-## Key Functions
-
-| Function | Purpose |
-|----------|---------|
-| `init()` | Load data, render UI, check migration |
-| `toggleTask(taskId)` | Mark task complete/incomplete |
-| `quickActionJustPlayed()` | Complete all daily tasks |
-| `addHumidityReadingSimplified()` | Log humidity with auto-timestamp |
-| `updateDashboard()` | Recalculate all metrics |
-| `checkForAlerts()` | Scan for critical conditions |
-| `drawHumidityChart()` | Render 7-day trend canvas |
+- Event handlers attached via JavaScript (not inline)
+- `<script type="module">` for ES module support
 
 ## Business Rules
 
@@ -99,19 +123,29 @@ index.html
 
 ### Before Editing
 1. Read this file and understand constraints
-2. Test current functionality in Safari
+2. Run existing tests: `npm test`
+3. Test current functionality in Safari
 
 ### While Editing
-- Keep all code in index.html
+- Keep related code in appropriate module
+- Add validation for any user inputs
 - Test mobile viewport (390px)
 - Test both light and dark themes
 - Verify localStorage read/write
 
 ### After Editing
+- Run tests: `npm test`
 - Test offline functionality
 - Verify no console errors
 - Check touch target sizes (44pt min)
 - Test on actual iPhone if possible
+
+### Adding New Features
+1. Determine which module(s) need changes
+2. Write tests first (TDD)
+3. Implement in appropriate module
+4. Export new functions if needed by other modules
+5. Update app.js if new initialization needed
 
 ## PWA Requirements
 
@@ -126,21 +160,41 @@ Already configured with:
 - Standalone display mode
 - Theme colors matching app
 
-## Testing Checklist
+### Offline Support
+For true offline support, add a service worker (sw.js) that caches:
+- index.html
+- css/styles.css
+- All js/*.js modules
+- manifest.json
+- icon.png
 
+## Testing
+
+### Running Tests
+```bash
+npm test
+```
+
+### Test Structure
+Tests use JSDOM to simulate browser environment. Each module has corresponding test coverage.
+
+### Testing Checklist
 - [ ] All task categories render
 - [ ] Checkboxes persist across reload
 - [ ] "Just Played" completes daily tasks
-- [ ] Humidity form validates input
+- [ ] Humidity form validates input (rejects invalid values)
 - [ ] Dashboard updates in real-time
 - [ ] Theme toggle works
 - [ ] Export generates valid files
 - [ ] No horizontal scroll at 390px
 - [ ] Works offline after first load
+- [ ] Data migration works for version changes
 
 ## Future Enhancements (v2.1+)
 
+- Service worker for true offline caching
 - Govee API integration for auto humidity logging
 - Browser notifications (iOS 16.4+)
 - iOS Shortcuts generator
-- Time budgeting display
+- Multi-guitar support
+- Smart recommendations engine

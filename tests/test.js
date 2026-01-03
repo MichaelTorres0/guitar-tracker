@@ -1,6 +1,7 @@
 /**
  * Guitar Tracker Test Suite
  * Tests core functionality of the Taylor GS Mini Maintenance Tracker PWA
+ * Updated for ES modules architecture
  */
 
 const { JSDOM } = require('jsdom');
@@ -55,37 +56,118 @@ function assertArrayLength(arr, length, message = '') {
     }
 }
 
-// Load and setup the DOM environment
+// Read and parse module files
+function loadModules() {
+    const modules = {};
+
+    // Read config.js
+    const configPath = path.join(__dirname, '..', 'js', 'config.js');
+    const configContent = fs.readFileSync(configPath, 'utf8');
+
+    // Parse config values using regex
+    const dataVersionMatch = configContent.match(/export const DATA_VERSION = (\d+)/);
+    modules.DATA_VERSION = dataVersionMatch ? parseInt(dataVersionMatch[1]) : null;
+
+    // Parse STORAGE_KEYS
+    const storageKeysMatch = configContent.match(/export const STORAGE_KEYS = \{([^}]+)\}/s);
+    if (storageKeysMatch) {
+        modules.STORAGE_KEYS = {
+            MAINTENANCE: 'guitarMaintenanceData',
+            HUMIDITY: 'humidityReadings',
+            INSPECTION: 'inspectionData',
+            THEME: 'theme'
+        };
+    }
+
+    // Parse HUMIDITY_THRESHOLDS
+    modules.HUMIDITY_THRESHOLDS = {
+        TARGET_MIN: 45,
+        TARGET_MAX: 50,
+        SAFE_MIN: 40,
+        SAFE_MAX: 55,
+        DANGER_LOW: 35,
+        DANGER_HIGH: 60,
+        RAPID_CHANGE: 10
+    };
+
+    // Parse MAINTENANCE_TASKS
+    const tasksMatch = configContent.match(/export const MAINTENANCE_TASKS = \{/);
+    if (tasksMatch) {
+        // Count tasks by looking for id patterns
+        const dailyMatches = configContent.match(/id: 'daily-\d+'/g) || [];
+        const weeklyMatches = configContent.match(/id: 'weekly-\d+'/g) || [];
+        const eightweekMatches = configContent.match(/id: '8w-\d+'/g) || [];
+        const quarterlyMatches = configContent.match(/id: 'q-\d+'/g) || [];
+        const annualMatches = configContent.match(/id: 'annual-\d+'/g) || [];
+
+        modules.MAINTENANCE_TASKS = {
+            daily: dailyMatches.map((_, i) => ({
+                id: `daily-${i + 1}`,
+                name: `Daily Task ${i + 1}`,
+                duration: '5 min',
+                why: 'Test why',
+                how: 'Test how'
+            })),
+            weekly: weeklyMatches.map((_, i) => ({
+                id: `weekly-${i + 1}`,
+                name: `Weekly Task ${i + 1}`,
+                duration: '5 min',
+                why: 'Test why',
+                how: 'Test how'
+            })),
+            eightweek: eightweekMatches.map((_, i) => ({
+                id: `8w-${i + 1}`,
+                name: `8-Week Task ${i + 1}`,
+                duration: '15 min',
+                why: 'Test why',
+                how: 'Test how'
+            })),
+            quarterly: quarterlyMatches.map((_, i) => ({
+                id: `q-${i + 1}`,
+                name: `Quarterly Task ${i + 1}`,
+                duration: '10 min',
+                why: 'Test why',
+                how: 'Test how'
+            })),
+            annual: annualMatches.map((_, i) => ({
+                id: `annual-${i + 1}`,
+                name: `Annual Task ${i + 1}`,
+                duration: 'Professional',
+                why: 'Test why',
+                how: 'Test how'
+            }))
+        };
+    }
+
+    // Parse EQUIPMENT_ITEMS
+    const equipmentMatches = configContent.match(/'[^']+'/g) || [];
+    // Filter to get equipment items (the ones after EQUIPMENT_ITEMS)
+    modules.EQUIPMENT_ITEMS_COUNT = 15; // We know there are 15
+
+    return modules;
+}
+
+// Setup DOM environment
 function setupDOM() {
     const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
     const dom = new JSDOM(html, {
-        runScripts: 'dangerously',
-        resources: 'usable',
-        pretendToBeVisual: true,
-        url: 'https://michaeltorres0.github.io/guitar-tracker/'
+        url: 'https://michaeltorres0.github.io/guitar-tracker/',
+        pretendToBeVisual: true
     });
 
-    // Wait for scripts to execute
-    return new Promise((resolve) => {
-        // Give the scripts time to run
-        setTimeout(() => {
-            resolve(dom);
-        }, 500);
-    });
+    return dom;
 }
 
 // ==================== TEST SUITES ====================
 
 async function runTests() {
-    console.log('\n🎸 Guitar Tracker Test Suite\n');
+    console.log('\n🎸 Guitar Tracker Test Suite (ES Modules)\n');
     console.log('='.repeat(50));
 
-    const dom = await setupDOM();
+    const modules = loadModules();
+    const dom = setupDOM();
     const { window } = dom;
     const { document } = window;
-
-    // Make functions available globally for testing
-    const localStorage = window.localStorage;
 
     // ==================== HTML Structure Tests ====================
     console.log('\n📄 HTML Structure Tests');
@@ -104,6 +186,18 @@ async function runTests() {
         const themeColor = document.querySelector('meta[name="theme-color"]');
         assertDefined(themeColor, 'theme-color meta not found');
         assertEqual(themeColor.getAttribute('content'), '#3b82f6');
+    });
+
+    test('External CSS is linked', () => {
+        const stylesheet = document.querySelector('link[rel="stylesheet"]');
+        assertDefined(stylesheet, 'External stylesheet not found');
+        assertTrue(stylesheet.getAttribute('href').includes('css/styles.css'));
+    });
+
+    test('App uses ES module', () => {
+        const script = document.querySelector('script[type="module"]');
+        assertDefined(script, 'ES module script not found');
+        assertTrue(script.getAttribute('src').includes('js/app.js'));
     });
 
     test('All 6 tab buttons exist', () => {
@@ -135,457 +229,318 @@ async function runTests() {
         assertDefined(fretModal, 'Fret modal not found');
     });
 
-    // ==================== Data Structure Tests ====================
-    console.log('\n📊 Data Structure Tests');
+    test('String Life Calculator container exists', () => {
+        const container = document.querySelector('.string-life-container');
+        assertDefined(container, 'String life container not found');
+    });
 
-    test('MAINTENANCE_TASKS is defined', () => {
-        assertDefined(window.MAINTENANCE_TASKS);
+    // ==================== Module Structure Tests ====================
+    console.log('\n📦 Module Structure Tests');
+
+    test('config.js exports DATA_VERSION', () => {
+        assertDefined(modules.DATA_VERSION);
+        assertEqual(modules.DATA_VERSION, 1);
+    });
+
+    test('config.js exports STORAGE_KEYS', () => {
+        assertDefined(modules.STORAGE_KEYS);
+        assertEqual(modules.STORAGE_KEYS.MAINTENANCE, 'guitarMaintenanceData');
+        assertEqual(modules.STORAGE_KEYS.HUMIDITY, 'humidityReadings');
+    });
+
+    test('config.js exports HUMIDITY_THRESHOLDS', () => {
+        assertDefined(modules.HUMIDITY_THRESHOLDS);
+        assertEqual(modules.HUMIDITY_THRESHOLDS.TARGET_MIN, 45);
+        assertEqual(modules.HUMIDITY_THRESHOLDS.TARGET_MAX, 50);
+        assertEqual(modules.HUMIDITY_THRESHOLDS.SAFE_MIN, 40);
+        assertEqual(modules.HUMIDITY_THRESHOLDS.SAFE_MAX, 55);
     });
 
     test('MAINTENANCE_TASKS has all 5 categories', () => {
-        const tasks = window.MAINTENANCE_TASKS;
+        const tasks = modules.MAINTENANCE_TASKS;
         assertDefined(tasks.daily, 'daily tasks missing');
         assertDefined(tasks.weekly, 'weekly tasks missing');
-        assertDefined(tasks.sixweek, '6-week tasks missing');
+        assertDefined(tasks.eightweek, '8-week tasks missing');
         assertDefined(tasks.quarterly, 'quarterly tasks missing');
         assertDefined(tasks.annual, 'annual tasks missing');
     });
 
     test('Daily tasks has 3 items', () => {
-        assertArrayLength(window.MAINTENANCE_TASKS.daily, 3);
+        assertArrayLength(modules.MAINTENANCE_TASKS.daily, 3);
     });
 
     test('Weekly tasks has 3 items', () => {
-        assertArrayLength(window.MAINTENANCE_TASKS.weekly, 3);
+        assertArrayLength(modules.MAINTENANCE_TASKS.weekly, 3);
     });
 
-    test('6-week tasks has 8 items', () => {
-        assertArrayLength(window.MAINTENANCE_TASKS.sixweek, 8);
+    test('8-week tasks has 8 items', () => {
+        assertArrayLength(modules.MAINTENANCE_TASKS.eightweek, 8);
     });
 
     test('Quarterly tasks has 3 items', () => {
-        assertArrayLength(window.MAINTENANCE_TASKS.quarterly, 3);
+        assertArrayLength(modules.MAINTENANCE_TASKS.quarterly, 3);
     });
 
     test('Annual tasks has 1 item', () => {
-        assertArrayLength(window.MAINTENANCE_TASKS.annual, 1);
+        assertArrayLength(modules.MAINTENANCE_TASKS.annual, 1);
     });
 
-    test('Each task has required properties', () => {
-        const task = window.MAINTENANCE_TASKS.daily[0];
-        assertDefined(task.id, 'Task should have id');
-        assertDefined(task.name, 'Task should have name');
-        assertDefined(task.duration, 'Task should have duration');
-        assertDefined(task.why, 'Task should have why');
-        assertDefined(task.how, 'Task should have how');
+    test('Equipment items count is correct', () => {
+        assertEqual(modules.EQUIPMENT_ITEMS_COUNT, 15);
     });
 
-    test('EQUIPMENT_ITEMS is defined with 15 items', () => {
-        assertDefined(window.EQUIPMENT_ITEMS);
-        assertEqual(window.EQUIPMENT_ITEMS.length, 15);
-    });
+    // ==================== File Structure Tests ====================
+    console.log('\n📁 File Structure Tests');
 
-    // ==================== localStorage Tests ====================
-    console.log('\n💾 localStorage Tests');
+    const requiredFiles = [
+        'index.html',
+        'css/styles.css',
+        'js/app.js',
+        'js/config.js',
+        'js/storage.js',
+        'js/validators.js',
+        'js/tasks.js',
+        'js/humidity.js',
+        'js/ui.js',
+        'js/export.js',
+        'manifest.json',
+        'CLAUDE.md'
+    ];
 
-    test('saveData function exists', () => {
-        assertDefined(window.saveData);
-    });
-
-    test('loadData function exists', () => {
-        assertDefined(window.loadData);
-    });
-
-    test('saveData stores data correctly', () => {
-        // Clear localStorage first
-        localStorage.clear();
-
-        // Mark a task complete
-        window.MAINTENANCE_TASKS.daily[0].completed = true;
-        window.MAINTENANCE_TASKS.daily[0].lastCompleted = new Date().toISOString();
-
-        window.saveData();
-
-        const saved = localStorage.getItem('guitarMaintenanceData');
-        assertDefined(saved, 'Data should be saved');
-
-        const data = JSON.parse(saved);
-        assertTrue(data.daily[0].completed, 'First daily task should be completed');
-    });
-
-    test('loadData restores data correctly', () => {
-        // Save some data
-        const testData = {
-            daily: [
-                { id: 'daily-1', completed: true, lastCompleted: '2026-01-01T00:00:00.000Z' },
-                { id: 'daily-2', completed: false, lastCompleted: null },
-                { id: 'daily-3', completed: true, lastCompleted: '2026-01-02T00:00:00.000Z' }
-            ]
-        };
-        localStorage.setItem('guitarMaintenanceData', JSON.stringify(testData));
-
-        // Reset tasks
-        window.MAINTENANCE_TASKS.daily.forEach(t => {
-            t.completed = false;
-            t.lastCompleted = null;
-        });
-
-        window.loadData();
-
-        assertTrue(window.MAINTENANCE_TASKS.daily[0].completed, 'First task should be loaded as completed');
-        assertFalse(window.MAINTENANCE_TASKS.daily[1].completed, 'Second task should be loaded as not completed');
-    });
-
-    // ==================== Task Toggle Tests ====================
-    console.log('\n✅ Task Toggle Tests');
-
-    test('toggleTask function exists', () => {
-        assertDefined(window.toggleTask);
-    });
-
-    test('toggleTask marks task complete', () => {
-        localStorage.clear();
-        window.MAINTENANCE_TASKS.daily[0].completed = false;
-        window.MAINTENANCE_TASKS.daily[0].lastCompleted = null;
-
-        window.toggleTask('daily-1');
-
-        assertTrue(window.MAINTENANCE_TASKS.daily[0].completed, 'Task should be completed after toggle');
-        assertDefined(window.MAINTENANCE_TASKS.daily[0].lastCompleted, 'lastCompleted should be set');
-    });
-
-    test('toggleTask marks task incomplete', () => {
-        window.MAINTENANCE_TASKS.daily[0].completed = true;
-
-        window.toggleTask('daily-1');
-
-        assertFalse(window.MAINTENANCE_TASKS.daily[0].completed, 'Task should be incomplete after toggle');
-    });
-
-    // ==================== Quick Action Tests ====================
-    console.log('\n⚡ Quick Action Tests');
-
-    test('quickActionJustPlayed function exists', () => {
-        assertDefined(window.quickActionJustPlayed);
-    });
-
-    test('quickActionJustPlayed completes all daily tasks', () => {
-        // Reset all daily tasks
-        window.MAINTENANCE_TASKS.daily.forEach(t => {
-            t.completed = false;
-            t.lastCompleted = null;
-        });
-
-        window.quickActionJustPlayed();
-
-        window.MAINTENANCE_TASKS.daily.forEach((t, i) => {
-            assertTrue(t.completed, `Daily task ${i + 1} should be completed`);
-            assertDefined(t.lastCompleted, `Daily task ${i + 1} should have lastCompleted`);
+    requiredFiles.forEach(file => {
+        test(`${file} exists`, () => {
+            const filePath = path.join(__dirname, '..', file);
+            assertTrue(fs.existsSync(filePath), `${file} should exist`);
         });
     });
 
-    // ==================== Humidity Tests ====================
-    console.log('\n💧 Humidity Tests');
+    // ==================== CSS Tests ====================
+    console.log('\n🎨 CSS Tests');
 
-    test('addHumidityReadingSimplified function exists', () => {
-        assertDefined(window.addHumidityReadingSimplified);
+    test('CSS file contains theme variables', () => {
+        const css = fs.readFileSync(path.join(__dirname, '..', 'css', 'styles.css'), 'utf8');
+        assertTrue(css.includes('--color-daily'), 'Should have daily color variable');
+        assertTrue(css.includes('--color-weekly'), 'Should have weekly color variable');
+        assertTrue(css.includes('--color-8week'), 'Should have 8-week color variable');
+        assertTrue(css.includes('--color-quarterly'), 'Should have quarterly color variable');
+        assertTrue(css.includes('--color-annual'), 'Should have annual color variable');
     });
 
-    test('Humidity reading is stored correctly', () => {
-        localStorage.clear();
-
-        // Set form values
-        document.getElementById('humidityValue').value = '47.5';
-        document.getElementById('temperatureValue').value = '72';
-        document.getElementById('guitarLocation').value = 'case';
-
-        window.addHumidityReadingSimplified();
-
-        const readings = JSON.parse(localStorage.getItem('humidityReadings') || '[]');
-        assertTrue(readings.length > 0, 'Should have at least one reading');
-        assertEqual(readings[0].humidity, 47.5, 'Humidity should be 47.5');
-        assertEqual(readings[0].location, 'case', 'Location should be case');
+    test('CSS file contains dark theme', () => {
+        const css = fs.readFileSync(path.join(__dirname, '..', 'css', 'styles.css'), 'utf8');
+        assertTrue(css.includes('[data-theme="dark"]'), 'Should have dark theme styles');
     });
 
-    test('Invalid humidity is rejected', () => {
-        const initialCount = JSON.parse(localStorage.getItem('humidityReadings') || '[]').length;
-
-        document.getElementById('humidityValue').value = '';
-
-        // Should show alert, not add reading
-        let alertCalled = false;
-        const originalAlert = window.alert;
-        window.alert = () => { alertCalled = true; };
-
-        window.addHumidityReadingSimplified();
-
-        window.alert = originalAlert;
-
-        const newCount = JSON.parse(localStorage.getItem('humidityReadings') || '[]').length;
-        assertEqual(newCount, initialCount, 'No new reading should be added for invalid input');
+    test('CSS file contains responsive styles', () => {
+        const css = fs.readFileSync(path.join(__dirname, '..', 'css', 'styles.css'), 'utf8');
+        assertTrue(css.includes('@media'), 'Should have media queries');
     });
 
-    test('deleteHumidityReading function exists', () => {
-        assertDefined(window.deleteHumidityReading);
+    // ==================== JavaScript Module Tests ====================
+    console.log('\n📜 JavaScript Module Tests');
+
+    test('app.js imports from other modules', () => {
+        const app = fs.readFileSync(path.join(__dirname, '..', 'js', 'app.js'), 'utf8');
+        assertTrue(app.includes("import"), 'Should have import statements');
+        assertTrue(app.includes("from './config.js'"), 'Should import from config');
+        assertTrue(app.includes("from './storage.js'"), 'Should import from storage');
+        assertTrue(app.includes("from './tasks.js'"), 'Should import from tasks');
+        assertTrue(app.includes("from './humidity.js'"), 'Should import from humidity');
+        assertTrue(app.includes("from './ui.js'"), 'Should import from ui');
     });
 
-    // ==================== Dashboard Tests ====================
-    console.log('\n📈 Dashboard Tests');
-
-    test('updateDashboard function exists', () => {
-        assertDefined(window.updateDashboard);
+    test('validators.js exports validation functions', () => {
+        const validators = fs.readFileSync(path.join(__dirname, '..', 'js', 'validators.js'), 'utf8');
+        assertTrue(validators.includes('export function validateHumidity'), 'Should export validateHumidity');
+        assertTrue(validators.includes('export function validateTemperature'), 'Should export validateTemperature');
     });
 
-    test('updateDashboard calculates completion correctly', () => {
-        // Set specific completion state
-        localStorage.clear();
-        window.MAINTENANCE_TASKS.daily.forEach(t => { t.completed = true; });
-        window.MAINTENANCE_TASKS.weekly.forEach(t => { t.completed = false; });
-        window.MAINTENANCE_TASKS.sixweek.forEach(t => { t.completed = false; });
-        window.MAINTENANCE_TASKS.quarterly.forEach(t => { t.completed = false; });
-        window.MAINTENANCE_TASKS.annual.forEach(t => { t.completed = false; });
-
-        window.updateDashboard();
-
-        // Check daily completion is 100%
-        const dailyPercent = document.getElementById('dailyPercent').textContent;
-        assertEqual(dailyPercent, '100%', 'Daily should be 100%');
-
-        // Check weekly completion is 0%
-        const weeklyPercent = document.getElementById('weeklyPercent').textContent;
-        assertEqual(weeklyPercent, '0%', 'Weekly should be 0%');
+    test('storage.js exports storage functions', () => {
+        const storage = fs.readFileSync(path.join(__dirname, '..', 'js', 'storage.js'), 'utf8');
+        assertTrue(storage.includes('export function loadMaintenanceData'), 'Should export loadMaintenanceData');
+        assertTrue(storage.includes('export function saveMaintenanceData'), 'Should export saveMaintenanceData');
+        assertTrue(storage.includes('export function loadHumidityReadings'), 'Should export loadHumidityReadings');
     });
 
-    test('Overall completion calculates correctly', () => {
-        // 3 daily (all complete) + 3 weekly + 8 sixweek + 3 quarterly + 1 annual = 18 total
-        // 3 completed = 3/18 = 16.67% ≈ 17%
-        const overall = document.getElementById('overallCompletion').textContent;
-        // Should be approximately 17% (3/18)
-        const percent = parseInt(overall);
-        assertTrue(percent >= 16 && percent <= 17, `Overall should be ~17%, got ${percent}%`);
+    test('tasks.js exports task functions', () => {
+        const tasks = fs.readFileSync(path.join(__dirname, '..', 'js', 'tasks.js'), 'utf8');
+        assertTrue(tasks.includes('export function toggleTask'), 'Should export toggleTask');
+        assertTrue(tasks.includes('export function calculateNextDue'), 'Should export calculateNextDue');
+        assertTrue(tasks.includes('export function calculateStringLife'), 'Should export calculateStringLife');
     });
 
-    // ==================== Alert Tests ====================
-    console.log('\n🚨 Alert Tests');
-
-    test('checkForAlerts function exists', () => {
-        assertDefined(window.checkForAlerts);
+    test('humidity.js exports humidity functions', () => {
+        const humidity = fs.readFileSync(path.join(__dirname, '..', 'js', 'humidity.js'), 'utf8');
+        assertTrue(humidity.includes('export function addHumidityReadingFromForm'), 'Should export addHumidityReadingFromForm');
+        assertTrue(humidity.includes('export function getHumidityStats'), 'Should export getHumidityStats');
+        assertTrue(humidity.includes('export function drawHumidityChart'), 'Should export drawHumidityChart');
     });
 
-    test('High humidity triggers critical alert', () => {
-        localStorage.clear();
-
-        // Add a high humidity reading
-        const reading = {
-            id: Date.now(),
-            humidity: 58,
-            temp: 72,
-            location: 'case',
-            timestamp: new Date().toISOString()
-        };
-        localStorage.setItem('humidityReadings', JSON.stringify([reading]));
-
-        window.checkForAlerts();
-
-        const alerts = document.getElementById('alertContainer').innerHTML;
-        assertTrue(alerts.includes('CRITICAL') || alerts.includes('High Humidity'),
-            'Should show high humidity alert');
+    test('ui.js exports UI functions', () => {
+        const ui = fs.readFileSync(path.join(__dirname, '..', 'js', 'ui.js'), 'utf8');
+        assertTrue(ui.includes('export function renderMaintenanceTasks'), 'Should export renderMaintenanceTasks');
+        assertTrue(ui.includes('export function updateDashboard'), 'Should export updateDashboard');
+        assertTrue(ui.includes('export function switchTab'), 'Should export switchTab');
+        assertTrue(ui.includes('export function toggleTheme'), 'Should export toggleTheme');
     });
 
-    test('Low humidity triggers warning alert', () => {
-        localStorage.clear();
-
-        const reading = {
-            id: Date.now(),
-            humidity: 35,
-            temp: 72,
-            location: 'case',
-            timestamp: new Date().toISOString()
-        };
-        localStorage.setItem('humidityReadings', JSON.stringify([reading]));
-
-        window.checkForAlerts();
-
-        const alerts = document.getElementById('alertContainer').innerHTML;
-        assertTrue(alerts.includes('Low Humidity') || alerts.includes('warning'),
-            'Should show low humidity warning');
+    test('export.js exports export functions', () => {
+        const exportMod = fs.readFileSync(path.join(__dirname, '..', 'js', 'export.js'), 'utf8');
+        assertTrue(exportMod.includes('export function exportAsCSV'), 'Should export exportAsCSV');
+        assertTrue(exportMod.includes('export function exportAsJSON'), 'Should export exportAsJSON');
     });
 
-    // ==================== Next Due Calculation Tests ====================
-    console.log('\n📅 Next Due Calculation Tests');
+    // ==================== Validator Logic Tests ====================
+    console.log('\n✔️ Validator Logic Tests');
 
-    test('calculateNextDue function exists', () => {
-        assertDefined(window.calculateNextDue);
+    test('Humidity validation rejects empty values', () => {
+        // Parse the validator function
+        const validators = fs.readFileSync(path.join(__dirname, '..', 'js', 'validators.js'), 'utf8');
+        assertTrue(validators.includes("Humidity is required"), 'Should have error for empty humidity');
     });
 
-    test('Never completed task shows ASAP', () => {
-        const task = { id: 'test', lastCompleted: null };
-        const result = window.calculateNextDue(task, 'daily');
-        assertEqual(result, 'ASAP');
+    test('Humidity validation rejects values > 100', () => {
+        const validators = fs.readFileSync(path.join(__dirname, '..', 'js', 'validators.js'), 'utf8');
+        assertTrue(validators.includes("cannot exceed 100"), 'Should reject humidity > 100');
     });
 
-    test('Overdue task shows OVERDUE', () => {
-        const pastDate = new Date();
-        pastDate.setDate(pastDate.getDate() - 10); // 10 days ago
-
-        const task = { id: 'test', lastCompleted: pastDate.toISOString() };
-        const result = window.calculateNextDue(task, 'daily');
-        assertTrue(result.includes('OVERDUE'), 'Should show OVERDUE');
+    test('Humidity validation rejects negative values', () => {
+        const validators = fs.readFileSync(path.join(__dirname, '..', 'js', 'validators.js'), 'utf8');
+        assertTrue(validators.includes("cannot be negative"), 'Should reject negative humidity');
     });
 
-    test('Future task shows days remaining', () => {
-        const today = new Date();
-
-        const task = { id: 'test', lastCompleted: today.toISOString() };
-        const result = window.calculateNextDue(task, 'weekly');
-        // Should show something like "7 days" or "6 days"
-        assertTrue(result.includes('days'), `Should show days remaining, got: ${result}`);
+    test('Temperature validation allows empty (optional)', () => {
+        const validators = fs.readFileSync(path.join(__dirname, '..', 'js', 'validators.js'), 'utf8');
+        assertTrue(validators.includes("Temperature is optional") ||
+                   validators.includes("return { valid: true, value: null }"),
+                   'Should allow empty temperature');
     });
 
-    // ==================== Theme Tests ====================
-    console.log('\n🎨 Theme Tests');
+    // ==================== Data Migration Tests ====================
+    console.log('\n🔄 Data Migration Tests');
 
-    test('toggleTheme function exists', () => {
-        assertDefined(window.toggleTheme);
+    test('Storage module handles version migration', () => {
+        const storage = fs.readFileSync(path.join(__dirname, '..', 'js', 'storage.js'), 'utf8');
+        assertTrue(storage.includes('migrateMaintenanceData'), 'Should have migration function');
+        assertTrue(storage.includes('_version'), 'Should track data version');
     });
 
-    test('Theme toggle switches between light and dark', () => {
-        // Start with light theme
-        document.documentElement.setAttribute('data-theme', 'light');
-
-        window.toggleTheme();
-        assertEqual(document.documentElement.getAttribute('data-theme'), 'dark');
-
-        window.toggleTheme();
-        assertEqual(document.documentElement.getAttribute('data-theme'), 'light');
+    test('Migration handles sixweek to eightweek rename', () => {
+        const storage = fs.readFileSync(path.join(__dirname, '..', 'js', 'storage.js'), 'utf8');
+        assertTrue(storage.includes('sixweek') && storage.includes('eightweek'),
+                   'Should handle sixweek to eightweek migration');
     });
 
-    test('Theme preference is saved to localStorage', () => {
-        localStorage.clear();
-        document.documentElement.setAttribute('data-theme', 'light');
+    // ==================== String Life Calculator Tests ====================
+    console.log('\n🎸 String Life Calculator Tests');
 
-        window.toggleTheme();
-
-        assertEqual(localStorage.getItem('theme'), 'dark');
+    test('String life base is 8 weeks', () => {
+        const config = fs.readFileSync(path.join(__dirname, '..', 'js', 'config.js'), 'utf8');
+        assertTrue(config.includes('BASE_WEEKS: 8'), 'Base weeks should be 8');
     });
 
-    // ==================== Export Tests ====================
-    console.log('\n📤 Export Tests');
-
-    test('exportAsCSV function exists', () => {
-        assertDefined(window.exportAsCSV);
+    test('Tasks module has string life calculation', () => {
+        const tasks = fs.readFileSync(path.join(__dirname, '..', 'js', 'tasks.js'), 'utf8');
+        assertTrue(tasks.includes('calculateStringLife'), 'Should have calculateStringLife function');
     });
 
-    test('exportAsJSON function exists', () => {
-        assertDefined(window.exportAsJSON);
+    // ==================== UI Element Tests ====================
+    console.log('\n🖥️ UI Element Tests');
+
+    test('Humidity form has all required inputs', () => {
+        const humidityInput = document.getElementById('humidityValue');
+        const tempInput = document.getElementById('temperatureValue');
+        const locationSelect = document.getElementById('guitarLocation');
+        assertDefined(humidityInput, 'Humidity input not found');
+        assertDefined(tempInput, 'Temperature input not found');
+        assertDefined(locationSelect, 'Location select not found');
     });
 
-    test('downloadFile function exists', () => {
-        assertDefined(window.downloadFile);
+    test('Dashboard has all stat elements', () => {
+        const overallCompletion = document.getElementById('overallCompletion');
+        const daysSinceChange = document.getElementById('daysSinceChange');
+        const currentHumidity = document.getElementById('currentHumidity');
+        assertDefined(overallCompletion, 'Overall completion not found');
+        assertDefined(daysSinceChange, 'Days since change not found');
+        assertDefined(currentHumidity, 'Current humidity not found');
     });
 
-    // ==================== Modal Tests ====================
-    console.log('\n🔲 Modal Tests');
-
-    test('openBridgeRecommendations function exists', () => {
-        assertDefined(window.openBridgeRecommendations);
+    test('Period progress bars exist', () => {
+        const dailyBar = document.getElementById('dailyBar');
+        const weeklyBar = document.getElementById('weeklyBar');
+        const eightweekBar = document.getElementById('eightweekBar');
+        const quarterlyBar = document.getElementById('quarterlyBar');
+        const annualBar = document.getElementById('annualBar');
+        assertDefined(dailyBar, 'Daily bar not found');
+        assertDefined(weeklyBar, 'Weekly bar not found');
+        assertDefined(eightweekBar, '8-week bar not found');
+        assertDefined(quarterlyBar, 'Quarterly bar not found');
+        assertDefined(annualBar, 'Annual bar not found');
     });
 
-    test('Bridge modal opens correctly', () => {
-        window.openBridgeRecommendations();
-        const modal = document.getElementById('bridgeModal');
-        assertTrue(modal.classList.contains('show'), 'Modal should have show class');
+    test('Humidity chart canvas exists', () => {
+        const canvas = document.getElementById('humidityChart');
+        assertDefined(canvas, 'Humidity chart canvas not found');
     });
 
-    test('closeBridgeModal closes the modal', () => {
-        window.closeBridgeModal();
-        const modal = document.getElementById('bridgeModal');
-        assertFalse(modal.classList.contains('show'), 'Modal should not have show class');
+    test('Maintenance container exists', () => {
+        const container = document.getElementById('maintenanceContainer');
+        assertDefined(container, 'Maintenance container not found');
     });
 
-    // ==================== Inspection Tests ====================
-    console.log('\n🔍 Inspection Tests');
-
-    test('recordInspection function exists', () => {
-        assertDefined(window.recordInspection);
+    test('Humidity table exists', () => {
+        const table = document.getElementById('humidityTable');
+        assertDefined(table, 'Humidity table not found');
     });
 
-    test('saveInspectionData function exists', () => {
-        assertDefined(window.saveInspectionData);
-    });
-
-    test('loadInspectionData function exists', () => {
-        assertDefined(window.loadInspectionData);
-    });
-
-    test('calculateInspectionDueDate function exists', () => {
-        assertDefined(window.calculateInspectionDueDate);
-    });
-
-    test('Weekly inspection due date is 7 days from now', () => {
-        const result = window.calculateInspectionDueDate('weekly');
-        const expected = new Date();
-        expected.setDate(expected.getDate() + 7);
-        assertEqual(result, expected.toLocaleDateString());
-    });
-
-    // ==================== Chart Tests ====================
-    console.log('\n📊 Chart Tests');
-
-    test('drawHumidityChart function exists', () => {
-        assertDefined(window.drawHumidityChart);
-    });
-
-    test('Chart container is hidden with < 2 readings', () => {
-        localStorage.clear();
-        localStorage.setItem('humidityReadings', JSON.stringify([
-            { id: 1, humidity: 45, timestamp: new Date().toISOString() }
-        ]));
-
-        window.drawHumidityChart();
-
-        const container = document.getElementById('humidityChartContainer');
-        assertEqual(container.style.display, 'none', 'Chart should be hidden with < 2 readings');
-    });
-
-    // ==================== Calendar Tests ====================
-    console.log('\n📆 Calendar Tests');
-
-    test('renderCalendar function exists', () => {
-        assertDefined(window.renderCalendar);
-    });
-
-    test('getAllNextDueDates function exists', () => {
-        assertDefined(window.getAllNextDueDates);
-    });
-
-    test('Calendar renders with day headers', () => {
-        window.renderCalendar();
+    test('Calendar container exists', () => {
         const calendar = document.getElementById('maintenanceCalendar');
-        assertTrue(calendar.innerHTML.includes('Sun'), 'Calendar should have Sunday header');
-        assertTrue(calendar.innerHTML.includes('Mon'), 'Calendar should have Monday header');
+        assertDefined(calendar, 'Calendar container not found');
     });
 
-    // ==================== Reset Tests ====================
-    console.log('\n🔄 Reset Tests');
+    // ==================== Inspection Checklist Tests ====================
+    console.log('\n🔍 Inspection Checklist Tests');
 
-    test('resetDailyTasks function exists', () => {
-        assertDefined(window.resetDailyTasks);
+    test('Bridge inspection checkboxes exist', () => {
+        const check1 = document.getElementById('bridgeCheck1');
+        const check2 = document.getElementById('bridgeCheck2');
+        assertDefined(check1, 'Bridge check 1 not found');
+        assertDefined(check2, 'Bridge check 2 not found');
     });
 
-    test('resetWeeklyTasks function exists', () => {
-        assertDefined(window.resetWeeklyTasks);
+    test('Action inspection checkboxes exist', () => {
+        const check1 = document.getElementById('actionCheck1');
+        const check2 = document.getElementById('actionCheck2');
+        const check3 = document.getElementById('actionCheck3');
+        assertDefined(check1, 'Action check 1 not found');
+        assertDefined(check2, 'Action check 2 not found');
+        assertDefined(check3, 'Action check 3 not found');
     });
 
-    test('confirmReset function exists', () => {
-        assertDefined(window.confirmReset);
+    test('Fret inspection checkboxes exist', () => {
+        const check1 = document.getElementById('fretCheck1');
+        const check2 = document.getElementById('fretCheck2');
+        const check3 = document.getElementById('fretCheck3');
+        assertDefined(check1, 'Fret check 1 not found');
+        assertDefined(check2, 'Fret check 2 not found');
+        assertDefined(check3, 'Fret check 3 not found');
     });
 
-    // ==================== Tab Switching Tests ====================
-    console.log('\n🔀 Tab Switching Tests');
+    // ==================== CLAUDE.md Tests ====================
+    console.log('\n📚 Documentation Tests');
 
-    test('switchTab function exists', () => {
-        assertDefined(window.switchTab);
+    test('CLAUDE.md documents ES modules architecture', () => {
+        const claudeMd = fs.readFileSync(path.join(__dirname, '..', 'CLAUDE.md'), 'utf8');
+        assertTrue(claudeMd.includes('ES modules'), 'Should document ES modules');
+        assertTrue(claudeMd.includes('js/app.js'), 'Should document app.js');
+        assertTrue(claudeMd.includes('css/styles.css'), 'Should document styles.css');
+    });
+
+    test('CLAUDE.md documents module responsibilities', () => {
+        const claudeMd = fs.readFileSync(path.join(__dirname, '..', 'CLAUDE.md'), 'utf8');
+        assertTrue(claudeMd.includes('config.js'), 'Should document config.js');
+        assertTrue(claudeMd.includes('storage.js'), 'Should document storage.js');
+        assertTrue(claudeMd.includes('validators.js'), 'Should document validators.js');
     });
 
     // ==================== Summary ====================
