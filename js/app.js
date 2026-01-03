@@ -2,9 +2,9 @@
 import { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS, DATA_VERSION } from './config.js';
 import { migrateData, loadData, saveData } from './storage.js';
 import { toggleTask, quickActionJustPlayed, resetDailyTasks, resetWeeklyTasks, confirmReset, recordInspection, setDefaultDate, calculateNextDue } from './tasks.js';
-import { addHumidityReading, addHumidityReadingSimplified, deleteHumidityReading, renderHumidityTable, checkForAlerts, drawHumidityChart } from './humidity.js';
+import { addHumidityReading, addHumidityReadingSimplified, deleteHumidityReading, renderHumidityTable, checkForAlerts, drawHumidityChart, applyHumidityFilters, clearHumidityFilters, getFilteredReadings } from './humidity.js';
 import { renderMaintenanceTasks, renderInventoryChecklist, updateDashboard, switchTab, toggleTheme, toggleExpand, openBridgeRecommendations, closeBridgeModal, openActionRecommendations, closeActionModal, openFretRecommendations, closeFretModal } from './ui.js';
-import { exportAsCSV, exportAsJSON } from './export.js';
+import { exportAsCSV, exportAsJSON, createBackup, initBackupRestore } from './export.js';
 import { validateHumidity, validateTemperature } from './validators.js';
 
 // Initialize the application
@@ -19,6 +19,7 @@ export function init() {
     renderInventoryChecklist();
     updateDashboard();
     setDefaultDate();
+    initBackupRestore();
 }
 
 // Set up event handlers
@@ -152,6 +153,10 @@ function setupEventHandlers() {
     const exportJsonBtn = document.getElementById('exportJSON');
     if (exportJsonBtn) exportJsonBtn.addEventListener('click', exportAsJSON);
 
+    // Backup button
+    const createBackupBtn = document.getElementById('createBackup');
+    if (createBackupBtn) createBackupBtn.addEventListener('click', createBackup);
+
     // Reset buttons
     const resetDailyBtn = document.getElementById('resetDaily');
     if (resetDailyBtn) {
@@ -175,6 +180,29 @@ function setupEventHandlers() {
 
     const resetAllBtn = document.getElementById('resetAll');
     if (resetAllBtn) resetAllBtn.addEventListener('click', confirmReset);
+
+    // Humidity filter buttons
+    const applyFiltersBtn = document.getElementById('applyFilters');
+    if (applyFiltersBtn) {
+        applyFiltersBtn.addEventListener('click', applyHumidityFilters);
+    }
+
+    const clearFiltersBtn = document.getElementById('clearFilters');
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', clearHumidityFilters);
+    }
+
+    const exportFilteredBtn = document.getElementById('exportFiltered');
+    if (exportFilteredBtn) {
+        exportFilteredBtn.addEventListener('click', () => {
+            const filtered = getFilteredReadings();
+            if (filtered.length === 0) {
+                alert('No humidity readings match the current filters.');
+                return;
+            }
+            exportAsCSV(filtered);
+        });
+    }
 }
 
 // Load theme
