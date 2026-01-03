@@ -133,6 +133,41 @@ export function updateDashboard() {
         }
     }
 
+    // Update weekly hours display
+    const sessions = JSON.parse(localStorage.getItem('playingSessions') || '[]');
+    const weeklyHoursEl = document.getElementById('weeklyHours');
+    const calculatorBasisEl = document.getElementById('calculatorBasis');
+
+    if (sessions.length > 0) {
+        // Calculate this week's hours
+        const now = new Date();
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const thisWeekSessions = sessions.filter(s => s.timestamp > startOfWeek.getTime());
+        const totalMinutes = thisWeekSessions.reduce((sum, s) => sum + s.duration, 0);
+        const hours = (totalMinutes / 60).toFixed(1);
+
+        if (weeklyHoursEl) {
+            weeklyHoursEl.textContent = `This week: ${hours} hrs`;
+            weeklyHoursEl.style.color = 'var(--color-success)';
+        }
+
+        // Check if we have enough data for average
+        const twoWeeksAgo = Date.now() - (14 * 24 * 60 * 60 * 1000);
+        const recentSessions = sessions.filter(s => s.timestamp > twoWeeksAgo);
+
+        if (calculatorBasisEl && recentSessions.length >= 3) {
+            const avgHours = playingHours || '2.5';
+            calculatorBasisEl.textContent = `Based on ${avgHours} hrs/week (your average) + daily cleaning`;
+        } else if (calculatorBasisEl) {
+            const avgHours = playingHours || '2.5';
+            calculatorBasisEl.textContent = `Based on ${avgHours} hrs/week + daily cleaning`;
+        }
+    } else if (weeklyHoursEl) {
+        weeklyHoursEl.textContent = 'This week: 0 hrs';
+    }
+
     // Calculate overall completion
     let totalTasks = 0, completedTasks = 0;
     for (let category in MAINTENANCE_TASKS) {
@@ -197,14 +232,25 @@ export function updateDashboard() {
         if (humidityStatusEl) humidityStatusEl.textContent = status;
         if (currentHumidityEl) currentHumidityEl.className = `humidity-display ${className}`;
 
-        // 24h change
+        // 24h change with color coding and arrows
         const oneDayAgo = new Date(date.getTime() - 24 * 60 * 60 * 1000);
         const prevReading = readings.find(r => new Date(r.timestamp) <= oneDayAgo);
         const humidity24hChangeEl = document.getElementById('humidity24hChange');
         if (prevReading && humidity24hChangeEl) {
             const change = humidity - prevReading.humidity;
-            const changeStr = change > 0 ? `+${change.toFixed(1)}%` : `${change.toFixed(1)}%`;
-            humidity24hChangeEl.textContent = changeStr;
+            const absChange = Math.abs(change);
+            const arrow = change > 0 ? '↑' : '↓';
+            const sign = change > 0 ? '+' : '';
+
+            // Determine severity and color
+            let colorClass = 'humidity-change-normal';
+            if (absChange >= 10) {
+                colorClass = 'humidity-change-danger';
+            } else if (absChange >= 5) {
+                colorClass = 'humidity-change-caution';
+            }
+
+            humidity24hChangeEl.innerHTML = `<span class="${colorClass}">${arrow} ${sign}${change.toFixed(1)}%</span>`;
             humidity24hChangeEl.classList.remove('empty-state');
         } else if (humidity24hChangeEl) {
             humidity24hChangeEl.innerHTML = '<span class="empty-state">Need 24h of data</span>';

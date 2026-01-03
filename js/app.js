@@ -7,6 +7,8 @@ import { renderMaintenanceTasks, renderInventoryChecklist, updateDashboard, swit
 import { exportAsCSV, exportAsJSON, createBackup, initBackupRestore } from './export.js';
 import { validateHumidity, validateTemperature } from './validators.js';
 import { initOnboarding } from './onboarding.js';
+import { initSessions, showSessionModal } from './sessions.js';
+import { initStringHistory } from './stringHistory.js';
 
 // Initialize the application
 export function init() {
@@ -25,14 +27,11 @@ export function init() {
 
 // Set up event handlers
 function setupEventHandlers() {
-    // Just Played button
+    // Just Played button - now shows session duration modal
     const justPlayedBtn = document.querySelector('.btn-just-played');
     if (justPlayedBtn) {
         justPlayedBtn.addEventListener('click', () => {
-            quickActionJustPlayed();
-            updateDashboard();
-            renderMaintenanceTasks();
-            checkForAlerts();
+            showSessionModal();
         });
     }
 
@@ -253,10 +252,30 @@ window.exportAsJSON = exportAsJSON;
 window.migrateData = migrateData;
 window.switchTab = switchTab;
 
+// Humidity trend info modal functions
+window.showHumidityTrendInfo = function() {
+    const modal = document.getElementById('humidityTrendModal');
+    if (modal) modal.classList.add('show');
+};
+
+window.hideHumidityTrendInfo = function() {
+    const modal = document.getElementById('humidityTrendModal');
+    if (modal) modal.classList.remove('show');
+};
+
+// Wire up humidity trend modal close buttons
+const closeHumidityTrendX = document.getElementById('closeHumidityTrendModal');
+if (closeHumidityTrendX) closeHumidityTrendX.addEventListener('click', window.hideHumidityTrendInfo);
+
+const closeHumidityTrendBtn = document.getElementById('closeHumidityTrendBtn');
+if (closeHumidityTrendBtn) closeHumidityTrendBtn.addEventListener('click', window.hideHumidityTrendInfo);
+
 // Initialize app
 init();
 setupEventHandlers();
 checkForAlerts();
 renderHumidityTable();
 drawHumidityChart();
+initSessions();
+initStringHistory();
 initOnboarding();
