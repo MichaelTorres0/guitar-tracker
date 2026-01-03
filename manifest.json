@@ -1,0 +1,19 @@
+{
+  "name": "Taylor GS Mini Maintenance Tracker",
+  "short_name": "Guitar Tracker",
+  "description": "Track maintenance, humidity, and care for Taylor GS Mini Sapele acoustic guitar",
+  "start_url": "/guitar-tracker/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "lifestyle"]
+}
