@@ -2,6 +2,22 @@
 
 A Progressive Web App for tracking maintenance, humidity, and care for a Taylor GS Mini Sapele acoustic guitar.
 
+## Purpose & Goals
+
+**User Profile:** Hobbyist guitarist returning after years away, owns quality instrument, wants proper maintenance without being overwhelmed.
+
+**Core Problems Solved:**
+1. **Bridge lift prevention** - GS Mini solid spruce tops are vulnerable to humidity damage ($150-200 repair)
+2. **Maintenance anxiety** - Users don't know WHEN or HOW to maintain their guitar
+3. **String life optimization** - Calculate when strings actually need changing based on playing habits
+4. **Humidity monitoring** - Track and alert on dangerous conditions before damage occurs
+
+**Design Philosophy:**
+- Mobile-first (target: iPhone in guitar case)
+- Offline-capable (works in case, basement, studio)
+- Zero configuration (works immediately)
+- Never lose data (robust localStorage)
+
 ## Quick Reference
 
 - **Live URL:** https://michaeltorres0.github.io/guitar-tracker/
@@ -65,6 +81,25 @@ guitar-tracker/
 - `inspectionData` - Old inspection checkbox states
 - `theme` - Light/dark mode preference
 
+### Data Flow
+
+**Typical user action flow:**
+```
+1. User clicks button in index.html (e.g., id="addHumiditySimplified")
+2. app.js event listener triggers → calls humidity.js function
+3. Function validates input (validators.js)
+4. Function updates in-memory data structure
+5. Function saves to localStorage (storage.js)
+6. Function calls ui.js to re-render affected sections
+7. UI updates immediately with new data
+```
+
+**Key patterns:**
+- **Event delegation:** Task checkboxes use event delegation (one listener for all checkboxes)
+- **Direct binding:** Buttons use direct getElementById + addEventListener
+- **Inline handlers:** Inspection checkboxes use inline onchange for simplicity
+- **Always re-render:** After data changes, always call relevant render functions
+
 ## Critical Constraints
 
 1. **No external libraries** - Vanilla JS only (optional Chart.js for humidity)
@@ -90,7 +125,22 @@ guitar-tracker/
 
 ### HTML
 - Semantic markup where possible
-- Event handlers wired in `app.js` (not inline onclick)
+- Most event handlers wired in `app.js` via element IDs
+- Exception: Inspection checkboxes use inline `onchange` for simplicity
+- Button element IDs must match the event listener IDs in `app.js`
+
+**Event Handler Pattern:**
+```javascript
+// HTML: <button id="exportCSV" class="btn-primary">Export</button>
+// app.js setupEventHandlers():
+const exportCsvBtn = document.getElementById('exportCSV');
+if (exportCsvBtn) exportCsvBtn.addEventListener('click', exportAsCSV);
+```
+
+**When adding new buttons:**
+1. Add unique `id` attribute to HTML element
+2. Add event listener in `app.js` setupEventHandlers()
+3. Import and wire to appropriate function from module
 
 ## Key Functions (by module)
 
@@ -141,24 +191,44 @@ guitar-tracker/
 
 ## Making Changes
 
-### Before Editing
-1. Read this file and understand constraints
-2. Test current functionality in Safari
-3. Run tests: open `test.html` in browser
+### Common Tasks
 
-### While Editing
-- Modify appropriate module in `js/` directory
-- Maintain ES module import/export patterns
-- Test mobile viewport (390px)
-- Test both light and dark themes
-- Verify localStorage read/write
+**Adding a new button:**
+1. Add element with unique ID to `index.html`
+   ```html
+   <button id="myNewButton" class="btn-primary">Do Thing</button>
+   ```
+2. Add event listener in `app.js` setupEventHandlers()
+   ```javascript
+   const myBtn = document.getElementById('myNewButton');
+   if (myBtn) myBtn.addEventListener('click', handleMyAction);
+   ```
+3. If function is in another module, import it at top of `app.js`
 
-### After Editing
-- Run all 62 tests (test.html)
-- Test offline functionality
-- Verify no console errors
-- Check touch target sizes (44pt min)
-- Test on actual iPhone if possible
+**Adding a new feature:**
+1. Determine which module owns the functionality
+2. Add function to appropriate module with named export
+3. Update `app.js` to import and wire up if needed
+4. Add UI elements to `index.html` if needed
+5. Update render functions in `ui.js` if displaying data
+
+**Modifying data structure:**
+1. Update schema in `config.js` if adding constants
+2. Increment DATA_VERSION in `config.js` if breaking change
+3. Add migration logic to `storage.js` migrateData()
+4. Update save/load functions in `storage.js`
+5. Test with empty localStorage AND with existing data
+
+### Testing Workflow
+1. **During development:** Refresh browser, check console
+2. **Before committing:** Open `test.html` - all 62 tests must pass
+3. **Before deploying:** Test on actual iPhone Safari if possible
+
+### Debugging Tips
+- Check browser console for errors (F12)
+- Verify element IDs match between HTML and JS
+- Use `console.log()` liberally during development
+- Test localStorage: Chrome DevTools → Application → Local Storage
 
 ## PWA Requirements
 
