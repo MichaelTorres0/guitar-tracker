@@ -873,6 +873,116 @@
             background-color: #fff5f5 !important;
         }
 
+        /* Onboarding Modal */
+        .onboarding-modal {
+            z-index: 2000;
+        }
+
+        .onboarding-content {
+            max-width: 600px;
+            position: relative;
+        }
+
+        .onboarding-steps {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--color-border);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .step-dot.active {
+            background: var(--color-primary);
+            width: 32px;
+            border-radius: 6px;
+        }
+
+        .step-dot.completed {
+            background: var(--color-success);
+        }
+
+        .onboarding-step {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .onboarding-step.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .onboarding-step h2 {
+            font-size: 22px;
+            margin-bottom: 12px;
+            color: var(--color-text);
+        }
+
+        .onboarding-step p {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .onboarding-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .onboarding-actions button {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .onboarding-yn-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .btn-yn {
+            padding: 16px;
+            font-size: 15px;
+            font-weight: 600;
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            background: var(--color-surface);
+            color: var(--color-text);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-yn:hover {
+            border-color: var(--color-primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-yn.selected {
+            border-color: var(--color-primary);
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--color-primary);
+        }
+
         /* Tablet breakpoint */
         @media (max-width: 768px) {
             .header {
@@ -1039,6 +1149,23 @@
 
             .calendar-day {
                 font-size: 10px;
+            }
+
+            /* Onboarding mobile adjustments */
+            .onboarding-yn-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .onboarding-actions {
+                flex-direction: column;
+            }
+
+            .onboarding-actions button {
+                width: 100%;
+            }
+
+            .onboarding-step h2 {
+                font-size: 20px;
             }
         }
 

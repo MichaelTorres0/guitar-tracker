@@ -123,6 +123,16 @@ export function renderInventoryChecklist() {
 }
 
 export function updateDashboard() {
+    // Update playing schedule in header if set
+    const playingHours = localStorage.getItem('playingHoursPerWeek');
+    if (playingHours) {
+        const headerSubtitle = document.querySelector('.header p:not(.model-badge)');
+        if (headerSubtitle) {
+            const stringGauge = 'String Gauge: EJ16 Light (.012-.053)';
+            headerSubtitle.textContent = `Playing Schedule: ${playingHours} hrs/week | ${stringGauge}`;
+        }
+    }
+
     // Calculate overall completion
     let totalTasks = 0, completedTasks = 0;
     for (let category in MAINTENANCE_TASKS) {
