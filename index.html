@@ -628,7 +628,83 @@
         </div>
     </div>
 
+    <!-- ONBOARDING MODAL -->
+    <div id="onboardingModal" class="modal onboarding-modal">
+        <div class="modal-content onboarding-content">
+            <button id="closeOnboarding" class="modal-close" title="Skip setup">&times;</button>
+
+            <!-- Step Indicator -->
+            <div class="onboarding-steps">
+                <div class="step-dot active" data-step="0"></div>
+                <div class="step-dot" data-step="1"></div>
+                <div class="step-dot" data-step="2"></div>
+                <div class="step-dot" data-step="3"></div>
+            </div>
+
+            <!-- Step 0: Welcome -->
+            <div class="onboarding-step active" data-step="0">
+                <h2>🎸 Welcome to Guitar Tracker</h2>
+                <p>Keep your Taylor GS Mini in perfect condition with guided maintenance tracking.</p>
+                <p style="margin-top: 16px; color: var(--color-text-light);">Let's get you set up in 3 quick steps.</p>
+                <div class="onboarding-actions">
+                    <button class="btn-secondary" onclick="skipOnboarding()">Skip Setup</button>
+                    <button class="btn-primary" onclick="nextOnboardingStep()">Get Started →</button>
+                </div>
+            </div>
+
+            <!-- Step 1: String Change Date -->
+            <div class="onboarding-step" data-step="1">
+                <h2>When did you last change strings?</h2>
+                <p style="color: var(--color-text-light); margin-bottom: 16px;">This helps us calculate when your next string change is due.</p>
+                <div class="form-group">
+                    <label class="form-label">Last String Change Date</label>
+                    <input type="date" id="onboardingStringDate" style="width: 100%;">
+                </div>
+                <div class="onboarding-actions">
+                    <button class="btn-secondary" onclick="previousOnboardingStep()">← Back</button>
+                    <button class="btn-secondary" onclick="skipStringDate()">I Don't Remember</button>
+                    <button class="btn-primary" onclick="nextOnboardingStep()">Next →</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Playing Frequency -->
+            <div class="onboarding-step" data-step="2">
+                <h2>How often do you play?</h2>
+                <p style="color: var(--color-text-light); margin-bottom: 16px;">This helps us adjust maintenance schedules and string life calculations.</p>
+                <div class="form-group">
+                    <label class="form-label">Playing Frequency</label>
+                    <select id="onboardingPlayingFrequency" style="width: 100%;">
+                        <option value="daily">Daily (6-7 days/week) — ~7 hrs/week</option>
+                        <option value="fewTimesWeek">A few times a week (3-5 days) — ~4 hrs/week</option>
+                        <option value="weekly" selected>Weekly (1-2 days) — ~2.5 hrs/week</option>
+                        <option value="occasionally">Occasionally (few times/month) — ~1 hr/week</option>
+                    </select>
+                </div>
+                <div class="onboarding-actions">
+                    <button class="btn-secondary" onclick="previousOnboardingStep()">← Back</button>
+                    <button class="btn-primary" onclick="nextOnboardingStep()">Next →</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Hygrometer -->
+            <div class="onboarding-step" data-step="3">
+                <h2>Do you have a hygrometer?</h2>
+                <p style="color: var(--color-text-light); margin-bottom: 16px;">A hygrometer measures humidity to prevent guitar damage. This is critical for solid-top guitars like the GS Mini.</p>
+                <div class="onboarding-yn-buttons">
+                    <button class="btn-yn" onclick="setHasHygrometer(true)">✓ Yes, I have one</button>
+                    <button class="btn-yn" onclick="setHasHygrometer(false)">✗ No, I don't</button>
+                </div>
+                <div id="hygrometerRecommendation" style="display: none; margin-top: 16px; padding: 12px; background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--color-error); border-radius: 4px; font-size: 13px;">
+                    <strong>⚠️ Highly Recommended:</strong> Get a hygrometer like the Inkbird ITH-10 ($10-15). Bridge lifting from high humidity causes $150-200 repairs. Your Humidipak needs monitoring to work effectively.
+                </div>
+                <div class="onboarding-actions" style="margin-top: 20px;">
+                    <button class="btn-secondary" onclick="previousOnboardingStep()">← Back</button>
+                    <button class="btn-primary" id="finishOnboarding" onclick="completeOnboarding()" disabled>Finish Setup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="js/app.js"></script>
-    </script>
 </body>
 </html>

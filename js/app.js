@@ -6,6 +6,7 @@ import { addHumidityReading, addHumidityReadingSimplified, deleteHumidityReading
 import { renderMaintenanceTasks, renderInventoryChecklist, updateDashboard, switchTab, toggleTheme, toggleExpand, openBridgeRecommendations, closeBridgeModal, openActionRecommendations, closeActionModal, openFretRecommendations, closeFretModal } from './ui.js';
 import { exportAsCSV, exportAsJSON, createBackup, initBackupRestore } from './export.js';
 import { validateHumidity, validateTemperature } from './validators.js';
+import { initOnboarding } from './onboarding.js';
 
 // Initialize the application
 export function init() {
@@ -258,3 +259,4 @@ setupEventHandlers();
 checkForAlerts();
 renderHumidityTable();
 drawHumidityChart();
+initOnboarding();
