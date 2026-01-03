@@ -146,7 +146,7 @@ async function runTests() {
         const tasks = window.MAINTENANCE_TASKS;
         assertDefined(tasks.daily, 'daily tasks missing');
         assertDefined(tasks.weekly, 'weekly tasks missing');
-        assertDefined(tasks.sixweek, '6-week tasks missing');
+        assertDefined(tasks.eightweek, '8-week tasks missing');
         assertDefined(tasks.quarterly, 'quarterly tasks missing');
         assertDefined(tasks.annual, 'annual tasks missing');
     });
@@ -159,8 +159,8 @@ async function runTests() {
         assertArrayLength(window.MAINTENANCE_TASKS.weekly, 3);
     });
 
-    test('6-week tasks has 8 items', () => {
-        assertArrayLength(window.MAINTENANCE_TASKS.sixweek, 8);
+    test('8-week tasks has 8 items', () => {
+        assertArrayLength(window.MAINTENANCE_TASKS.eightweek, 8);
     });
 
     test('Quarterly tasks has 3 items', () => {
@@ -341,7 +341,7 @@ async function runTests() {
         localStorage.clear();
         window.MAINTENANCE_TASKS.daily.forEach(t => { t.completed = true; });
         window.MAINTENANCE_TASKS.weekly.forEach(t => { t.completed = false; });
-        window.MAINTENANCE_TASKS.sixweek.forEach(t => { t.completed = false; });
+        window.MAINTENANCE_TASKS.eightweek.forEach(t => { t.completed = false; });
         window.MAINTENANCE_TASKS.quarterly.forEach(t => { t.completed = false; });
         window.MAINTENANCE_TASKS.annual.forEach(t => { t.completed = false; });
 
@@ -357,7 +357,7 @@ async function runTests() {
     });
 
     test('Overall completion calculates correctly', () => {
-        // 3 daily (all complete) + 3 weekly + 8 sixweek + 3 quarterly + 1 annual = 18 total
+        // 3 daily (all complete) + 3 weekly + 8 eightweek + 3 quarterly + 1 annual = 18 total
         // 3 completed = 3/18 = 16.67% ≈ 17%
         const overall = document.getElementById('overallCompletion').textContent;
         // Should be approximately 17% (3/18)
