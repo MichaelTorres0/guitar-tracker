@@ -135,6 +135,16 @@ function setupEventHandlers() {
     const closeFretBtn = document.getElementById('closeFretModal');
     if (closeFretBtn) closeFretBtn.addEventListener('click', closeFretModal);
 
+    // Modal X close buttons
+    const closeBridgeX = document.getElementById('closeBridgeModalX');
+    if (closeBridgeX) closeBridgeX.addEventListener('click', closeBridgeModal);
+
+    const closeActionX = document.getElementById('closeActionModalX');
+    if (closeActionX) closeActionX.addEventListener('click', closeActionModal);
+
+    const closeFretX = document.getElementById('closeFretModalX');
+    if (closeFretX) closeFretX.addEventListener('click', closeFretModal);
+
     // Export buttons
     const exportCsvBtn = document.getElementById('exportCSV');
     if (exportCsvBtn) exportCsvBtn.addEventListener('click', exportAsCSV);
