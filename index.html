@@ -73,8 +73,11 @@
             </div>
 
             <div class="string-life-container">
-                <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">📊 String Life Calculator</h3>
-                <div style="font-size: 12px; color: var(--color-text-light); margin-bottom: 12px;">Based on 2.5 hrs/week playing + daily cleaning</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <h3 style="font-size: 14px; font-weight: 600; margin: 0;">📊 String Life Calculator</h3>
+                    <div id="weeklyHours" style="font-size: 12px; color: var(--color-text-light); font-weight: 600;">This week: 0 hrs</div>
+                </div>
+                <div style="font-size: 12px; color: var(--color-text-light); margin-bottom: 12px;" id="calculatorBasis">Based on 2.5 hrs/week playing + daily cleaning</div>
                 <div class="string-life-bar">
                     <div class="string-life-fill safe" id="stringLifeFill" style="width: 0%"></div>
                 </div>
@@ -215,7 +218,10 @@
                         <div class="stat-label" style="margin-top: 8px;" id="latestTime">—</div>
                     </div>
                     <div class="stat-card" style="margin-bottom: 12px;">
-                        <div class="stat-label">24h Change</div>
+                        <div class="stat-label">
+                            24h Change
+                            <span class="info-icon" title="Click for info" onclick="showHumidityTrendInfo()">ⓘ</span>
+                        </div>
                         <div class="stat-value" id="humidity24hChange" style="font-size: 20px;">—</div>
                     </div>
                     <div class="stat-card">
@@ -496,6 +502,13 @@
             </div>
 
             <div class="card" style="margin-top: 20px;">
+                <h3>📜 String Change History</h3>
+                <div id="stringHistoryDisplay">
+                    <p class="empty-state" style="padding: 20px; text-align: center;">No string changes logged yet</p>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
                 <h3>📖 Quick Reference: Your Maintenance Calendar</h3>
                 <div style="font-size: 13px; color: var(--color-text-light); line-height: 1.8;">
                     <p><strong>After Every Session (5 min):</strong></p>
@@ -625,6 +638,82 @@
                 </p>
             </div>
             <button id="closeFretModal" class="btn-primary" style="width: 100%; margin-top: 16px;">Thanks</button>
+        </div>
+    </div>
+
+    <!-- HUMIDITY TREND INFO MODAL -->
+    <div id="humidityTrendModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <button id="closeHumidityTrendModal" class="modal-close">&times;</button>
+            <div class="modal-header">Why Rapid Humidity Changes Matter</div>
+            <div style="font-size: 14px; line-height: 1.6;">
+                <p style="margin-bottom: 12px;">Rapid humidity changes stress guitar wood and can cause serious damage:</p>
+                <div style="background: var(--color-bg); padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                    <div style="font-weight: 600; margin-bottom: 8px;">Change Severity:</div>
+                    <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px;">
+                        <div><span style="color: var(--color-success); font-weight: 600;">↑↓ &lt;5% in 24h:</span> Normal variation (safe)</div>
+                        <div><span style="color: var(--color-warning); font-weight: 600;">↑↓ 5-10% in 24h:</span> Moderate stress (caution)</div>
+                        <div><span style="color: var(--color-error); font-weight: 600;">↑↓ &gt;10% in 24h:</span> High stress (danger)</div>
+                    </div>
+                </div>
+                <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--color-error); padding: 12px; border-radius: 4px; margin-bottom: 12px;">
+                    <strong>⚠️ Potential Damage:</strong>
+                    <ul style="margin-top: 8px; padding-left: 20px; font-size: 13px;">
+                        <li>Finish cracking</li>
+                        <li>Glue joint stress</li>
+                        <li>Bridge movement or lifting</li>
+                        <li>Fret sprout from wood expansion/contraction</li>
+                    </ul>
+                </div>
+                <div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--color-success); padding: 12px; border-radius: 4px;">
+                    <strong>✅ Prevention:</strong>
+                    <p style="margin-top: 8px; font-size: 13px;">Keep your guitar in its case with Humidipak when not playing. The case buffers environmental changes and keeps humidity stable.</p>
+                </div>
+            </div>
+            <button id="closeHumidityTrendBtn" class="btn-primary" style="width: 100%; margin-top: 16px;">Got It</button>
+        </div>
+    </div>
+
+    <!-- STRING BRAND PROMPT MODAL -->
+    <div id="stringBrandModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <button id="closeStringBrandModal" class="modal-close">&times;</button>
+            <div class="modal-header">✅ String Change Logged!</div>
+            <p style="font-size: 14px; color: var(--color-text-light); margin-bottom: 16px;">What strings did you install? (optional)</p>
+            <div class="form-group">
+                <input type="text" id="stringBrandInput" placeholder="e.g., D'Addario EJ16, Elixir Nanoweb" style="width: 100%;">
+            </div>
+            <div class="button-group" style="margin-top: 16px;">
+                <button class="btn-secondary" onclick="saveStringChange(null)">Skip</button>
+                <button class="btn-primary" onclick="saveStringChangeBrand()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PLAYING SESSION DURATION MODAL -->
+    <div id="sessionDurationModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <button id="closeSessionModal" class="modal-close">&times;</button>
+            <div class="modal-header">How long did you play?</div>
+            <p style="font-size: 13px; color: var(--color-text-light); margin-bottom: 16px;">This helps calculate accurate string life and maintenance needs.</p>
+            <div class="duration-options">
+                <button class="duration-btn" onclick="logSessionWithDuration(15)">
+                    <span class="duration-time">15 min</span>
+                    <span class="duration-label">Quick practice</span>
+                </button>
+                <button class="duration-btn" onclick="logSessionWithDuration(30)">
+                    <span class="duration-time">30 min</span>
+                    <span class="duration-label">Short session</span>
+                </button>
+                <button class="duration-btn" onclick="logSessionWithDuration(60)">
+                    <span class="duration-time">1 hour</span>
+                    <span class="duration-label">Standard session</span>
+                </button>
+                <button class="duration-btn" onclick="logSessionWithDuration(120)">
+                    <span class="duration-time">2+ hours</span>
+                    <span class="duration-label">Long session</span>
+                </button>
+            </div>
         </div>
     </div>
 
