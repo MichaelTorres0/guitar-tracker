@@ -2198,6 +2198,12 @@
         // Load inspection data on page load
         loadInspectionData();
 
+        // Expose key objects to window for testing and debugging
+        window.MAINTENANCE_TASKS = MAINTENANCE_TASKS;
+        window.EQUIPMENT_ITEMS = EQUIPMENT_ITEMS;
+        window.DATA_KEY = DATA_KEY;
+        window.HUMIDITY_KEY = HUMIDITY_KEY;
+
         // INIT
         init();
         checkForAlerts();
