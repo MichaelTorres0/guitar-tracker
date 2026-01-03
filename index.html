@@ -189,7 +189,7 @@
                             <option value="out">Out of Case</option>
                         </select>
                     </div>
-                    <button class="btn-primary" style="width: 100%;">📍 Log Reading Now</button>
+                    <button id="addHumiditySimplified" class="btn-primary" style="width: 100%;">📍 Log Reading Now</button>
                     <div id="humidityFeedback" class="form-feedback" style="display: none;"></div>
                     <div id="logConfirmation" class="form-feedback success" style="display: none;">✅ Reading logged successfully</div>
                 </div>
@@ -264,7 +264,7 @@
                             <div class="checklist-note">Should feel firm and flush to top. Soft or gaps indicate humidity swelling and require action.</div>
                         </div>
                     </div>
-                    <button class="btn-secondary" style="width: 100%; margin-top: 12px;">If Detected → Recommended Actions</button>
+                    <button id="openBridgeModal" class="btn-secondary" style="width: 100%; margin-top: 12px;">If Detected → Recommended Actions</button>
                 </div>
 
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--color-border);">
@@ -293,7 +293,7 @@
                             <div class="checklist-note">Play chords across neck. Uneven sustain or sudden drops indicate action or intonation issues.</div>
                         </div>
                     </div>
-                    <button class="btn-secondary" style="width: 100%; margin-top: 12px;">If Detected → Recommended Actions</button>
+                    <button id="openActionModal" class="btn-secondary" style="width: 100%; margin-top: 12px;">If Detected → Recommended Actions</button>
                 </div>
 
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--color-border);">
@@ -322,7 +322,7 @@
                             <div class="checklist-note">Look at fretboard edges. Sharp fret ends protruding indicate humidity drying. Requires professional truss rod adjustment.</div>
                         </div>
                     </div>
-                    <button class="btn-secondary" style="width: 100%; margin-top: 12px;">If Detected → Recommended Actions</button>
+                    <button id="openFretModal" class="btn-secondary" style="width: 100%; margin-top: 12px;">If Detected → Recommended Actions</button>
                 </div>
 
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--color-border);">
@@ -392,16 +392,16 @@
                 <div class="card">
                     <h3>⬇️ Export Data</h3>
                     <p style="font-size: 13px; color: var(--color-text-light); margin-bottom: 16px;">Export your maintenance history and humidity logs for backup or analysis.</p>
-                    <button class="btn-primary" style="width: 100%; margin-bottom: 10px;">📊 Export as CSV</button>
-                    <button class="btn-secondary" style="width: 100%;">💾 Backup as JSON</button>
+                    <button id="exportCSV" class="btn-primary" style="width: 100%; margin-bottom: 10px;">📊 Export as CSV</button>
+                    <button id="exportJSON" class="btn-secondary" style="width: 100%;">💾 Backup as JSON</button>
                 </div>
 
                 <div class="card">
                     <h3>🔄 Reset & Manage</h3>
                     <p style="font-size: 13px; color: var(--color-text-light); margin-bottom: 16px;">Reset tracking periods or clear all data.</p>
-                    <button class="btn-secondary" style="width: 100%; margin-bottom: 10px;">↻ Reset Daily Tasks</button>
-                    <button class="btn-secondary" style="width: 100%; margin-bottom: 10px;">↻ Reset Weekly Tasks</button>
-                    <button class="btn-danger" style="width: 100%;">⚠️ Clear All Data</button>
+                    <button id="resetDaily" class="btn-secondary" style="width: 100%; margin-bottom: 10px;">↻ Reset Daily Tasks</button>
+                    <button id="resetWeekly" class="btn-secondary" style="width: 100%; margin-bottom: 10px;">↻ Reset Weekly Tasks</button>
+                    <button id="resetAll" class="btn-danger" style="width: 100%;">⚠️ Clear All Data</button>
                 </div>
             </div>
 
@@ -470,7 +470,7 @@
     <!-- MODALS -->
     <div id="bridgeModal" class="modal">
         <div class="modal-content">
-            <button class="modal-close">&times;</button>
+            <button id="closeBridgeModalX" class="modal-close">&times;</button>
             <div class="modal-header">🔴 Bridge Wing Lift Detected</div>
             <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--color-error);">EMERGENCY ACTION REQUIRED</h3>
             <div style="font-size: 13px; color: var(--color-text-light); line-height: 1.6;">
@@ -490,13 +490,13 @@
                 <h4 style="font-weight: 600; margin-top: 16px; margin-bottom: 8px;">String Tension Check:</h4>
                 <p>If not already done, consider switching to EJ16 Light (.012-.053) strings to reduce neck/top stress. Multiple techs report all GS Minis they repaired for bridge lift were on mediums long-term.</p>
             </div>
-            <button class="btn-primary" style="width: 100%; margin-top: 16px;">Understood</button>
+            <button id="closeBridgeModal" class="btn-primary" style="width: 100%; margin-top: 16px;">Understood</button>
         </div>
     </div>
 
     <div id="actionModal" class="modal">
         <div class="modal-content">
-            <button class="modal-close">&times;</button>
+            <button id="closeActionModalX" class="modal-close">&times;</button>
             <div class="modal-header">🔧 Action or Buzzing Issues Detected</div>
             <div style="font-size: 13px; color: var(--color-text-light); line-height: 1.6;">
                 <h4 style="font-weight: 600; margin-bottom: 8px;">High Action Issues:</h4>
@@ -523,13 +523,13 @@
                     <strong>GS Mini-specific note:</strong> The 23.5" scale length requires specific setup parameters. Ensure your tech is familiar with GS Minis for optimal results.
                 </p>
             </div>
-            <button class="btn-primary" style="width: 100%; margin-top: 16px;">Got It</button>
+            <button id="closeActionModal" class="btn-primary" style="width: 100%; margin-top: 16px;">Got It</button>
         </div>
     </div>
 
     <div id="fretModal" class="modal">
         <div class="modal-content">
-            <button class="modal-close">&times;</button>
+            <button id="closeFretModalX" class="modal-close">&times;</button>
             <div class="modal-header">✨ Fret Condition Issues Detected</div>
             <div style="font-size: 13px; color: var(--color-text-light); line-height: 1.6;">
                 <h4 style="font-weight: 600; margin-bottom: 8px;">Rough or Gritty Frets:</h4>
@@ -558,7 +558,7 @@
                     <strong>Preventive note:</strong> Your FRINE Kit is designed specifically for this. Regular quarterly polishing prevents excessive buildup and extends fret life.
                 </p>
             </div>
-            <button class="btn-primary" style="width: 100%; margin-top: 16px;">Thanks</button>
+            <button id="closeFretModal" class="btn-primary" style="width: 100%; margin-top: 16px;">Thanks</button>
         </div>
     </div>
 
