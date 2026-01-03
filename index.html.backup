@@ -18,7 +18,7 @@
         :root {
             --color-daily: #10b981;
             --color-weekly: #3b82f6;
-            --color-8week: #f97316;
+            --color-6week: #f97316;
             --color-quarterly: #ef4444;
             --color-annual: #a855f7;
             --color-bg: #f8fafc;
@@ -390,7 +390,7 @@
 
         .color-daily { background-color: var(--color-daily); }
         .color-weekly { background-color: var(--color-weekly); }
-        .color-8week { background-color: var(--color-8week); }
+        .color-6week { background-color: var(--color-6week); }
         .color-quarterly { background-color: var(--color-quarterly); }
         .color-annual { background-color: var(--color-annual); }
 
@@ -460,33 +460,6 @@
         textarea {
             resize: vertical;
             min-height: 80px;
-        }
-
-
-        .form-feedback {
-            margin-top: 8px;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .form-feedback.error {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--color-error);
-            border-left: 3px solid var(--color-error);
-        }
-
-        .form-feedback.warning {
-            background: rgba(245, 158, 11, 0.1);
-            color: var(--color-warning);
-            border-left: 3px solid var(--color-warning);
-        }
-
-        .form-feedback.success {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--color-success);
-            border-left: 3px solid var(--color-success);
         }
 
         .button-group {
@@ -738,7 +711,7 @@
         <div class="header">
             <div>
                 <h1>🎸 Taylor GS Mini Maintenance Tracker</h1>
-                <p style="color: var(--color-text-light); font-size: 13px; margin-top: 4px;">Playing Schedule: 2.5 hrs/week | String Gauge: EJ16 Light (.012-.053)</p>
+                <p style="color: var(--color-text-light); font-size: 13px; margin-top: 4px;">Playing Schedule: 2.5 hrs/week | String Gauge: EJ17 Medium (.013-.056)</p>
             </div>
             <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
         </div>
@@ -818,11 +791,11 @@
                     </div>
                     <div class="progress-section">
                         <div class="progress-label">
-                            <span>8-Week Tasks</span>
-                            <span id="eightweekPercent">0%</span>
+                            <span>6-Week Tasks</span>
+                            <span id="sixweekPercent">0%</span>
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill color-8week" id="eightweekBar" style="width: 0%"></div>
+                            <div class="progress-fill color-6week" id="sixweekBar" style="width: 0%"></div>
                         </div>
                     </div>
                     <div class="progress-section">
@@ -907,8 +880,9 @@
                         </select>
                     </div>
                     <button class="btn-primary" onclick="addHumidityReadingSimplified()" style="width: 100%;">📍 Log Reading Now</button>
-                    <div id="humidityFeedback" class="form-feedback" style="display: none;"></div>
-                    <div id="logConfirmation" class="form-feedback success" style="display: none;">✅ Reading logged successfully</div>
+                    <div id="logConfirmation" style="margin-top: 12px; padding: 10px; border-radius: 4px; background: rgba(16, 185, 129, 0.1); color: var(--color-success); font-size: 12px; font-weight: 600; display: none; text-align: center;">
+                        ✅ Reading logged successfully
+                    </div>
                 </div>
 
                 <div class="card">
@@ -1132,7 +1106,7 @@
                     <ul style="margin-top: 8px; padding-left: 20px; font-size: 13px; color: var(--color-text-light); line-height: 1.6;">
                         <li><strong>Daily:</strong> "Guitar maintenance - String cleaning & case check" at 5:00 PM (after playing)</li>
                         <li><strong>Weekly:</strong> "Guitar inspection - Hardware, bridge, Humidipak check" every Sunday at 2:00 PM</li>
-                        <li><strong>Every 8 weeks:</strong> "String change & deep clean" with 2-week advance reminder</li>
+                        <li><strong>Every 6 weeks:</strong> "String change & deep clean" with 2-week advance reminder</li>
                         <li><strong>Quarterly:</strong> "Truss rod observation & structural inspection"</li>
                         <li><strong>Annual:</strong> "Taylor Refresh service appointment" ($115)</li>
                     </ul>
@@ -1161,7 +1135,7 @@
                         <li>Bridge wing monitoring</li>
                         <li>Humidipak packet check</li>
                     </ul>
-                    <p><strong>Every 8 Weeks (60 min):</strong></p>
+                    <p><strong>Every 6 Weeks (60 min):</strong></p>
                     <ul style="padding-left: 20px; margin-bottom: 12px;">
                         <li>String change & fret polishing (FRINE)</li>
                         <li>Fretboard conditioning (if dry)</li>
@@ -1281,145 +1255,8 @@
 
     <script>
         // DATA STRUCTURE & STORAGE
-        // DATA VERSIONING & STORAGE
-        const DATA_VERSION = 2;
-        const STORAGE_KEYS = {
-            mainData: 'guitarTrackerData',
-            legacy: {
-                maintenance: 'guitarMaintenanceData',
-                humidity: 'humidityReadings',
-                inspection: 'inspectionData'
-            }
-        };
-        const DATA_KEY = STORAGE_KEYS.legacy.maintenance; // Keep for compatibility
-        const HUMIDITY_KEY = STORAGE_KEYS.legacy.humidity; // Keep for compatibility
-
-
-
-        // DEFAULT DATA STRUCTURE
-        const DEFAULT_GUITAR = {
-            id: 'default',
-            name: 'Taylor GS Mini Sapele',
-            make: 'Taylor',
-            model: 'GS Mini',
-            variant: 'Sapele',
-            settings: {
-                targetHumidity: { min: 45, max: 50 },
-                safeHumidity: { min: 40, max: 55 },
-                dangerHumidity: { low: 35, high: 60 },
-                stringChangeWeeks: 8,
-                playingHoursPerWeek: 2.5
-            }
-        };
-
-        // MIGRATION FUNCTIONS
-        function migrateData() {
-            try {
-                // Check for new format data first
-                const newData = localStorage.getItem(STORAGE_KEYS.mainData);
-                if (newData) {
-                    const parsed = JSON.parse(newData);
-                    if (parsed.version === DATA_VERSION) {
-                        return parsed; // Already migrated
-                    }
-                }
-
-                // Check for legacy data
-                const legacyMaintenance = localStorage.getItem(STORAGE_KEYS.legacy.maintenance);
-                const legacyHumidity = localStorage.getItem(STORAGE_KEYS.legacy.humidity);
-                const legacyInspection = localStorage.getItem(STORAGE_KEYS.legacy.inspection);
-
-                if (legacyMaintenance || legacyHumidity || legacyInspection) {
-                    console.log('Migrating legacy data to version', DATA_VERSION);
-                    return migrateLegacyData(legacyMaintenance, legacyHumidity, legacyInspection);
-                }
-
-                // No data exists, return default
-                return createDefaultData();
-            } catch (e) {
-                console.error('Migration error:', e);
-                return createDefaultData();
-            }
-        }
-
-        function migrateLegacyData(maintenanceJson, humidityJson, inspectionJson) {
-            const data = createDefaultData();
-
-            // Migrate maintenance task states
-            if (maintenanceJson) {
-                try {
-                    const legacy = JSON.parse(maintenanceJson);
-                    data.maintenanceStates = {};
-
-                    for (let category in legacy) {
-                        // Map old 'sixweek' to new 'eightweek'
-                        const newCategory = category === 'sixweek' ? 'eightweek' : category;
-                        data.maintenanceStates[newCategory] = legacy[category].map(task => ({
-                            id: task.id.replace('6w-', '8w-'), // Update task IDs
-                            completed: task.completed || false,
-                            lastCompleted: task.lastCompleted || null
-                        }));
-                    }
-                } catch (e) {
-                    console.error('Error migrating maintenance data:', e);
-                }
-            }
-
-            // Migrate humidity readings
-            if (humidityJson) {
-                try {
-                    const legacy = JSON.parse(humidityJson);
-                    data.humidityReadings = legacy.map(r => ({
-                        ...r,
-                        guitarId: 'default'
-                    }));
-                } catch (e) {
-                    console.error('Error migrating humidity data:', e);
-                }
-            }
-
-            // Migrate inspection data
-            if (inspectionJson) {
-                try {
-                    data.inspectionData = JSON.parse(inspectionJson);
-                } catch (e) {
-                    console.error('Error migrating inspection data:', e);
-                }
-            }
-
-            // Save migrated data
-            saveVersionedData(data);
-
-            // Clean up legacy keys (commented out for safety - can be enabled after verification)
-            // localStorage.removeItem(STORAGE_KEYS.legacy.maintenance);
-            // localStorage.removeItem(STORAGE_KEYS.legacy.humidity);
-            // localStorage.removeItem(STORAGE_KEYS.legacy.inspection);
-
-            return data;
-        }
-
-        function createDefaultData() {
-            return {
-                version: DATA_VERSION,
-                guitars: [DEFAULT_GUITAR],
-                activeGuitarId: 'default',
-                maintenanceStates: {},
-                humidityReadings: [],
-                inspectionData: {}
-            };
-        }
-
-        function saveVersionedData(data) {
-            try {
-                data.version = DATA_VERSION;
-                localStorage.setItem(STORAGE_KEYS.mainData, JSON.stringify(data));
-                return true;
-            } catch (e) {
-                console.error('Error saving versioned data:', e);
-                alert('Warning: Unable to save data. Storage may be full.');
-                return false;
-            }
-        }
+        const DATA_KEY = 'guitarMaintenanceData';
+        const HUMIDITY_KEY = 'humidityReadings';
 
         const MAINTENANCE_TASKS = {
             daily: [
@@ -1432,15 +1269,15 @@
                 { id: 'weekly-2', name: 'Bridge Wing Monitoring', duration: '3 min', frequency: 'Once per week', why: 'Visible gaps indicate humidity problems requiring immediate professional attention.', how: 'Look closely at bridge wings where they meet the top. Any lifting at the tips = emergency situation.' },
                 { id: 'weekly-3', name: 'Humidipak Packet Check', duration: '2 min', frequency: 'Once per week', why: 'Hard packets = no moisture = your guitar is drying out.', how: 'Squeeze packets through pouches—should feel gel-like/soft. Hard = replace immediately.' }
             ],
-            eightweek: [
-                { id: '8w-1', name: 'String Removal & Fret Inspection', duration: '15 min', frequency: 'Every 8 weeks', why: 'Inspection during string change catches issues early.', how: 'Use GRIP String Winder and Cutter to remove old strings. Inspect all 20 frets for tarnish (dull appearance) or roughness.' },
-                { id: '8w-2', name: 'Fret Polishing (FRINE Kit)', duration: '20 min', frequency: 'Every 8 weeks', why: 'Tarnished frets cause gritty feeling during bends and damage strings.', how: 'Place GRIP fretboard guard over fret. Apply pea-sized FRINE polish. Rub back-and-forth until oxidation removes. Wipe residue. Repeat all 20 frets.' },
-                { id: '8w-3', name: 'Fretboard Conditioning (F-ONE)', duration: '5 min', frequency: 'Every 2nd or 3rd change', why: 'Prevents fret lift and buzzing.', how: 'Apply small amount F-ONE to cloth, wipe onto bare fretboard, let sit 3-5 min, wipe excess. ⚠️ WARNING: Over-oiling darkens ebony permanently.' },
-                { id: '8w-4', name: 'Nut & Saddle Lubrication', duration: '10 min', frequency: 'Every 8 weeks', why: 'Prevents tuning instability and string "ping".', how: 'Apply Tune-It lubricant to all 6 nut slots with toothpick amounts. Lubricate saddle both sides of each string. Clean old lubricant first.' },
-                { id: '8w-5', name: 'Bridge Pin Cleaning', duration: '5 min', frequency: 'Every 8 weeks', why: 'Dirty pins affect tone transfer and make removal difficult.', how: 'Remove with GRIP Puller, wipe down, or wash with mild soap if sticky. Dry completely before reinstalling.' },
-                { id: '8w-6', name: 'Full Body Detailing', duration: '10 min', frequency: 'Every 8 weeks', why: 'Removes accumulated sweat, oils, fingerprints that damage finish.', how: 'Spray Guitar ONE Detailer on microfiber cloth (never directly on guitar). Wipe entire body in circular motions. Pay special attention to forearm rest area.' },
-                { id: '8w-7', name: 'Hardware Polish', duration: '5 min', frequency: 'Every 8 weeks', why: 'Prevents corrosion that can seize tuners.', how: 'Wipe tuners, bridge pins, chrome parts with Guitar ONE Detailer or chrome polish if oxidation present.' },
-                { id: '8w-8', name: 'Restring', duration: '15 min', frequency: 'Every 8 weeks', why: 'Fresh strings maintain tone and playability.', how: 'Use GRIP String Winder for efficient installation. Stretch strings gently after installation. Retune multiple times over 24 hours.' }
+            sixweek: [
+                { id: '6w-1', name: 'String Removal & Fret Inspection', duration: '15 min', frequency: 'Every 6 weeks', why: 'Inspection during string change catches issues early.', how: 'Use GRIP String Winder and Cutter to remove old strings. Inspect all 20 frets for tarnish (dull appearance) or roughness.' },
+                { id: '6w-2', name: 'Fret Polishing (FRINE Kit)', duration: '20 min', frequency: 'Every 6 weeks', why: 'Tarnished frets cause gritty feeling during bends and damage strings.', how: 'Place GRIP fretboard guard over fret. Apply pea-sized FRINE polish. Rub back-and-forth until oxidation removes. Wipe residue. Repeat all 20 frets.' },
+                { id: '6w-3', name: 'Fretboard Conditioning (F-ONE)', duration: '5 min', frequency: 'Every 2nd or 3rd change', why: 'Prevents fret lift and buzzing.', how: 'Apply small amount F-ONE to cloth, wipe onto bare fretboard, let sit 3-5 min, wipe excess. ⚠️ WARNING: Over-oiling darkens ebony permanently.' },
+                { id: '6w-4', name: 'Nut & Saddle Lubrication', duration: '10 min', frequency: 'Every 6 weeks', why: 'Prevents tuning instability and string "ping".', how: 'Apply Tune-It lubricant to all 6 nut slots with toothpick amounts. Lubricate saddle both sides of each string. Clean old lubricant first.' },
+                { id: '6w-5', name: 'Bridge Pin Cleaning', duration: '5 min', frequency: 'Every 6 weeks', why: 'Dirty pins affect tone transfer and make removal difficult.', how: 'Remove with GRIP Puller, wipe down, or wash with mild soap if sticky. Dry completely before reinstalling.' },
+                { id: '6w-6', name: 'Full Body Detailing', duration: '10 min', frequency: 'Every 6 weeks', why: 'Removes accumulated sweat, oils, fingerprints that damage finish.', how: 'Spray Guitar ONE Detailer on microfiber cloth (never directly on guitar). Wipe entire body in circular motions. Pay special attention to forearm rest area.' },
+                { id: '6w-7', name: 'Hardware Polish', duration: '5 min', frequency: 'Every 6 weeks', why: 'Prevents corrosion that can seize tuners.', how: 'Wipe tuners, bridge pins, chrome parts with Guitar ONE Detailer or chrome polish if oxidation present.' },
+                { id: '6w-8', name: 'Restring', duration: '15 min', frequency: 'Every 6 weeks', why: 'Fresh strings maintain tone and playability.', how: 'Use GRIP String Winder for efficient installation. Stretch strings gently after installation. Retune multiple times over 24 hours.' }
             ],
             quarterly: [
                 { id: 'q-1', name: 'Humidipak Replacement', duration: '5 min', frequency: 'Every 12 weeks', why: 'Packets effective for 2-6 months. Don\'t push beyond effective life.', how: 'Replace both saddle pouch and headstock pouch packets. Monitor replacement frequency based on how quickly they harden.' },
@@ -1462,7 +1299,7 @@
             'GRIP String Winder, Cutter, and Puller',
             '26-piece guitar tech screwdriver/wrench set',
             'Premium microfiber cloths',
-            'D\'Addario EJ16 Phosphor Bronze Light (.012-.053)',
+            'D\'Addario EJ17 Phosphor Bronze Medium (.013-.056)',
             'Kyser Quick-Change Capo (KG6BA)',
             'Levy\'s MSSC8 Cotton Strap + D\'Addario Flex Lock Blocks',
             'Gator GC-GSMINI Molded Case',
@@ -1472,12 +1309,7 @@
 
         // INITIALIZE
         function init() {
-            // Migrate data if needed
-            const migratedData = migrateData();
-
-            // Load migrated data into tasks
             loadData();
-
             renderMaintenanceTasks();
             renderInventoryChecklist();
             updateDashboard();
@@ -1538,61 +1370,6 @@
             }
         }
 
-
-        // VALIDATION FUNCTIONS
-        function validateHumidity(value) {
-            if (value === '' || value === null || value === undefined) {
-                return { valid: false, error: 'Humidity is required' };
-            }
-            const num = parseFloat(value);
-            if (isNaN(num)) {
-                return { valid: false, error: 'Must be a number' };
-            }
-            if (num < 0 || num > 100) {
-                return { valid: false, error: 'Must be between 0-100%' };
-            }
-            if (num > 85) {
-                return { valid: true, value: num, warning: 'Unusually high reading - please verify' };
-            }
-            if (num < 20) {
-                return { valid: true, value: num, warning: 'Unusually low reading - please verify' };
-            }
-            return { valid: true, value: num };
-        }
-
-        function validateTemperature(value) {
-            if (value === '' || value === null || value === undefined) {
-                return { valid: true, value: null }; // Optional field
-            }
-            const num = parseFloat(value);
-            if (isNaN(num)) {
-                return { valid: false, error: 'Must be a number' };
-            }
-            if (num < 32 || num > 120) {
-                return { valid: false, error: 'Temperature outside reasonable range (32-120°F)' };
-            }
-            return { valid: true, value: num };
-        }
-
-        function showFeedback(elementId, message, type) {
-            const el = document.getElementById(elementId);
-            if (el) {
-                el.textContent = message;
-                el.className = 'form-feedback ' + type;
-                el.style.display = 'block';
-                if (type === 'success') {
-                    setTimeout(() => { el.style.display = 'none'; }, 3000);
-                }
-            }
-        }
-
-        function hideFeedback(elementId) {
-            const el = document.getElementById(elementId);
-            if (el) {
-                el.style.display = 'none';
-            }
-        }
-
         function renderMaintenanceTasks() {
             const container = document.getElementById('maintenanceContainer');
             container.innerHTML = '';
@@ -1600,7 +1377,7 @@
             const categories = [
                 { key: 'daily', label: '🟢 Daily Tasks (After Each Session)', color: '--color-daily' },
                 { key: 'weekly', label: '🔵 Weekly Tasks', color: '--color-weekly' },
-                { key: 'eightweek', label: '🟠 8-Week Tasks (String Change & Deep Clean)', color: '--color-8week' },
+                { key: 'sixweek', label: '🟠 6-Week Tasks (String Change & Deep Clean)', color: '--color-6week' },
                 { key: 'quarterly', label: '🔴 Quarterly Tasks (Every 12 Weeks)', color: '--color-quarterly' },
                 { key: 'annual', label: '🟣 Annual Tasks', color: '--color-annual' }
             ];
@@ -1671,8 +1448,8 @@
                 nextDate.setDate(nextDate.getDate() + 1);
             } else if (category === 'weekly') {
                 nextDate.setDate(nextDate.getDate() + 7);
-            } else if (category === 'eightweek') {
-                nextDate.setDate(nextDate.getDate() + 56);
+            } else if (category === 'sixweek') {
+                nextDate.setDate(nextDate.getDate() + 42);
             } else if (category === 'quarterly') {
                 nextDate.setDate(nextDate.getDate() + 84);
             } else if (category === 'annual') {
@@ -1713,38 +1490,14 @@
         function addHumidityReading() {
             const date = document.getElementById('humidityDate').value;
             const time = document.getElementById('humidityTime').value;
-            const humidityInput = document.getElementById('humidityValue').value;
-            const tempInput = document.getElementById('temperatureValue').value;
+            const humidity = parseFloat(document.getElementById('humidityValue').value);
+            const temp = parseFloat(document.getElementById('temperatureValue').value);
             const location = document.getElementById('guitarLocation').value;
 
-            // Validate humidity
-            const humidityResult = validateHumidity(humidityInput);
-            if (!humidityResult.valid) {
-                showFeedback('humidityFeedback', humidityResult.error, 'error');
+            if (!date || !time || isNaN(humidity) || isNaN(temp)) {
+                alert('Please fill in all fields');
                 return;
             }
-
-            // Validate temperature
-            const tempResult = validateTemperature(tempInput);
-            if (!tempResult.valid) {
-                showFeedback('humidityFeedback', tempResult.error, 'error');
-                return;
-            }
-
-            // Show warning if present but continue
-            if (humidityResult.warning) {
-                showFeedback('humidityFeedback', humidityResult.warning, 'warning');
-            } else {
-                hideFeedback('humidityFeedback');
-            }
-
-            if (!date || !time) {
-                showFeedback('humidityFeedback', 'Please enter date and time', 'error');
-                return;
-            }
-
-            const humidity = humidityResult.value;
-            const temp = tempResult.value;
 
             const reading = {
                 id: Date.now(),
@@ -1763,7 +1516,6 @@
 
             document.getElementById('humidityValue').value = '';
             document.getElementById('temperatureValue').value = '';
-            showFeedback('logConfirmation', '✅ Reading logged successfully', 'success');
             updateDashboard();
             renderHumidityTable();
             checkForAlerts();
@@ -1824,7 +1576,7 @@
             // Period completion
             updatePeriodCompletion('daily', '--color-daily');
             updatePeriodCompletion('weekly', '--color-weekly');
-            updatePeriodCompletion('eightweek', '--color-8week');
+            updatePeriodCompletion('sixweek', '--color-6week');
             updatePeriodCompletion('quarterly', '--color-quarterly');
             updatePeriodCompletion('annual', '--color-annual');
 
@@ -1879,7 +1631,7 @@
             // String change counter
             let stringChangeDate = null;
             for (let task of MAINTENANCE_TASKS.sixweek) {
-                if (task.id === '8w-8' && task.lastCompleted) {
+                if (task.id === '6w-8' && task.lastCompleted) {
                     stringChangeDate = new Date(task.lastCompleted);
                     break;
                 }
@@ -1892,7 +1644,7 @@
                 
                 if (daysSince > 56) {
                     document.getElementById('daysSinceChange').style.color = 'var(--color-error)';
-                } else if (daysSince > 49) {
+                } else if (daysSince > 42) {
                     document.getElementById('daysSinceChange').style.color = 'var(--color-warning)';
                 } else {
                     document.getElementById('daysSinceChange').style.color = 'var(--color-success)';
@@ -1980,8 +1732,8 @@
                         nextDate.setDate(nextDate.getDate() + 1);
                     } else if (category === 'weekly') {
                         nextDate.setDate(nextDate.getDate() + 7);
-                    } else if (category === 'eightweek') {
-                        nextDate.setDate(nextDate.getDate() + 56);
+                    } else if (category === 'sixweek') {
+                        nextDate.setDate(nextDate.getDate() + 42);
                     } else if (category === 'quarterly') {
                         nextDate.setDate(nextDate.getDate() + 84);
                     } else if (category === 'annual') {

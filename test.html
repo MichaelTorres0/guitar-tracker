@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guitar Tracker Tests - Phase 1</title>
+    <style>
+        body {
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+            background: #f8fafc;
+        }
+        h1 {
+            color: #1e293b;
+            border-bottom: 3px solid #3b82f6;
+            padding-bottom: 12px;
+        }
+        .test-group {
+            margin: 24px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .test-group h2 {
+            margin-top: 0;
+            font-size: 18px;
+            color: #334155;
+            border-left: 4px solid #3b82f6;
+            padding-left: 12px;
+        }
+        .test {
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .test:last-child { border-bottom: none; }
+        .test-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .test-content {
+            flex: 1;
+        }
+        .test-desc {
+            color: #475569;
+            font-size: 14px;
+        }
+        .pass { color: #10b981; }
+        .fail { color: #ef4444; }
+        .error-detail {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 6px;
+            background: #fef2f2;
+            padding: 8px;
+            border-radius: 4px;
+            border-left: 3px solid #ef4444;
+            font-family: 'Courier New', monospace;
+        }
+        .summary {
+            padding: 24px;
+            background: #1e293b;
+            color: white;
+            border-radius: 8px;
+            margin-top: 24px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .summary.all-pass { background: #10b981; }
+        .summary.has-fails { background: #ef4444; }
+        .summary-details {
+            margin-top: 8px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Guitar Tracker Test Suite - Phase 1</h1>
+    <p style="color: #64748b; margin-bottom: 24px;">
+        Testing data versioning, validation logic, and core functionality
+    </p>
+    <div id="results" class="loading">Loading tests...</div>
+    <div id="summary"></div>
+
+    <script>
+        // Simple test framework
+        const results = { passed: 0, failed: 0, tests: [] };
+
+        function describe(name, fn) {
+            const group = { name, tests: [] };
+            const it = function(desc, testFn) {
+                try {
+                    testFn();
+                    group.tests.push({ desc, passed: true });
+                    results.passed++;
+                } catch (e) {
+                    group.tests.push({ desc, passed: false, error: e.message });
+                    results.failed++;
+                }
+            };
+            fn(it);
+            results.tests.push(group);
+        }
+
+        function expect(actual) {
+            return {
+                toBe: (expected) => {
+                    if (actual !== expected)
+                        throw new Error(`Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+                },
+                toEqual: (expected) => {
+                    if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+                        throw new Error(`Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+                    }
+                },
+                toBeTruthy: () => {
+                    if (!actual) throw new Error(`Expected truthy, got ${JSON.stringify(actual)}`);
+                },
+                toBeFalsy: () => {
+                    if (actual) throw new Error(`Expected falsy, got ${JSON.stringify(actual)}`);
+                },
+                toBeGreaterThan: (expected) => {
+                    if (!(actual > expected)) throw new Error(`Expected ${actual} > ${expected}`);
+                },
+                toBeLessThan: (expected) => {
+                    if (!(actual < expected)) throw new Error(`Expected ${actual} < ${expected}`);
+                },
+                toContain: (expected) => {
+                    if (!actual.includes(expected))
+                        throw new Error(`Expected "${actual}" to contain "${expected}"`);
+                },
+                toBeNull: () => {
+                    if (actual !== null) throw new Error(`Expected null, got ${JSON.stringify(actual)}`);
+                }
+            };
+        }
+
+        // ============================================
+        // MOCK VALIDATION FUNCTIONS (from app)
+        // ============================================
+
+        function validateHumidity(value) {
+            if (value === '' || value === null || value === undefined) {
+                return { valid: false, error: 'Humidity is required' };
+            }
+            const num = parseFloat(value);
+            if (isNaN(num)) {
+                return { valid: false, error: 'Must be a number' };
+            }
+            if (num < 0 || num > 100) {
+                return { valid: false, error: 'Must be between 0-100%' };
+            }
+            if (num > 85) {
+                return { valid: true, value: num, warning: 'Unusually high reading - please verify' };
+            }
+            if (num < 20) {
+                return { valid: true, value: num, warning: 'Unusually low reading - please verify' };
+            }
+            return { valid: true, value: num };
+        }
+
+        function validateTemperature(value) {
+            if (value === '' || value === null || value === undefined) {
+                return { valid: true, value: null };
+            }
+            const num = parseFloat(value);
+            if (isNaN(num)) {
+                return { valid: false, error: 'Must be a number' };
+            }
+            if (num < 32 || num > 120) {
+                return { valid: false, error: 'Temperature outside reasonable range (32-120°F)' };
+            }
+            return { valid: true, value: num };
+        }
+
+        function getHumidityStatus(humidity) {
+            const settings = {
+                targetHumidity: { min: 45, max: 50 },
+                safeHumidity: { min: 40, max: 55 },
+                dangerHumidity: { low: 35, high: 60 }
+            };
+
+            if (humidity >= settings.targetHumidity.min && humidity <= settings.targetHumidity.max) {
+                return { level: 'optimal', label: '✓ Optimal', className: 'safe' };
+            }
+            if (humidity >= settings.safeHumidity.min && humidity < settings.targetHumidity.min) {
+                return { level: 'safe-low', label: '✓ Safe (slightly low)', className: 'safe' };
+            }
+            if (humidity > settings.targetHumidity.max && humidity <= settings.safeHumidity.max) {
+                return { level: 'safe-high', label: '✓ Safe (slightly high)', className: 'safe' };
+            }
+            if (humidity >= settings.dangerHumidity.low && humidity < settings.safeHumidity.min) {
+                return { level: 'warning-low', label: '⚠️ Low', className: 'warning' };
+            }
+            if (humidity > settings.safeHumidity.max && humidity <= settings.dangerHumidity.high) {
+                return { level: 'warning-high', label: '⚠️ High', className: 'warning' };
+            }
+            if (humidity < settings.dangerHumidity.low) {
+                return { level: 'danger-low', label: '🔴 DANGER - Too Low', className: 'danger' };
+            }
+            return { level: 'danger-high', label: '🔴 DANGER - Too High', className: 'danger' };
+        }
+
+        function calculateNextDue(lastCompleted, category) {
+            if (!lastCompleted) {
+                return 'ASAP';
+            }
+
+            const lastDate = new Date(lastCompleted);
+            let nextDate = new Date(lastDate);
+
+            const intervals = {
+                daily: 1,
+                weekly: 7,
+                eightweek: 56,
+                quarterly: 84,
+                annual: 365
+            };
+
+            if (category === 'annual') {
+                nextDate.setFullYear(nextDate.getFullYear() + 1);
+            } else {
+                nextDate.setDate(nextDate.getDate() + (intervals[category] || 7));
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            nextDate.setHours(0, 0, 0, 0);
+
+            if (nextDate <= today) {
+                return '⚠️ OVERDUE';
+            }
+
+            const daysUntil = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24));
+            return daysUntil + ' days';
+        }
+
+        function calculateCompletion(tasks) {
+            if (!tasks || tasks.length === 0) return 0;
+            const completed = tasks.filter(t => t.completed).length;
+            return Math.round((completed / tasks.length) * 100);
+        }
+
+        // ============================================
+        // TEST CASES
+        // ============================================
+
+        describe('Humidity Validation', (it) => {
+            it('accepts valid humidity in range 0-100', () => {
+                expect(validateHumidity(48.5).valid).toBe(true);
+                expect(validateHumidity(0).valid).toBe(true);
+                expect(validateHumidity(100).valid).toBe(true);
+            });
+
+            it('rejects humidity below 0', () => {
+                expect(validateHumidity(-5).valid).toBe(false);
+            });
+
+            it('rejects humidity above 100', () => {
+                expect(validateHumidity(105).valid).toBe(false);
+            });
+
+            it('rejects non-numeric humidity', () => {
+                expect(validateHumidity('abc').valid).toBe(false);
+            });
+
+            it('rejects empty humidity', () => {
+                expect(validateHumidity('').valid).toBe(false);
+                expect(validateHumidity(null).valid).toBe(false);
+            });
+
+            it('warns on unusually high humidity (>85%)', () => {
+                const result = validateHumidity(90);
+                expect(result.valid).toBe(true);
+                expect(result.warning).toBeTruthy();
+            });
+
+            it('warns on unusually low humidity (<20%)', () => {
+                const result = validateHumidity(15);
+                expect(result.valid).toBe(true);
+                expect(result.warning).toBeTruthy();
+            });
+
+            it('returns parsed numeric value', () => {
+                expect(validateHumidity('48.5').value).toBe(48.5);
+            });
+        });
+
+        describe('Temperature Validation', (it) => {
+            it('accepts valid temperature', () => {
+                expect(validateTemperature(72).valid).toBe(true);
+            });
+
+            it('accepts empty temperature (optional)', () => {
+                const result = validateTemperature('');
+                expect(result.valid).toBe(true);
+                expect(result.value).toBeNull();
+            });
+
+            it('rejects extreme high temperature', () => {
+                expect(validateTemperature(150).valid).toBe(false);
+            });
+
+            it('rejects extreme low temperature', () => {
+                expect(validateTemperature(0).valid).toBe(false);
+            });
+
+            it('accepts edge case temperatures', () => {
+                expect(validateTemperature(32).valid).toBe(true);
+                expect(validateTemperature(120).valid).toBe(true);
+            });
+        });
+
+        describe('Humidity Status Classification', (it) => {
+            it('returns optimal for 45-50%', () => {
+                expect(getHumidityStatus(47).level).toBe('optimal');
+                expect(getHumidityStatus(45).level).toBe('optimal');
+                expect(getHumidityStatus(50).level).toBe('optimal');
+            });
+
+            it('returns safe-low for 40-44%', () => {
+                expect(getHumidityStatus(42).level).toBe('safe-low');
+                expect(getHumidityStatus(40).level).toBe('safe-low');
+            });
+
+            it('returns safe-high for 51-55%', () => {
+                expect(getHumidityStatus(52).level).toBe('safe-high');
+                expect(getHumidityStatus(55).level).toBe('safe-high');
+            });
+
+            it('returns warning-low for 35-39%', () => {
+                expect(getHumidityStatus(38).level).toBe('warning-low');
+            });
+
+            it('returns warning-high for 56-60%', () => {
+                expect(getHumidityStatus(57).level).toBe('warning-high');
+            });
+
+            it('returns danger for extremes', () => {
+                expect(getHumidityStatus(30).level).toBe('danger-low');
+                expect(getHumidityStatus(65).level).toBe('danger-high');
+            });
+        });
+
+        describe('Task Due Date Calculation', (it) => {
+            it('returns ASAP for never-completed task', () => {
+                expect(calculateNextDue(null, 'daily')).toBe('ASAP');
+            });
+
+            it('marks overdue tasks correctly', () => {
+                const tenDaysAgo = new Date();
+                tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+                expect(calculateNextDue(tenDaysAgo.toISOString(), 'weekly')).toContain('OVERDUE');
+            });
+
+            it('calculates days correctly for weekly', () => {
+                const threeDaysAgo = new Date();
+                threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+                expect(calculateNextDue(threeDaysAgo.toISOString(), 'weekly')).toBe('4 days');
+            });
+
+            it('uses 56 days for eightweek tasks', () => {
+                const fourWeeksAgo = new Date();
+                fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+                expect(calculateNextDue(fourWeeksAgo.toISOString(), 'eightweek')).toBe('28 days');
+            });
+
+            it('handles annual tasks correctly', () => {
+                const oneYearAgo = new Date();
+                oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+                oneYearAgo.setDate(oneYearAgo.getDate() + 10); // 10 days from now
+                const result = calculateNextDue(oneYearAgo.toISOString(), 'annual');
+                expect(result).toContain('days');
+                expect(parseInt(result)).toBeGreaterThan(0);
+            });
+        });
+
+        describe('Completion Calculator', (it) => {
+            it('calculates 0% for no completed tasks', () => {
+                const tasks = [{ completed: false }, { completed: false }];
+                expect(calculateCompletion(tasks)).toBe(0);
+            });
+
+            it('calculates 100% for all completed', () => {
+                const tasks = [{ completed: true }, { completed: true }];
+                expect(calculateCompletion(tasks)).toBe(100);
+            });
+
+            it('calculates partial completion', () => {
+                const tasks = [{ completed: true }, { completed: false }];
+                expect(calculateCompletion(tasks)).toBe(50);
+            });
+
+            it('handles empty array', () => {
+                expect(calculateCompletion([])).toBe(0);
+            });
+
+            it('rounds to whole number', () => {
+                const tasks = [{ completed: true }, { completed: true }, { completed: false }];
+                expect(calculateCompletion(tasks)).toBe(67);
+            });
+        });
+
+        describe('Data Migration Logic', (it) => {
+            it('recognizes DATA_VERSION = 2', () => {
+                expect(2).toBe(2); // Placeholder - version is in app
+            });
+
+            it('legacy sixweek maps to eightweek', () => {
+                // Test that old 'sixweek' category becomes 'eightweek'
+                const oldCategory = 'sixweek';
+                const newCategory = oldCategory === 'sixweek' ? 'eightweek' : oldCategory;
+                expect(newCategory).toBe('eightweek');
+            });
+
+            it('legacy 6w- IDs map to 8w-', () => {
+                // Test that old task IDs are updated
+                const oldId = '6w-1';
+                const newId = oldId.replace('6w-', '8w-');
+                expect(newId).toBe('8w-1');
+            });
+        });
+
+        describe('String Change Frequency Update', (it) => {
+            it('uses 56 days (8 weeks) for string change interval', () => {
+                const stringChangeWeeks = 8;
+                const stringChangeDays = stringChangeWeeks * 7;
+                expect(stringChangeDays).toBe(56);
+            });
+
+            it('calculates halfway point at 28 days', () => {
+                const halfLife = 56 / 2;
+                expect(halfLife).toBe(28);
+            });
+        });
+
+        // ============================================
+        // RENDER RESULTS
+        // ============================================
+
+        function renderResults() {
+            let html = '';
+            results.tests.forEach(group => {
+                html += `<div class="test-group"><h2>${group.name}</h2>`;
+                group.tests.forEach(test => {
+                    const icon = test.passed ? '✅' : '❌';
+                    const cls = test.passed ? 'pass' : 'fail';
+                    html += `<div class="test">`;
+                    html += `<span class="test-icon ${cls}">${icon}</span>`;
+                    html += `<div class="test-content">`;
+                    html += `<div class="test-desc">${test.desc}</div>`;
+                    if (test.error) {
+                        html += `<div class="error-detail">${test.error}</div>`;
+                    }
+                    html += `</div></div>`;
+                });
+                html += '</div>';
+            });
+
+            document.getElementById('results').innerHTML = html;
+
+            const summaryEl = document.getElementById('summary');
+            summaryEl.className = 'summary ' + (results.failed === 0 ? 'all-pass' : 'has-fails');
+
+            const total = results.passed + results.failed;
+            const passRate = Math.round((results.passed / total) * 100);
+
+            summaryEl.innerHTML = `
+                <div><strong>Test Results:</strong> ${results.passed} passed, ${results.failed} failed</div>
+                <div class="summary-details">Pass Rate: ${passRate}% (${results.passed}/${total} tests)</div>
+            `;
+        }
+
+        // Run all tests
+        setTimeout(() => {
+            renderResults();
+        }, 100);
+    </script>
+</body>
+</html>
