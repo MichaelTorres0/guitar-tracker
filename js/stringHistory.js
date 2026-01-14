@@ -124,6 +124,8 @@ export function initStringHistory() {
 }
 
 // Expose functions to window
-window.saveStringChange = saveStringChange;
-window.saveStringChangeBrand = saveStringChangeBrand;
-window.showStringBrandPrompt = showStringBrandPrompt;
+if (typeof window !== 'undefined') {
+    window.saveStringChange = saveStringChange;
+    window.saveStringChangeBrand = saveStringChangeBrand;
+    window.showStringBrandPrompt = showStringBrandPrompt;
+}

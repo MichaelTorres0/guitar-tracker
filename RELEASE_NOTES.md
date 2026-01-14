@@ -1,4 +1,52 @@
-# Guitar Tracker - Release Notes v2.0
+# Guitar Tracker - Release Notes
+
+---
+
+# v2.1.1 - Test Infrastructure Fixes
+
+**Release Date:** January 2026
+
+## Summary
+
+This patch release fixes critical issues with the test infrastructure that prevented tests from running in Node.js environments. The core application functionality is unchanged.
+
+## Bug Fixes
+
+### Test Environment Compatibility
+- **Fixed:** Module-level `window` assignments causing `ReferenceError: window is not defined` in Node.js
+- **Affected files:** `ui.js`, `sessions.js`, `onboarding.js`, `stringHistory.js`
+- **Solution:** Wrapped all window assignments with `if (typeof window !== 'undefined')` checks
+
+### Humidity Display Fix
+- **Fixed:** Null temperature values displaying as `null°F` in humidity log table
+- **Solution:** Added null check with fallback to em-dash (`—`) for missing temperature values
+
+### Test Setup Improvements
+- **Fixed:** Test modules loading before global DOM environment was configured
+- **Solution:** Converted `test-setup.js` to use dynamic imports, ensuring globals are set first
+- **Added:** LocalStorage mock for reliable test execution
+
+## Technical Details
+
+| Metric | Value |
+|--------|-------|
+| Files Modified | 6 |
+| Tests Passing | 48/62 |
+| Breaking Changes | None |
+
+## Files Changed
+
+1. `js/ui.js:169-179` - Window assignment wrapped
+2. `js/sessions.js:125-129` - Window assignment wrapped
+3. `js/onboarding.js:212-220` - Window assignment wrapped
+4. `js/stringHistory.js:126-131` - Window assignment wrapped
+5. `js/humidity.js:138` - Null temperature handling
+6. `tests/test-setup.js` - Dynamic imports
+7. `tests/test.js` - LocalStorage mock, async setup
+
+---
+
+# v2.0 - Major Feature Release
 
 ## Overview
 
