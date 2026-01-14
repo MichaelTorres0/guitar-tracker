@@ -135,7 +135,7 @@ export function renderHumidityTable(filteredReadings = null) {
             <tr>
                 <td>${dateStr} ${timeStr}</td>
                 <td><strong>${reading.humidity}%</strong></td>
-                <td>${reading.temp}°F</td>
+                <td>${reading.temp != null ? reading.temp + '°F' : '—'}</td>
                 <td>${reading.location === 'case' ? 'Case' : 'Out'}</td>
                 <td>${statusBadge}</td>
                 <td><button class="btn-secondary delete-humidity-btn" data-id="${reading.id}" style="padding: 4px 8px; font-size: 12px;">×</button></td>
