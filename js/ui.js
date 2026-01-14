@@ -167,14 +167,16 @@ export function renderInventoryChecklist() {
 }
 
 // Delete equipment item (exposed to window)
-window.deleteEquipment = function(index) {
-    if (confirm('Delete this equipment item?')) {
-        const data = getVersionedData();
-        data.equipmentList.splice(index, 1);
-        saveVersionedData(data);
-        renderInventoryChecklist();
-    }
-};
+if (typeof window !== 'undefined') {
+    window.deleteEquipment = function(index) {
+        if (confirm('Delete this equipment item?')) {
+            const data = getVersionedData();
+            data.equipmentList.splice(index, 1);
+            saveVersionedData(data);
+            renderInventoryChecklist();
+        }
+    };
+}
 
 export function updateDashboard() {
     // Update playing schedule in header if set

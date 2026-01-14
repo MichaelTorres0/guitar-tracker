@@ -210,9 +210,11 @@ export function initOnboarding() {
 }
 
 // Expose functions to window for onclick handlers
-window.nextOnboardingStep = nextOnboardingStep;
-window.previousOnboardingStep = previousOnboardingStep;
-window.skipStringDate = skipStringDate;
-window.setHasHygrometer = setHasHygrometer;
-window.skipOnboarding = skipOnboarding;
-window.completeOnboarding = completeOnboarding;
+if (typeof window !== 'undefined') {
+    window.nextOnboardingStep = nextOnboardingStep;
+    window.previousOnboardingStep = previousOnboardingStep;
+    window.skipStringDate = skipStringDate;
+    window.setHasHygrometer = setHasHygrometer;
+    window.skipOnboarding = skipOnboarding;
+    window.completeOnboarding = completeOnboarding;
+}

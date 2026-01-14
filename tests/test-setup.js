@@ -1,13 +1,25 @@
-// Import modules directly and expose to window
-import { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS, DATA_VERSION } from '../js/config.js';
-import { migrateData, loadData, saveData } from '../js/storage.js';
-import { toggleTask, quickActionJustPlayed, calculateNextDue, resetDailyTasks, resetWeeklyTasks, confirmReset, recordInspection, getAllNextDueDates } from '../js/tasks.js';
-import { validateHumidity, validateTemperature } from '../js/validators.js';
-import { addHumidityReadingSimplified, deleteHumidityReading, checkForAlerts, drawHumidityChart } from '../js/humidity.js';
-import { renderCalendar, toggleTheme, updateDashboard, switchTab, openBridgeRecommendations, closeBridgeModal, openActionRecommendations, closeActionModal, openFretRecommendations, closeFretModal } from '../js/ui.js';
-import { exportAsCSV, exportAsJSON, downloadFile } from '../js/export.js';
+// Test setup - dynamically import modules after globals are set
+// This function must be called AFTER global.window, global.localStorage, etc. are set
 
-export function setupWindow(window) {
+export async function setupWindow(win) {
+    // Set up global references for modules that use global localStorage/document
+    global.window = win;
+    global.document = win.document;
+    global.localStorage = win.localStorage;
+    global.alert = win.alert || (() => {});
+    global.confirm = win.confirm || (() => true);
+
+    const window = win;
+
+    // Now dynamically import modules after globals are set
+    const { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS, DATA_VERSION } = await import('../js/config.js');
+    const { migrateData, loadData, saveData } = await import('../js/storage.js');
+    const { toggleTask, quickActionJustPlayed, calculateNextDue, resetDailyTasks, resetWeeklyTasks, confirmReset, recordInspection, getAllNextDueDates } = await import('../js/tasks.js');
+    const { validateHumidity, validateTemperature } = await import('../js/validators.js');
+    const { addHumidityReadingSimplified, deleteHumidityReading, checkForAlerts, drawHumidityChart } = await import('../js/humidity.js');
+    const { renderCalendar, toggleTheme, updateDashboard, switchTab, openBridgeRecommendations, closeBridgeModal, openActionRecommendations, closeActionModal, openFretRecommendations, closeFretModal } = await import('../js/ui.js');
+    const { exportAsCSV, exportAsJSON, downloadFile } = await import('../js/export.js');
+
     window.MAINTENANCE_TASKS = MAINTENANCE_TASKS;
     window.EQUIPMENT_ITEMS = EQUIPMENT_ITEMS;
     window.STORAGE_KEYS = STORAGE_KEYS;

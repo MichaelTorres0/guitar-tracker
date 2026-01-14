@@ -66,10 +66,11 @@ Each task includes expandable "Why" and "How" explanations.
 ## Technical Details
 
 - **ES modules architecture** with separate CSS and JS files
-- **localStorage** for offline-capable data persistence (versioned schema v2)
+- **localStorage** for offline-capable data persistence (versioned schema v3)
 - **No external dependencies** (vanilla JavaScript)
 - **Mobile-first design** optimized for iPhone Safari
 - **62 tests** for validation and business logic
+- **Node.js compatible** - Window assignments wrapped for test environment support
 
 **NEW in v2.1:**
 - **Fully responsive** with breakpoints for 480px, 375px (iPhone SE)
@@ -115,18 +116,23 @@ guitar-tracker/
 ├── js/
 │   ├── app.js           # Entry point, init
 │   ├── config.js        # Task definitions, thresholds
-│   ├── storage.js       # Data persistence, migration
+│   ├── storage.js       # Data persistence, migration (v3)
 │   ├── validators.js    # Input validation
 │   ├── humidity.js      # Humidity features
 │   ├── tasks.js         # Task management
 │   ├── ui.js            # DOM rendering
-│   └── export.js        # Export functions
+│   ├── export.js        # Export functions
+│   ├── onboarding.js    # First-time user wizard (v2.0)
+│   ├── sessions.js      # Playing session tracking (v2.0)
+│   └── stringHistory.js # String change history (v2.0)
 ├── tests/
-│   └── test.js          # Test suite
-├── test.html            # Test runner
+│   ├── test.js          # Test suite (62 tests)
+│   └── test-setup.js    # Test environment setup
+├── test.html            # Browser test runner
 ├── manifest.json        # PWA manifest
 ├── CLAUDE.md            # Development guidelines
 ├── SPECIFICATION.md     # Full feature specification
+├── RELEASE_NOTES.md     # Version history
 └── README.md            # This file
 ```
 
@@ -136,4 +142,10 @@ This project is for personal use.
 
 ## Version
 
-v2.1 - January 2026 (UX Improvements Update)
+v2.1.1 - January 2026 (Test Infrastructure Fixes)
+
+### Recent Changes (v2.1.1)
+- Fixed Node.js compatibility for test environment
+- Window assignments now wrapped with `typeof window !== 'undefined'` checks
+- Fixed null temperature display in humidity log table
+- Improved test setup with dynamic module loading

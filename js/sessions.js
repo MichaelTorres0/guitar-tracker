@@ -123,5 +123,7 @@ export function initSessions() {
 }
 
 // Expose functions to window
-window.logSessionWithDuration = logPlayingSession;
-window.showSessionModal = showSessionModal;
+if (typeof window !== 'undefined') {
+    window.logSessionWithDuration = logPlayingSession;
+    window.showSessionModal = showSessionModal;
+}
