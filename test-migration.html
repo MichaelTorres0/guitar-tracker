@@ -16,6 +16,7 @@
 <body>
     <h1>🧪 Guitar Tracker - Migration Test</h1>
 
+    <button onclick="testV3ToV4Migration()">Test v3→v4 Migration</button>
     <button onclick="testV2ToV3Migration()">Test v2→v3 Migration</button>
     <button onclick="testFreshInstall()">Test Fresh Install</button>
     <button onclick="clearStorage()">Clear All Data</button>
@@ -24,7 +25,7 @@
 
     <script type="module">
         import { DATA_VERSION } from './js/config.js';
-        import { migrateData, getVersionedData, migrateV2ToV3, createDefaultData } from './js/storage.js';
+        import { migrateData, getVersionedData, migrateV2ToV3, migrateV3ToV4, createDefaultData } from './js/storage.js';
 
         window.log = (msg, pass = true) => {
             const div = document.createElement('div');
@@ -55,8 +56,8 @@
             window.logData('Default Data Created', data);
 
             // Verify structure
-            if (data.version === 3) window.log('✓ Version is 3');
-            else window.log('✗ Version should be 3, got ' + data.version, false);
+            if (data.version === 4) window.log('✓ Version is 4');
+            else window.log('✗ Version should be 4, got ' + data.version, false);
 
             if (data.onboardingComplete === false) window.log('✓ onboardingComplete initialized');
             else window.log('✗ onboardingComplete should be false', false);
@@ -139,6 +140,92 @@
 
             if (migrated.humidityReadings.length === 1) window.log('✓ Existing data preserved');
             else window.log('✗ Existing data not preserved', false);
+        };
+
+        window.testV3ToV4Migration = () => {
+            document.getElementById('results').innerHTML = '';
+            localStorage.clear();
+
+            window.log('Testing v3→v4 migration...');
+
+            // Simulate v3 data
+            const v3Data = {
+                version: 3,
+                guitars: [{ id: 'default', name: 'Taylor GS Mini Sapele' }],
+                activeGuitarId: 'default',
+                maintenanceStates: {},
+                humidityReadings: [
+                    { humidity: 47, temp: 70, timestamp: Date.now(), guitarId: 'default' }
+                ],
+                inspectionData: {},
+                onboardingComplete: true,
+                playingFrequency: 'weekly',
+                playingHoursPerWeek: 2.5,
+                hasHygrometer: true,
+                playingSessions: [
+                    { timestamp: Date.now() - 86400000, duration: 30 },
+                    { timestamp: Date.now(), duration: 45 }
+                ],
+                stringChangeHistory: [
+                    { date: Date.now() - 5184000000, brand: 'D\'Addario EJ16', daysFromPrevious: null },
+                    { date: Date.now(), brand: 'Elixir', daysFromPrevious: 60 }
+                ],
+                equipmentList: ['Item 1', 'Item 2'],
+                currentStringType: 'EJ16',
+                lastStringChangeDate: null
+            };
+
+            localStorage.setItem('guitarTrackerData', JSON.stringify(v3Data));
+
+            window.log('Created v3 data');
+
+            // Run migration
+            const migrated = migrateV3ToV4(v3Data);
+
+            window.logData('Migrated Data', migrated);
+
+            // Verify migration
+            if (migrated.version === 4) window.log('✓ Version upgraded to 4');
+            else window.log('✗ Version should be 4, got ' + migrated.version, false);
+
+            // Check v4 features
+            if (migrated.timerState && typeof migrated.timerState.running === 'boolean') {
+                window.log('✓ timerState initialized');
+            } else {
+                window.log('✗ timerState not initialized correctly', false);
+            }
+
+            if (Array.isArray(migrated.practiceHistory)) {
+                window.log('✓ practiceHistory initialized');
+            } else {
+                window.log('✗ practiceHistory not initialized correctly', false);
+            }
+
+            if (migrated.inventory && Array.isArray(migrated.inventory.items)) {
+                window.log('✓ inventory initialized');
+            } else {
+                window.log('✗ inventory not initialized correctly', false);
+            }
+
+            // Check existing string change history has notes field
+            if (migrated.stringChangeHistory && migrated.stringChangeHistory.length > 0) {
+                const hasNotes = migrated.stringChangeHistory.every(entry => 'notes' in entry);
+                if (hasNotes) {
+                    window.log('✓ stringChangeHistory entries have notes field');
+                } else {
+                    window.log('✗ stringChangeHistory entries missing notes field', false);
+                }
+            }
+
+            // Verify all v3 data preserved
+            if (migrated.onboardingComplete === true) window.log('✓ v3 data preserved');
+            else window.log('✗ v3 data not preserved', false);
+
+            if (migrated.playingSessions.length === 2) window.log('✓ playingSessions preserved');
+            else window.log('✗ playingSessions not preserved', false);
+
+            if (migrated.humidityReadings.length === 1) window.log('✓ humidityReadings preserved');
+            else window.log('✗ humidityReadings not preserved', false);
         };
     </script>
 </body>
