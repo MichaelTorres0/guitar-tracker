@@ -10,7 +10,6 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-import { setupWindow } from './test-setup.js';
 
 // Test results tracking
 let passed = 0;
@@ -60,23 +59,63 @@ function assertArrayLength(arr, length, message = '') {
     }
 }
 
+// Simple in-memory localStorage implementation for testing
+class LocalStorageMock {
+    constructor() {
+        this.store = {};
+    }
+    clear() {
+        this.store = {};
+    }
+    getItem(key) {
+        return this.store[key] || null;
+    }
+    setItem(key, value) {
+        this.store[key] = String(value);
+    }
+    removeItem(key) {
+        delete this.store[key];
+    }
+    get length() {
+        return Object.keys(this.store).length;
+    }
+    key(index) {
+        return Object.keys(this.store)[index] || null;
+    }
+}
 
-// Load and setup the DOM environment
-function setupDOM() {
+// Setup DOM environment BEFORE importing modules
+function setupGlobalDOM() {
     const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
     // Remove the script tag to prevent module loading issues
     const htmlWithoutScript = html.replace(/<script type="module".*?<\/script>/s, '');
-    
+
     const dom = new JSDOM(htmlWithoutScript, {
         runScripts: 'outside-only',
         pretendToBeVisual: true,
         url: 'file://' + path.join(__dirname, '..') + '/'
     });
 
-    // Manually setup window with our modules
-    setupWindow(dom.window);
-    
-    return Promise.resolve(dom);
+    // Create localStorage mock if not available
+    const localStorageMock = new LocalStorageMock();
+
+    // Set up global references BEFORE modules are imported
+    global.window = dom.window;
+    global.document = dom.window.document;
+    global.localStorage = dom.window.localStorage || localStorageMock;
+    global.alert = () => {};
+    global.confirm = () => true;
+    global.HTMLElement = dom.window.HTMLElement;
+    global.Element = dom.window.Element;
+    global.Node = dom.window.Node;
+    global.URL = dom.window.URL;
+
+    // Also set on the window object
+    if (!dom.window.localStorage) {
+        dom.window.localStorage = localStorageMock;
+    }
+
+    return dom;
 }
 
 // ==================== TEST SUITES ====================
@@ -85,12 +124,17 @@ async function runTests() {
     console.log('\n🎸 Guitar Tracker Test Suite\n');
     console.log('='.repeat(50));
 
-    const dom = await setupDOM();
+    // Setup DOM globals first
+    const dom = setupGlobalDOM();
     const { window } = dom;
     const { document } = window;
 
-    // Make functions available globally for testing
-    const localStorage = window.localStorage;
+    // Now dynamically import modules after globals are set up
+    const { setupWindow } = await import('./test-setup.js');
+    await setupWindow(window);
+
+    // Use global.localStorage for tests (set by setupWindow)
+    const localStorage = global.localStorage;
 
     // ==================== HTML Structure Tests ====================
     console.log('\n📄 HTML Structure Tests');
@@ -319,12 +363,12 @@ async function runTests() {
 
         // Should show alert, not add reading
         let alertCalled = false;
-        const originalAlert = window.alert;
-        window.alert = () => { alertCalled = true; };
+        const originalAlert = global.alert;
+        global.alert = () => { alertCalled = true; };
 
         window.addHumidityReadingSimplified();
 
-        window.alert = originalAlert;
+        global.alert = originalAlert;
 
         const newCount = JSON.parse(localStorage.getItem('humidityReadings') || '[]').length;
         assertEqual(newCount, initialCount, 'No new reading should be added for invalid input');
