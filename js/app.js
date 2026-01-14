@@ -9,6 +9,7 @@ import { validateHumidity, validateTemperature } from './validators.js';
 import { initOnboarding } from './onboarding.js';
 import { initSessions, showSessionModal } from './sessions.js';
 import { initStringHistory } from './stringHistory.js';
+import { renderInventory, updateRestockAlerts } from './inventory.js';
 
 // Guitar settings functions
 function loadGuitarSettings() {
@@ -91,6 +92,7 @@ export function init() {
 
     renderMaintenanceTasks();
     renderInventoryChecklist();
+    renderInventory();
     updateDashboard();
     setDefaultDate();
     initBackupRestore();
@@ -98,13 +100,8 @@ export function init() {
 
 // Set up event handlers
 function setupEventHandlers() {
-    // Just Played button - now shows session duration modal
-    const justPlayedBtn = document.querySelector('.btn-just-played');
-    if (justPlayedBtn) {
-        justPlayedBtn.addEventListener('click', () => {
-            showSessionModal();
-        });
-    }
+    // Just Played button - timer display sets the handler dynamically
+    // No need to set up event handler here anymore
 
     // Theme toggle
     const themeToggle = document.querySelector('.theme-toggle');
