@@ -23,6 +23,9 @@ export function toggleTask(taskId) {
             if (task.completed) {
                 task.lastCompleted = new Date().toISOString();
 
+                // Check for linked inventory items and prompt to decrement
+                checkAndPromptInventoryDecrement(taskId);
+
                 // If this is the string change task, show brand prompt
                 if (taskId === '8w-8' && window.showStringBrandPrompt) {
                     window.showStringBrandPrompt();
@@ -33,6 +36,43 @@ export function toggleTask(taskId) {
         }
     }
     return null;
+}
+
+// Check for linked inventory and prompt to decrement
+function checkAndPromptInventoryDecrement(taskId) {
+    // Dynamically import inventory module to avoid circular dependency
+    import('./inventory.js').then(({ getItemByTask, decrementInventory, renderInventory, updateRestockAlerts }) => {
+        const linkedItem = getItemByTask(taskId);
+
+        if (linkedItem) {
+            if (linkedItem.count > 0) {
+                const shouldDecrement = confirm(
+                    `Deduct 1 ${linkedItem.name} from inventory?\n\nCurrent count: ${linkedItem.count}`
+                );
+
+                if (shouldDecrement) {
+                    decrementInventory(linkedItem.id);
+                    renderInventory();
+                    updateRestockAlerts();
+
+                    // Show success message
+                    setTimeout(() => {
+                        alert(`✓ ${linkedItem.name} count updated: ${linkedItem.count} → ${linkedItem.count - 1}`);
+                    }, 100);
+                }
+            } else {
+                // Warn about out of stock
+                const shouldAddToList = confirm(
+                    `You're out of ${linkedItem.name}!\n\nWould you like to be reminded to restock?`
+                );
+
+                if (shouldAddToList) {
+                    // The item is already at 0, so restock alert will show automatically
+                    updateRestockAlerts();
+                }
+            }
+        }
+    });
 }
 
 // Set custom completion date for backdating

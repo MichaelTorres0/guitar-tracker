@@ -2,6 +2,8 @@
 import { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS } from './config.js';
 import { calculateNextDue, getAllNextDueDates, isCompletedWithinPeriod, getRelativeTimeAgo } from './tasks.js';
 import { getVersionedData, saveVersionedData, getVersionedField } from './storage.js';
+import { calculatePracticeStreak, getStreakEmoji, getThisWeekHours } from './sessions.js';
+import { updateRestockAlerts } from './inventory.js';
 
 const HUMIDITY_KEY = STORAGE_KEYS.legacy.humidity;
 
@@ -397,9 +399,10 @@ export function updateDashboard() {
         daysSinceChangeEl.style.fontSize = '14px';
     }
 
-    // String Life Calculator
+    // String Life Calculator with Health Ring
     const stringLifeTextEl = document.getElementById('stringLifeText');
-    const stringLifeFillEl = document.getElementById('stringLifeFill');
+    const ringProgressEl = document.getElementById('ringProgress');
+    const ringTextEl = document.getElementById('ringText');
     const stringLifeEstimateEl = document.getElementById('stringLifeEstimate');
 
     if (stringChangeDate) {
@@ -408,33 +411,45 @@ export function updateDashboard() {
         const targetDays = 56; // 8 weeks
         const percentage = Math.min(Math.round((daysSince / targetDays) * 100), 100);
 
-        if (stringLifeTextEl) stringLifeTextEl.textContent = `Strings at ${percentage}% life`;
-        if (stringLifeFillEl) {
-            stringLifeFillEl.style.width = percentage + '%';
+        // Update ring
+        if (ringProgressEl && ringTextEl) {
+            ringProgressEl.setAttribute('stroke-dasharray', `${percentage}, 100`);
+            ringTextEl.textContent = `${percentage}%`;
+
+            // Set ring color based on percentage
+            let ringColor = '#22c55e'; // green
             if (percentage >= 100) {
-                stringLifeFillEl.className = 'string-life-fill danger';
-            } else if (percentage >= 85) {
-                stringLifeFillEl.className = 'string-life-fill warning';
-            } else {
-                stringLifeFillEl.className = 'string-life-fill safe';
+                ringColor = '#ef4444'; // red
+            } else if (percentage >= 75) {
+                ringColor = '#f59e0b'; // yellow/orange
             }
+            ringProgressEl.setAttribute('stroke', ringColor);
         }
 
+        if (stringLifeTextEl) stringLifeTextEl.textContent = `Strings at ${percentage}% life`;
+
         const daysRemaining = Math.max(targetDays - daysSince, 0);
+        const weeksRemaining = Math.round(daysRemaining / 7);
+
         if (stringLifeEstimateEl) {
-            if (daysRemaining > 0) {
-                stringLifeEstimateEl.innerHTML = `Change recommended in ${daysRemaining} days`;
+            if (daysRemaining > 14) {
+                stringLifeEstimateEl.innerHTML = `~${weeksRemaining} weeks remaining<br><span style="font-size: 11px;">Based on 2.5 hrs/week</span>`;
+            } else if (daysRemaining > 1) {
+                stringLifeEstimateEl.innerHTML = `~${daysRemaining} days remaining<br><span style="font-size: 11px;">Based on 2.5 hrs/week</span>`;
             } else {
-                stringLifeEstimateEl.innerHTML = '<strong style="color: var(--color-error);">⚠️ String change overdue</strong>';
+                stringLifeEstimateEl.innerHTML = '<strong style="color: var(--color-error);">Change strings soon!</strong>';
             }
             stringLifeEstimateEl.classList.remove('empty-state');
         }
     } else {
         // Empty state for string life
         if (stringLifeTextEl) stringLifeTextEl.innerHTML = '<span class="empty-state">Complete setup to start tracking</span>';
-        if (stringLifeFillEl) {
-            stringLifeFillEl.style.width = '0%';
-            stringLifeFillEl.className = 'string-life-fill safe';
+        if (ringProgressEl) {
+            ringProgressEl.setAttribute('stroke-dasharray', '0, 100');
+            ringProgressEl.setAttribute('stroke', '#22c55e');
+        }
+        if (ringTextEl) {
+            ringTextEl.textContent = '0%';
         }
         if (stringLifeEstimateEl) {
             stringLifeEstimateEl.innerHTML = '<span class="empty-state">Log a string change to activate calculator</span>';
@@ -443,6 +458,30 @@ export function updateDashboard() {
 
     // Calendar
     renderCalendar();
+
+    // Practice Streak
+    updatePracticeStreak();
+
+    // Restock Alerts
+    updateRestockAlerts();
+}
+
+// Update practice streak display
+function updatePracticeStreak() {
+    const streakEl = document.getElementById('practiceStreak');
+    if (!streakEl) return;
+
+    const streak = calculatePracticeStreak();
+    const weeklyHours = getThisWeekHours();
+    const emoji = getStreakEmoji(streak);
+
+    if (streak === 0) {
+        streakEl.innerHTML = 'No streak yet — play today! • This week: ' + weeklyHours + ' hrs';
+        streakEl.style.color = 'var(--color-text-light)';
+    } else {
+        streakEl.innerHTML = emoji + ' ' + streak + ' day streak • This week: ' + weeklyHours + ' hrs';
+        streakEl.style.color = 'var(--color-success)';
+    }
 }
 
 function updatePeriodCompletion(category, colorVar) {
