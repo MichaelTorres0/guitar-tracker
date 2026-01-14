@@ -1,7 +1,7 @@
 // Main application entry point
 import { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS, DATA_VERSION } from './config.js';
 import { migrateData, loadData, saveData } from './storage.js';
-import { toggleTask, quickActionJustPlayed, resetDailyTasks, resetWeeklyTasks, confirmReset, recordInspection, setDefaultDate, calculateNextDue } from './tasks.js';
+import { toggleTask, quickActionJustPlayed, resetDailyTasks, resetWeeklyTasks, confirmReset, recordInspection, setDefaultDate, calculateNextDue, setCustomCompletionDate } from './tasks.js';
 import { addHumidityReading, addHumidityReadingSimplified, deleteHumidityReading, renderHumidityTable, checkForAlerts, drawHumidityChart, applyHumidityFilters, clearHumidityFilters, getFilteredReadings } from './humidity.js';
 import { renderMaintenanceTasks, renderInventoryChecklist, updateDashboard, switchTab, toggleTheme, toggleExpand, openBridgeRecommendations, closeBridgeModal, openActionRecommendations, closeActionModal, openFretRecommendations, closeFretModal } from './ui.js';
 import { exportAsCSV, exportAsJSON, createBackup, initBackupRestore } from './export.js';
@@ -9,6 +9,77 @@ import { validateHumidity, validateTemperature } from './validators.js';
 import { initOnboarding } from './onboarding.js';
 import { initSessions, showSessionModal } from './sessions.js';
 import { initStringHistory } from './stringHistory.js';
+
+// Guitar settings functions
+function loadGuitarSettings() {
+    import('./storage.js').then(({ getVersionedField, MAINTENANCE_TASKS }) => {
+        const stringTypeInput = document.getElementById('currentStringType');
+        const stringDateInput = document.getElementById('lastStringChangeDate');
+
+        if (stringTypeInput) {
+            const currentStringType = getVersionedField('currentStringType', 'D\'Addario EJ16 Phosphor Bronze Light (.012-.053)');
+            stringTypeInput.value = currentStringType;
+        }
+
+        if (stringDateInput) {
+            // Try to get from versioned data first
+            let lastChangeDate = getVersionedField('lastStringChangeDate', null);
+
+            // If not found, check the 8-week string change task
+            if (!lastChangeDate) {
+                const stringChangeTask = MAINTENANCE_TASKS.eightweek.find(t => t.id === '8w-8');
+                if (stringChangeTask && stringChangeTask.lastCompleted) {
+                    lastChangeDate = new Date(stringChangeTask.lastCompleted).toISOString().split('T')[0];
+                }
+            }
+
+            if (lastChangeDate) {
+                // Convert to YYYY-MM-DD format if needed
+                const date = new Date(lastChangeDate);
+                stringDateInput.value = date.toISOString().split('T')[0];
+            }
+        }
+    });
+}
+
+function saveGuitarSettings() {
+    import('./storage.js').then(({ getVersionedData, saveVersionedData }) => {
+        const stringTypeInput = document.getElementById('currentStringType');
+        const stringDateInput = document.getElementById('lastStringChangeDate');
+
+        const data = getVersionedData();
+
+        if (stringTypeInput) {
+            data.currentStringType = stringTypeInput.value.trim() || 'D\'Addario EJ16 Phosphor Bronze Light (.012-.053)';
+        }
+
+        if (stringDateInput && stringDateInput.value) {
+            data.lastStringChangeDate = stringDateInput.value;
+
+            // Also update the 8-week string change task
+            const stringChangeTask = MAINTENANCE_TASKS.eightweek.find(t => t.id === '8w-8');
+            if (stringChangeTask) {
+                stringChangeTask.completed = true;
+                stringChangeTask.lastCompleted = new Date(stringDateInput.value).toISOString();
+            }
+        }
+
+        saveVersionedData(data);
+        saveData(); // Save task states
+
+        // Show confirmation
+        const confirmation = document.getElementById('settingsSavedConfirmation');
+        if (confirmation) {
+            confirmation.style.display = 'block';
+            setTimeout(() => {
+                confirmation.style.display = 'none';
+            }, 3000);
+        }
+
+        // Update dashboard
+        updateDashboard();
+    });
+}
 
 // Initialize the application
 export function init() {
@@ -200,6 +271,22 @@ function setupEventHandlers() {
     const resetAllBtn = document.getElementById('resetAll');
     if (resetAllBtn) resetAllBtn.addEventListener('click', confirmReset);
 
+    // Guitar settings
+    const saveGuitarSettingsBtn = document.getElementById('saveGuitarSettings');
+    if (saveGuitarSettingsBtn) {
+        saveGuitarSettingsBtn.addEventListener('click', saveGuitarSettings);
+    }
+
+    // Load guitar settings on tab switch to export
+    document.querySelectorAll('.tab-btn').forEach((btn, index) => {
+        const tabs = ['dashboard', 'maintenance', 'humidity', 'inspection', 'inventory', 'export'];
+        btn.addEventListener('click', () => {
+            if (tabs[index] === 'export') {
+                loadGuitarSettings();
+            }
+        });
+    });
+
     // Humidity filter buttons
     const applyFiltersBtn = document.getElementById('applyFilters');
     if (applyFiltersBtn) {
@@ -251,6 +338,9 @@ window.exportAsCSV = exportAsCSV;
 window.exportAsJSON = exportAsJSON;
 window.migrateData = migrateData;
 window.switchTab = switchTab;
+window.setCustomCompletionDate = setCustomCompletionDate;
+window.renderMaintenanceTasks = renderMaintenanceTasks;
+window.updateDashboard = updateDashboard;
 
 // Humidity trend info modal functions
 window.showHumidityTrendInfo = function() {
