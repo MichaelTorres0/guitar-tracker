@@ -3,6 +3,7 @@ import { updateDashboard } from './ui.js';
 import { quickActionJustPlayed } from './tasks.js';
 import { renderMaintenanceTasks } from './ui.js';
 import { checkForAlerts } from './humidity.js';
+import { getVersionedData, saveVersionedData, getVersionedField } from './storage.js';
 
 // Get start of current week (Sunday)
 function getStartOfWeek() {
@@ -16,14 +17,14 @@ function getStartOfWeek() {
 
 // Log a playing session
 export function logPlayingSession(durationMinutes) {
-    const sessions = JSON.parse(localStorage.getItem('playingSessions') || '[]');
+    const data = getVersionedData();
 
-    sessions.push({
+    data.playingSessions.push({
         timestamp: Date.now(),
         duration: durationMinutes
     });
 
-    localStorage.setItem('playingSessions', JSON.stringify(sessions));
+    saveVersionedData(data);
     updateWeeklyHours();
 
     // Complete daily tasks
@@ -52,15 +53,15 @@ export function logPlayingSession(durationMinutes) {
 
 // Calculate weekly average hours (last 2 weeks)
 export function calculateAverageHoursPerWeek() {
-    const sessions = JSON.parse(localStorage.getItem('playingSessions') || '[]');
+    const sessions = getVersionedField('playingSessions', []);
     const twoWeeksAgo = Date.now() - (14 * 24 * 60 * 60 * 1000);
 
     const recentSessions = sessions.filter(s => s.timestamp > twoWeeksAgo);
 
     if (recentSessions.length < 3) {
         // Not enough data, use default or onboarding value
-        const defaultHours = localStorage.getItem('playingHoursPerWeek');
-        return defaultHours ? parseFloat(defaultHours) : 2.5;
+        const defaultHours = getVersionedField('playingHoursPerWeek', 2.5);
+        return defaultHours;
     }
 
     const totalMinutes = recentSessions.reduce((sum, s) => sum + s.duration, 0);
@@ -70,7 +71,7 @@ export function calculateAverageHoursPerWeek() {
 
 // Get this week's total hours
 export function getThisWeekHours() {
-    const sessions = JSON.parse(localStorage.getItem('playingSessions') || '[]');
+    const sessions = getVersionedField('playingSessions', []);
     const startOfWeek = getStartOfWeek();
 
     const thisWeekSessions = sessions.filter(s => s.timestamp > startOfWeek);
@@ -91,8 +92,10 @@ function updateWeeklyHours() {
         headerSubtitle.textContent = `Playing Schedule: ${avgHours.toFixed(1)} hrs/week | ${stringGauge}`;
     }
 
-    // Store the updated average
-    localStorage.setItem('playingHoursPerWeek', avgHours.toFixed(1));
+    // Store the updated average in versioned data
+    const data = getVersionedData();
+    data.playingHoursPerWeek = parseFloat(avgHours.toFixed(1));
+    saveVersionedData(data);
 }
 
 // Show session duration modal

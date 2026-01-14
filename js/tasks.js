@@ -35,6 +35,43 @@ export function toggleTask(taskId) {
     return null;
 }
 
+// Set custom completion date for backdating
+export function setCustomCompletionDate(taskId, category) {
+    const task = MAINTENANCE_TASKS[category].find(t => t.id === taskId);
+    if (!task) return false;
+
+    const dateInput = document.getElementById(`customDate-${taskId}`);
+    if (!dateInput || !dateInput.value) {
+        alert('Please select a date');
+        return false;
+    }
+
+    const selectedDate = new Date(dateInput.value);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+
+    if (selectedDate > today) {
+        alert('Cannot set a completion date in the future');
+        return false;
+    }
+
+    task.completed = true;
+    task.lastCompleted = selectedDate.toISOString();
+    saveData();
+
+    alert(`✓ Completion date updated to ${selectedDate.toLocaleDateString()}`);
+
+    // Trigger UI update
+    if (window.updateDashboard) window.updateDashboard();
+    if (window.renderMaintenanceTasks) {
+        import('./ui.js').then(({ renderMaintenanceTasks }) => {
+            renderMaintenanceTasks();
+        });
+    }
+
+    return true;
+}
+
 // Helper function to check if task was completed within its period
 export function isCompletedWithinPeriod(task, category) {
     if (!task.lastCompleted) return false;

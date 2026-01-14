@@ -1,5 +1,6 @@
 // String change history tracking module
 import { updateDashboard } from './ui.js';
+import { getVersionedData, saveVersionedData, getVersionedField } from './storage.js';
 
 // Show string brand prompt
 export function showStringBrandPrompt() {
@@ -27,7 +28,8 @@ export function saveStringChangeBrand() {
 
 // Log a string change
 export function saveStringChange(brand) {
-    const history = JSON.parse(localStorage.getItem('stringChangeHistory') || '[]');
+    const data = getVersionedData();
+    const history = data.stringChangeHistory || [];
     const previousChange = history[history.length - 1];
 
     const record = {
@@ -39,7 +41,8 @@ export function saveStringChange(brand) {
     };
 
     history.push(record);
-    localStorage.setItem('stringChangeHistory', JSON.stringify(history));
+    data.stringChangeHistory = history;
+    saveVersionedData(data);
 
     // Hide modal
     hideStringBrandPrompt();
@@ -51,7 +54,7 @@ export function saveStringChange(brand) {
 
 // Calculate average string life
 export function getAverageStringLife() {
-    const history = JSON.parse(localStorage.getItem('stringChangeHistory') || '[]');
+    const history = getVersionedField('stringChangeHistory', []);
     const withDays = history.filter(r => r.daysFromPrevious !== null);
 
     if (withDays.length < 2) return null;
@@ -65,7 +68,7 @@ export function renderStringHistory() {
     const container = document.getElementById('stringHistoryDisplay');
     if (!container) return;
 
-    const history = JSON.parse(localStorage.getItem('stringChangeHistory') || '[]');
+    const history = getVersionedField('stringChangeHistory', []);
 
     if (history.length === 0) {
         container.innerHTML = '<p class="empty-state" style="padding: 20px; text-align: center;">No string changes logged yet</p>';

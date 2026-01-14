@@ -1,5 +1,6 @@
 // Export and download functions
-import { MAINTENANCE_TASKS, STORAGE_KEYS } from './config.js';
+import { MAINTENANCE_TASKS, STORAGE_KEYS, DATA_VERSION } from './config.js';
+import { getVersionedData } from './storage.js';
 
 const HUMIDITY_KEY = STORAGE_KEYS.legacy.humidity;
 
@@ -82,12 +83,17 @@ export function updateBackupStatus() {
 
 // Create backup
 export function createBackup() {
+    // Get all versioned data (includes v2.0 features)
+    const versionedData = getVersionedData();
+
     const data = {
         exportDate: new Date().toISOString(),
-        version: 2,
+        version: DATA_VERSION,
+        // Include current task states
         tasks: MAINTENANCE_TASKS,
-        humidity: JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]'),
-        inspections: JSON.parse(localStorage.getItem('inspectionData') || '{}'),
+        // Include all versioned data fields
+        versionedData: versionedData,
+        // Include theme preference (stored separately)
         theme: localStorage.getItem('theme') || 'light'
     };
 
@@ -115,23 +121,57 @@ export function restoreFromBackup(fileContent) {
     try {
         const data = JSON.parse(fileContent);
 
-        // Validate backup structure
-        if (!data.tasks || !data.humidity) {
+        // Validate backup structure (support both old and new format)
+        if (!data.tasks && !data.versionedData) {
             throw new Error('Invalid backup file structure');
         }
 
-        // Show preview and confirm
-        const taskCount = Object.values(data.tasks).flat().length;
-        const humidityCount = data.humidity.length;
-        const confirmMsg = `This backup contains:\n- ${taskCount} maintenance tasks\n- ${humidityCount} humidity readings\n\nThis will REPLACE all current data. Continue?`;
+        // Build preview message
+        let confirmMsg = 'This backup contains:\n';
+
+        if (data.versionedData) {
+            // New format backup
+            const taskCount = Object.values(data.tasks || {}).flat().length;
+            const humidityCount = (data.versionedData.humidityReadings || []).length;
+            const sessionCount = (data.versionedData.playingSessions || []).length;
+            const stringChangeCount = (data.versionedData.stringChangeHistory || []).length;
+
+            confirmMsg += `- ${taskCount} maintenance tasks\n`;
+            confirmMsg += `- ${humidityCount} humidity readings\n`;
+            if (sessionCount > 0) confirmMsg += `- ${sessionCount} playing sessions\n`;
+            if (stringChangeCount > 0) confirmMsg += `- ${stringChangeCount} string changes\n`;
+        } else {
+            // Old format backup
+            const taskCount = Object.values(data.tasks).flat().length;
+            const humidityCount = (data.humidity || []).length;
+            confirmMsg += `- ${taskCount} maintenance tasks\n`;
+            confirmMsg += `- ${humidityCount} humidity readings\n`;
+        }
+
+        confirmMsg += '\nThis will REPLACE all current data. Continue?';
 
         if (!confirm(confirmMsg)) {
             return;
         }
 
-        // Restore data
+        // Restore versioned data structure
+        if (data.versionedData) {
+            localStorage.setItem(STORAGE_KEYS.mainData, JSON.stringify(data.versionedData));
+        } else {
+            // Old format - restore to legacy keys and let migration handle it
+            if (data.tasks) {
+                localStorage.setItem('guitarMaintenanceData', JSON.stringify(data.tasks));
+            }
+            if (data.humidity) {
+                localStorage.setItem(HUMIDITY_KEY, JSON.stringify(data.humidity));
+            }
+            if (data.inspections) {
+                localStorage.setItem('inspectionData', JSON.stringify(data.inspections));
+            }
+        }
+
+        // Restore task states to in-memory MAINTENANCE_TASKS
         if (data.tasks) {
-            // Update MAINTENANCE_TASKS with restored data
             for (let category in data.tasks) {
                 if (MAINTENANCE_TASKS[category]) {
                     data.tasks[category].forEach((task, index) => {
@@ -142,17 +182,9 @@ export function restoreFromBackup(fileContent) {
                     });
                 }
             }
-            localStorage.setItem('guitarMaintenanceData', JSON.stringify(data.tasks));
         }
 
-        if (data.humidity) {
-            localStorage.setItem(HUMIDITY_KEY, JSON.stringify(data.humidity));
-        }
-
-        if (data.inspections) {
-            localStorage.setItem('inspectionData', JSON.stringify(data.inspections));
-        }
-
+        // Restore theme
         if (data.theme) {
             localStorage.setItem('theme', data.theme);
         }
