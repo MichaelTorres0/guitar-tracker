@@ -22,7 +22,7 @@ A Progressive Web App for tracking maintenance, humidity, and care for a Taylor 
 
 - **Live URL:** https://michaeltorres0.github.io/guitar-tracker/
 - **Architecture:** ES modules with separate CSS
-- **Data storage:** localStorage with versioned schema (DATA_VERSION = 2)
+- **Data storage:** localStorage with versioned schema (DATA_VERSION = 3)
 - **Target device:** iPhone Safari (iOS 16.4+)
 
 ## Architecture
@@ -58,7 +58,7 @@ guitar-tracker/
 | Module | Purpose |
 |--------|---------|
 | `config.js` | Data constants, task definitions, humidity thresholds |
-| `storage.js` | Data persistence, v1→v2 migration, legacy compatibility |
+| `storage.js` | Data persistence, v1→v2→v3 migration, legacy compatibility, versioned data helpers |
 | `validators.js` | Input validation with error/warning feedback |
 | `humidity.js` | Humidity logging, chart rendering, alerts |
 | `tasks.js` | Task completion, string life calculator, string change hook |
@@ -69,32 +69,47 @@ guitar-tracker/
 | `stringHistory.js` | **v2.0** String change history, brand tracking, average life calc |
 | `app.js` | Application init, event handler wiring, module initialization |
 
-### localStorage Schema (v2)
+### localStorage Schema (v3 - Current)
 ```javascript
-// Key: 'guitarTrackerData'
+// Key: 'guitarTrackerData' - ALL data is now consolidated in this versioned structure
 {
-    version: 2,
+    version: 3,
     guitars: [{ id, name, settings: { targetHumidity, stringChangeWeeks, ... } }],
     activeGuitarId: 'default',
     maintenanceStates: { daily: [...], weekly: [...], eightweek: [...], ... },
     humidityReadings: [{ humidity, temp, timestamp, guitarId }],
-    inspectionData: { ... }
+    inspectionData: { ... },
+    // v2.0 features - now consolidated into versioned structure (v3+)
+    onboardingComplete: false,
+    playingFrequency: 'weekly',
+    playingHoursPerWeek: 2.5,
+    hasHygrometer: null,
+    playingSessions: [{ timestamp, duration }],
+    stringChangeHistory: [{ date, brand, daysFromPrevious }]
 }
 ```
 
-### v2.0 Additional Keys
-- `onboardingComplete` - Boolean flag (prevents repeat onboarding)
-- `playingFrequency` - Enum: 'daily' | 'fewTimesWeek' | 'weekly' | 'occasionally'
-- `playingHoursPerWeek` - Number (dynamically calculated from sessions)
-- `hasHygrometer` - Boolean (equipment check from onboarding)
-- `playingSessions` - Array of `{ timestamp, duration }` objects
-- `stringChangeHistory` - Array of `{ date, brand, daysFromPrevious }` objects
+### Migration History
+- **v1 → v2**: Consolidated separate keys into `guitarTrackerData` with guitars array
+- **v2 → v3**: Moved v2.0 session/string tracking from separate keys into versioned structure
+- All migrations are automatic and backward-compatible
 
 ### Legacy Keys (for migration)
+**v1 keys** (migrated to v2/v3):
 - `guitarMaintenanceData` - Old maintenance task states
 - `humidityReadings` - Old humidity log entries
 - `inspectionData` - Old inspection checkbox states
-- `theme` - Light/dark mode preference
+
+**v2.0 separate keys** (migrated to v3):
+- `onboardingComplete` - Now in versioned structure
+- `playingFrequency` - Now in versioned structure
+- `playingHoursPerWeek` - Now in versioned structure
+- `hasHygrometer` - Now in versioned structure
+- `playingSessions` - Now in versioned structure
+- `stringChangeHistory` - Now in versioned structure
+
+**Separate keys** (not versioned):
+- `theme` - Light/dark mode preference (stored separately for quick access)
 
 ### Data Flow
 
@@ -228,11 +243,15 @@ if (exportCsvBtn) exportCsvBtn.addEventListener('click', exportAsCSV);
 5. Update render functions in `ui.js` if displaying data
 
 **Modifying data structure:**
-1. Update schema in `config.js` if adding constants
+1. Update `createDefaultData()` in `storage.js` to include new fields
 2. Increment DATA_VERSION in `config.js` if breaking change
-3. Add migration logic to `storage.js` migrateData()
-4. Update save/load functions in `storage.js`
-5. Test with empty localStorage AND with existing data
+3. Add migration logic to `storage.js` (e.g., `migrateV3ToV4()`)
+4. Use helper functions to access versioned data:
+   - `getVersionedData()` - Get entire data structure
+   - `getVersionedField(field, default)` - Get specific field
+   - `updateVersionedField(field, value)` - Update single field
+   - `saveVersionedData(data)` - Save entire structure
+5. Test with empty localStorage AND with existing data from all previous versions
 
 ### Testing Workflow
 1. **During development:** Refresh browser, check console
