@@ -48,7 +48,11 @@
 
         <!-- DASHBOARD TAB -->
         <div id="dashboard" class="tab-content active">
-            <button class="btn-just-played">▶️ Just Played - Log Daily Tasks</button>
+            <!-- Practice Timer and Quick Actions -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                <button class="btn-timer">▶️ Start Practice</button>
+                <button class="btn-quick-action" id="quickCompleteDaily">✓ Complete Daily Tasks</button>
+            </div>
 
             <!-- Restock Alert Banner -->
             <div id="restockAlertBanner" class="restock-alert" style="display: none;"></div>
