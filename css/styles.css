@@ -71,28 +71,41 @@
             white-space: nowrap;
         }
 
-        .btn-just-played {
-            background: linear-gradient(135deg, var(--color-success), var(--color-primary));
+        .btn-timer,
+        .btn-quick-action {
             color: white;
-            padding: 16px 24px;
-            font-size: 16px;
+            padding: 16px 20px;
+            font-size: 15px;
             font-weight: 700;
             border-radius: 8px;
-            width: 100%;
-            margin-bottom: 20px;
             border: none;
             cursor: pointer;
             transition: all 0.3s;
             min-height: 44px;
+        }
+
+        .btn-timer {
+            background: linear-gradient(135deg, var(--color-primary), #6366f1);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-timer:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-quick-action {
+            background: linear-gradient(135deg, var(--color-success), #059669);
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
-        .btn-just-played:hover {
+        .btn-quick-action:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
         }
 
-        .btn-just-played:active {
+        .btn-timer:active,
+        .btn-quick-action:active {
             transform: translateY(0);
         }
 
