@@ -13,21 +13,25 @@ export function hideStringBrandPrompt() {
     const modal = document.getElementById('stringBrandModal');
     if (modal) {
         modal.classList.remove('show');
-        // Clear input
-        const input = document.getElementById('stringBrandInput');
-        if (input) input.value = '';
+        // Clear inputs
+        const brandInput = document.getElementById('stringBrandInput');
+        const notesInput = document.getElementById('stringNotesInput');
+        if (brandInput) brandInput.value = '';
+        if (notesInput) notesInput.value = '';
     }
 }
 
-// Save string change with brand
+// Save string change with brand and notes
 export function saveStringChangeBrand() {
-    const input = document.getElementById('stringBrandInput');
-    const brand = input ? input.value.trim() : null;
-    saveStringChange(brand);
+    const brandInput = document.getElementById('stringBrandInput');
+    const notesInput = document.getElementById('stringNotesInput');
+    const brand = brandInput ? brandInput.value.trim() : null;
+    const notes = notesInput ? notesInput.value.trim() : null;
+    saveStringChange(brand, notes);
 }
 
 // Log a string change
-export function saveStringChange(brand) {
+export function saveStringChange(brand, notes) {
     const data = getVersionedData();
     const history = data.stringChangeHistory || [];
     const previousChange = history[history.length - 1];
@@ -35,6 +39,7 @@ export function saveStringChange(brand) {
     const record = {
         date: Date.now(),
         brand: brand || null,
+        notes: notes || '',
         daysFromPrevious: previousChange
             ? Math.floor((Date.now() - previousChange.date) / (24 * 60 * 60 * 1000))
             : null
@@ -89,7 +94,7 @@ export function renderStringHistory() {
         </div>`;
     }
 
-    html += '<div style="max-height: 300px; overflow-y: auto;">';
+    html += '<div style="max-height: 400px; overflow-y: auto;">';
     html += '<table style="width: 100%; font-size: 13px;">';
     html += '<thead><tr style="border-bottom: 2px solid var(--color-border);"><th style="text-align: left; padding: 8px;">Date</th><th style="text-align: left; padding: 8px;">Brand</th><th style="text-align: right; padding: 8px;">Days Used</th></tr></thead>';
     html += '<tbody>';
@@ -101,7 +106,7 @@ export function renderStringHistory() {
 
         html += `<tr style="border-bottom: 1px solid var(--color-border);">
             <td style="padding: 8px;">${date}</td>
-            <td style="padding: 8px;">${brand}</td>
+            <td style="padding: 8px;">${brand}${record.notes ? '<br><span style="font-size: 11px; color: var(--color-text-light); font-style: italic;">' + record.notes + '</span>' : ''}</td>
             <td style="padding: 8px; text-align: right; font-weight: 600;">${days}</td>
         </tr>`;
     });
@@ -116,7 +121,7 @@ export function initStringHistory() {
     // Wire up close button
     const closeBtn = document.getElementById('closeStringBrandModal');
     if (closeBtn) {
-        closeBtn.addEventListener('click', () => saveStringChange(null));
+        closeBtn.addEventListener('click', () => saveStringChange(null, null));
     }
 
     // Render on load

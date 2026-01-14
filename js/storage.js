@@ -14,17 +14,25 @@ export function migrateData() {
                 return parsed;
             }
 
-            // Migrate from v2 to v3
-            if (parsed.version === 2) {
-                console.log('Migrating from v2 to v3 - consolidating fragmented keys');
-                return migrateV2ToV3(parsed);
+            // Migrate from v3 to v4
+            if (parsed.version === 3) {
+                console.log('Migrating from v3 to v4 - adding practice stopwatch and inventory');
+                return migrateV3ToV4(parsed);
             }
 
-            // Migrate from v1 to v3 (through v2 first)
+            // Migrate from v2 to v4 (through v3 first)
+            if (parsed.version === 2) {
+                console.log('Migrating from v2 to v4 - consolidating fragmented keys');
+                const v3Data = migrateV2ToV3(parsed);
+                return migrateV3ToV4(v3Data);
+            }
+
+            // Migrate from v1 to v4 (through v2 and v3 first)
             if (parsed.version === 1 || !parsed.version) {
-                console.log('Migrating from v1 to v3');
+                console.log('Migrating from v1 to v4');
                 const v2Data = migrateV1ToV2(parsed);
-                return migrateV2ToV3(v2Data);
+                const v3Data = migrateV2ToV3(v2Data);
+                return migrateV3ToV4(v3Data);
             }
         }
 
@@ -44,6 +52,47 @@ export function migrateData() {
         console.error('Migration error:', e);
         return createDefaultData();
     }
+}
+
+// Migrate from v3 to v4 - add new features
+export function migrateV3ToV4(v3Data) {
+    const data = {
+        ...v3Data,
+        version: 4
+    };
+
+    // Add v4 features if missing
+    if (!data.timerState) {
+        data.timerState = {
+            running: false,
+            startTimestamp: null
+        };
+    }
+
+    if (!data.practiceHistory) {
+        data.practiceHistory = [];
+    }
+
+    if (!data.inventory) {
+        data.inventory = {
+            items: []
+        };
+    }
+
+    // Add notes field to existing string change history entries if missing
+    if (data.stringChangeHistory && Array.isArray(data.stringChangeHistory)) {
+        data.stringChangeHistory = data.stringChangeHistory.map(entry => ({
+            ...entry,
+            notes: entry.notes || ''
+        }));
+    }
+
+    // Save migrated data
+    saveVersionedData(data);
+
+    console.log('✓ Migration to v4 complete - practice tracking and inventory added');
+
+    return data;
 }
 
 // Migrate from v2 to v3 - consolidate separate localStorage keys into versioned structure
@@ -171,15 +220,16 @@ export function migrateLegacyData(maintenanceJson, humidityJson, inspectionJson)
     data.version = 2;
     saveVersionedData(data);
 
-    // Now migrate v2 → v3 to pick up any v2.0 separate keys
+    // Now migrate v2 → v3 → v4 to pick up any v2.0 separate keys and add v4 features
     const v3Data = migrateV2ToV3(data);
+    const v4Data = migrateV3ToV4(v3Data);
 
     // Clean up legacy keys (commented out for safety - can be enabled after verification)
     // localStorage.removeItem(STORAGE_KEYS.legacy.maintenance);
     // localStorage.removeItem(STORAGE_KEYS.legacy.humidity);
     // localStorage.removeItem(STORAGE_KEYS.legacy.inspection);
 
-    return v3Data;
+    return v4Data;
 }
 
 export function createDefaultData() {
@@ -217,7 +267,16 @@ export function createDefaultData() {
         ],
         // String type and last change date
         currentStringType: 'D\'Addario EJ16 Phosphor Bronze Light (.012-.053)',
-        lastStringChangeDate: null
+        lastStringChangeDate: null,
+        // v4+ features - practice stopwatch and inventory
+        timerState: {
+            running: false,
+            startTimestamp: null
+        },
+        practiceHistory: [],
+        inventory: {
+            items: []
+        }
     };
 }
 
