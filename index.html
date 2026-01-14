@@ -401,9 +401,9 @@
         <!-- EQUIPMENT INVENTORY TAB -->
         <div id="inventory" class="tab-content">
             <div class="card">
-                <h3>📦 Equipment Inventory Checklist</h3>
-                
-                <h4 style="font-size: 13px; font-weight: 600; margin-top: 16px; margin-bottom: 12px;">MusicNomad MN290 Work Station</h4>
+                <h3>📦 Equipment Inventory</h3>
+                <p style="font-size: 13px; color: var(--color-text-light); margin-bottom: 16px;">Manage your guitar care equipment. Add, edit, or remove items as needed.</p>
+
                 <div id="inventoryChecklist"></div>
 
                 <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--color-border);">
@@ -474,6 +474,28 @@
                     <button id="resetDaily" class="btn-secondary" style="width: 100%; margin-bottom: 10px;">↻ Reset Daily Tasks</button>
                     <button id="resetWeekly" class="btn-secondary" style="width: 100%; margin-bottom: 10px;">↻ Reset Weekly Tasks</button>
                     <button id="resetAll" class="btn-danger" style="width: 100%;">⚠️ Clear All Data</button>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <h3>🎸 Guitar Settings</h3>
+                <p style="font-size: 13px; color: var(--color-text-light); margin-bottom: 16px;">Update your guitar's configuration and string information.</p>
+
+                <div class="form-group">
+                    <label class="form-label">Current String Type</label>
+                    <input type="text" id="currentStringType" placeholder="e.g., D'Addario EJ16 Phosphor Bronze Light (.012-.053)">
+                    <div style="font-size: 11px; color: var(--color-text-light); margin-top: 4px;">This will be displayed in the header</div>
+                </div>
+
+                <div class="form-group" style="margin-top: 16px;">
+                    <label class="form-label">Last String Change Date</label>
+                    <input type="date" id="lastStringChangeDate">
+                    <div style="font-size: 11px; color: var(--color-text-light); margin-top: 4px;">Used to calculate days since string change</div>
+                </div>
+
+                <button id="saveGuitarSettings" class="btn-primary" style="width: 100%; margin-top: 16px;">Save Settings</button>
+                <div id="settingsSavedConfirmation" class="form-feedback success" style="display:none; margin-top: 12px;">
+                    ✅ Settings saved successfully!
                 </div>
             </div>
 

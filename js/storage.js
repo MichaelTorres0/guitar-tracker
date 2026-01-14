@@ -94,6 +94,18 @@ export function migrateV2ToV3(v2Data) {
         }
     }
 
+    // Add v3.1+ fields if missing (equipment list, string data)
+    if (!data.equipmentList) {
+        const defaultData = createDefaultData();
+        data.equipmentList = defaultData.equipmentList;
+    }
+    if (!data.currentStringType) {
+        data.currentStringType = 'D\'Addario EJ16 Phosphor Bronze Light (.012-.053)';
+    }
+    if (!data.lastStringChangeDate) {
+        data.lastStringChangeDate = null;
+    }
+
     // Save migrated data
     saveVersionedData(data);
 
@@ -184,7 +196,28 @@ export function createDefaultData() {
         playingHoursPerWeek: 2.5,
         hasHygrometer: null,
         playingSessions: [],
-        stringChangeHistory: []
+        stringChangeHistory: [],
+        // v3.1+ features - equipment list (now editable)
+        equipmentList: [
+            'MusicNomad MN290 Ultimate Work Station (36" x 17" mat with gel cradle)',
+            'Guitar ONE Polish & Cleaner',
+            'F-ONE Fretboard Oil & Cleaner',
+            'String Fuel string cleaner',
+            'FRINE Fret Polishing Kit (5-piece micro-fine kit)',
+            'Tune-It nut/saddle lubricant',
+            'GRIP String Winder, Cutter, and Puller',
+            '26-piece guitar tech screwdriver/wrench set',
+            'Premium microfiber cloths',
+            'D\'Addario EJ16 Phosphor Bronze Light (.012-.053)',
+            'Kyser Quick-Change Capo (KG6BA)',
+            'Levy\'s MSSC8 Cotton Strap + D\'Addario Flex Lock Blocks',
+            'Gator GC-GSMINI Molded Case',
+            'D\'Addario Humidipak Restore Kit',
+            'Inkbird ITH-10 Hygrometer'
+        ],
+        // String type and last change date
+        currentStringType: 'D\'Addario EJ16 Phosphor Bronze Light (.012-.053)',
+        lastStringChangeDate: null
     };
 }
 

@@ -1,6 +1,7 @@
 // UI rendering and interaction functions
 import { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS } from './config.js';
 import { calculateNextDue, getAllNextDueDates, isCompletedWithinPeriod, getRelativeTimeAgo } from './tasks.js';
+import { getVersionedData, saveVersionedData, getVersionedField } from './storage.js';
 
 const HUMIDITY_KEY = STORAGE_KEYS.legacy.humidity;
 
@@ -90,6 +91,14 @@ export function renderMaintenanceTasks() {
                         <div class="expand-label">HOW</div>
                         <div class="expand-text">${task.how}</div>
                     </div>
+                    <div class="expand-section" style="border-top: 1px solid var(--color-border); padding-top: 12px; margin-top: 12px;">
+                        <div class="expand-label">SET COMPLETION DATE</div>
+                        <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px;">
+                            <input type="date" id="customDate-${task.id}" class="custom-date-input" style="flex: 1;" value="${task.lastCompleted ? new Date(task.lastCompleted).toISOString().split('T')[0] : ''}">
+                            <button class="btn-secondary" onclick="window.setCustomCompletionDate('${task.id}', '${category.key}')" style="font-size: 11px; padding: 6px 12px; white-space: nowrap;">Update</button>
+                        </div>
+                        <div style="font-size: 11px; color: var(--color-text-light); margin-top: 6px;">Use this to backdate or correct completion dates</div>
+                    </div>
                 </div>
             `;
             taskList.appendChild(taskEl);
@@ -107,20 +116,65 @@ export function renderInventoryChecklist() {
     const container = document.getElementById('inventoryChecklist');
     if (!container) return;
 
-    container.innerHTML = '';
+    const equipmentList = getVersionedField('equipmentList', []);
 
-    EQUIPMENT_ITEMS.forEach((item, index) => {
-        const el = document.createElement('div');
-        el.className = 'checklist-item';
-        el.innerHTML = `
-            <input type="checkbox" id="eq-${index}">
-            <div class="checklist-content">
-                <div class="checklist-label">${item}</div>
+    let html = '<div class="equipment-list">';
+
+    equipmentList.forEach((item, index) => {
+        html += `
+            <div class="equipment-item">
+                <span class="equipment-name">${item}</span>
+                <button class="btn-icon-delete" onclick="window.deleteEquipment(${index})" title="Delete item">×</button>
             </div>
         `;
-        container.appendChild(el);
     });
+
+    html += '</div>';
+
+    html += `
+        <div class="equipment-add" style="margin-top: 16px;">
+            <input type="text" id="newEquipmentItem" placeholder="Add new equipment item..." style="margin-bottom: 8px;">
+            <button id="addEquipmentBtn" class="btn-secondary" style="width: 100%;">+ Add Equipment</button>
+        </div>
+    `;
+
+    container.innerHTML = html;
+
+    // Wire up add button
+    const addBtn = document.getElementById('addEquipmentBtn');
+    const input = document.getElementById('newEquipmentItem');
+
+    if (addBtn && input) {
+        addBtn.addEventListener('click', () => {
+            const item = input.value.trim();
+            if (item) {
+                const data = getVersionedData();
+                if (!data.equipmentList) data.equipmentList = [];
+                data.equipmentList.push(item);
+                saveVersionedData(data);
+                input.value = '';
+                renderInventoryChecklist();
+            }
+        });
+
+        // Allow Enter key to add
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addBtn.click();
+            }
+        });
+    }
 }
+
+// Delete equipment item (exposed to window)
+window.deleteEquipment = function(index) {
+    if (confirm('Delete this equipment item?')) {
+        const data = getVersionedData();
+        data.equipmentList.splice(index, 1);
+        saveVersionedData(data);
+        renderInventoryChecklist();
+    }
+};
 
 export function updateDashboard() {
     // Update playing schedule in header if set
@@ -128,7 +182,7 @@ export function updateDashboard() {
     if (playingHours) {
         const headerSubtitle = document.querySelector('.header p:not(.model-badge)');
         if (headerSubtitle) {
-            const stringGauge = 'String Gauge: EJ16 Light (.012-.053)';
+            const stringGauge = getVersionedField("currentStringType", "D'Addario EJ16 Phosphor Bronze Light (.012-.053)");
             headerSubtitle.textContent = `Playing Schedule: ${playingHours} hrs/week | ${stringGauge}`;
         }
     }
