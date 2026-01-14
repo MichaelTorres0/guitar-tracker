@@ -30,9 +30,6 @@ export function logPlayingSession(durationMinutes) {
     saveVersionedData(data);
     updateWeeklyHours();
 
-    // Complete daily tasks
-    quickActionJustPlayed();
-
     // Close modal
     hideSessionModal();
 
@@ -41,17 +38,10 @@ export function logPlayingSession(durationMinutes) {
     renderMaintenanceTasks();
     checkForAlerts();
 
-    // Show confirmation
-    const btn = document.querySelector('.btn-just-played');
-    if (btn) {
-        const originalText = btn.textContent;
-        btn.textContent = `✓ ${durationMinutes} min session logged!`;
-        btn.style.background = 'var(--color-success)';
-        setTimeout(() => {
-            btn.textContent = originalText;
-            btn.style.background = '';
-        }, 2000);
-    }
+    // Show confirmation briefly
+    setTimeout(() => {
+        alert(`✓ ${durationMinutes} min practice session logged!`);
+    }, 100);
 }
 
 // Calculate weekly average hours (last 2 weeks)
@@ -259,7 +249,7 @@ export function discardTimer() {
 
 // Update timer button display
 export function updateTimerDisplay() {
-    const btn = document.querySelector('.btn-just-played');
+    const btn = document.querySelector('.btn-timer');
     if (!btn) return;
 
     const data = getVersionedData();
@@ -279,7 +269,7 @@ export function updateTimerDisplay() {
             timeDisplay = `${minutes}:${String(seconds).padStart(2, '0')}`;
         }
 
-        btn.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 12px;">
+        btn.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 8px; justify-content: center;">
             <span>⏹️ Stop ${timeDisplay}</span>
             <button onclick="event.stopPropagation(); discardTimer();" style="background: rgba(239,68,68,0.2); color: var(--color-error); border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">✕ Discard</button>
         </span>`;
