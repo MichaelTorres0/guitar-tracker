@@ -8,12 +8,27 @@ export function migrateData() {
         const newData = localStorage.getItem(STORAGE_KEYS.mainData);
         if (newData) {
             const parsed = JSON.parse(newData);
+
+            // Check if already at current version
             if (parsed.version === DATA_VERSION) {
-                return parsed; // Already migrated
+                return parsed;
+            }
+
+            // Migrate from v2 to v3
+            if (parsed.version === 2) {
+                console.log('Migrating from v2 to v3 - consolidating fragmented keys');
+                return migrateV2ToV3(parsed);
+            }
+
+            // Migrate from v1 to v3 (through v2 first)
+            if (parsed.version === 1 || !parsed.version) {
+                console.log('Migrating from v1 to v3');
+                const v2Data = migrateV1ToV2(parsed);
+                return migrateV2ToV3(v2Data);
             }
         }
 
-        // Check for legacy data
+        // Check for legacy data (pre-versioning)
         const legacyMaintenance = localStorage.getItem(STORAGE_KEYS.legacy.maintenance);
         const legacyHumidity = localStorage.getItem(STORAGE_KEYS.legacy.humidity);
         const legacyInspection = localStorage.getItem(STORAGE_KEYS.legacy.inspection);
@@ -29,6 +44,70 @@ export function migrateData() {
         console.error('Migration error:', e);
         return createDefaultData();
     }
+}
+
+// Migrate from v2 to v3 - consolidate separate localStorage keys into versioned structure
+export function migrateV2ToV3(v2Data) {
+    const data = {
+        ...v2Data,
+        version: 3
+    };
+
+    // Consolidate v2.0 features from separate keys if not already in structure
+    if (!data.onboardingComplete) {
+        const onboardingComplete = localStorage.getItem(STORAGE_KEYS.legacy.onboardingComplete);
+        data.onboardingComplete = onboardingComplete === 'true';
+    }
+
+    if (!data.playingFrequency) {
+        const playingFrequency = localStorage.getItem(STORAGE_KEYS.legacy.playingFrequency);
+        data.playingFrequency = playingFrequency || 'weekly';
+    }
+
+    if (!data.playingHoursPerWeek) {
+        const playingHoursPerWeek = localStorage.getItem(STORAGE_KEYS.legacy.playingHoursPerWeek);
+        data.playingHoursPerWeek = playingHoursPerWeek ? parseFloat(playingHoursPerWeek) : 2.5;
+    }
+
+    if (!data.hasHygrometer) {
+        const hasHygrometer = localStorage.getItem(STORAGE_KEYS.legacy.hasHygrometer);
+        data.hasHygrometer = hasHygrometer === 'true' ? true : (hasHygrometer === 'false' ? false : null);
+    }
+
+    if (!data.playingSessions) {
+        try {
+            const playingSessions = localStorage.getItem(STORAGE_KEYS.legacy.playingSessions);
+            data.playingSessions = playingSessions ? JSON.parse(playingSessions) : [];
+        } catch (e) {
+            console.error('Error migrating playing sessions:', e);
+            data.playingSessions = [];
+        }
+    }
+
+    if (!data.stringChangeHistory) {
+        try {
+            const stringChangeHistory = localStorage.getItem(STORAGE_KEYS.legacy.stringChangeHistory);
+            data.stringChangeHistory = stringChangeHistory ? JSON.parse(stringChangeHistory) : [];
+        } catch (e) {
+            console.error('Error migrating string change history:', e);
+            data.stringChangeHistory = [];
+        }
+    }
+
+    // Save migrated data
+    saveVersionedData(data);
+
+    console.log('✓ Migration to v3 complete - all data consolidated');
+
+    return data;
+}
+
+// Migrate from v1 to v2 (for compatibility)
+export function migrateV1ToV2(v1Data) {
+    return {
+        ...v1Data,
+        version: 2
+    };
 }
 
 export function migrateLegacyData(maintenanceJson, humidityJson, inspectionJson) {
@@ -76,15 +155,19 @@ export function migrateLegacyData(maintenanceJson, humidityJson, inspectionJson)
         }
     }
 
-    // Save migrated data
+    // Save as v2 first
+    data.version = 2;
     saveVersionedData(data);
+
+    // Now migrate v2 → v3 to pick up any v2.0 separate keys
+    const v3Data = migrateV2ToV3(data);
 
     // Clean up legacy keys (commented out for safety - can be enabled after verification)
     // localStorage.removeItem(STORAGE_KEYS.legacy.maintenance);
     // localStorage.removeItem(STORAGE_KEYS.legacy.humidity);
     // localStorage.removeItem(STORAGE_KEYS.legacy.inspection);
 
-    return data;
+    return v3Data;
 }
 
 export function createDefaultData() {
@@ -94,7 +177,14 @@ export function createDefaultData() {
         activeGuitarId: 'default',
         maintenanceStates: {},
         humidityReadings: [],
-        inspectionData: {}
+        inspectionData: {},
+        // v2.0+ features - now in versioned structure
+        onboardingComplete: false,
+        playingFrequency: 'weekly',
+        playingHoursPerWeek: 2.5,
+        hasHygrometer: null,
+        playingSessions: [],
+        stringChangeHistory: []
     };
 }
 
@@ -108,6 +198,38 @@ export function saveVersionedData(data) {
         alert('Warning: Unable to save data. Storage may be full.');
         return false;
     }
+}
+
+// Get current versioned data (loads and migrates if needed)
+export function getVersionedData() {
+    try {
+        const data = localStorage.getItem(STORAGE_KEYS.mainData);
+        if (data) {
+            const parsed = JSON.parse(data);
+            // Ensure it's at the current version
+            if (parsed.version !== DATA_VERSION) {
+                return migrateData();
+            }
+            return parsed;
+        }
+        return migrateData();
+    } catch (e) {
+        console.error('Error loading versioned data:', e);
+        return createDefaultData();
+    }
+}
+
+// Update a specific field in versioned data
+export function updateVersionedField(field, value) {
+    const data = getVersionedData();
+    data[field] = value;
+    return saveVersionedData(data);
+}
+
+// Get a specific field from versioned data
+export function getVersionedField(field, defaultValue = null) {
+    const data = getVersionedData();
+    return data[field] !== undefined ? data[field] : defaultValue;
 }
 
 // Legacy compatibility functions

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migration Test - Guitar Tracker</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #fff; }
+        .test { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .pass { background: #064e3b; }
+        .fail { background: #7f1d1d; }
+        pre { background: #2a2a2a; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Guitar Tracker - Migration Test</h1>
+
+    <button onclick="testV2ToV3Migration()">Test v2→v3 Migration</button>
+    <button onclick="testFreshInstall()">Test Fresh Install</button>
+    <button onclick="clearStorage()">Clear All Data</button>
+
+    <div id="results"></div>
+
+    <script type="module">
+        import { DATA_VERSION } from './js/config.js';
+        import { migrateData, getVersionedData, migrateV2ToV3, createDefaultData } from './js/storage.js';
+
+        window.log = (msg, pass = true) => {
+            const div = document.createElement('div');
+            div.className = `test ${pass ? 'pass' : 'fail'}`;
+            div.textContent = `${pass ? '✓' : '✗'} ${msg}`;
+            document.getElementById('results').appendChild(div);
+        };
+
+        window.logData = (title, data) => {
+            const div = document.createElement('div');
+            div.innerHTML = `<strong>${title}</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            document.getElementById('results').appendChild(div);
+        };
+
+        window.clearStorage = () => {
+            localStorage.clear();
+            window.log('Storage cleared');
+            document.getElementById('results').innerHTML = '';
+        };
+
+        window.testFreshInstall = () => {
+            document.getElementById('results').innerHTML = '';
+            localStorage.clear();
+
+            window.log('Testing fresh install (no existing data)...');
+
+            const data = createDefaultData();
+            window.logData('Default Data Created', data);
+
+            // Verify structure
+            if (data.version === 3) window.log('✓ Version is 3');
+            else window.log('✗ Version should be 3, got ' + data.version, false);
+
+            if (data.onboardingComplete === false) window.log('✓ onboardingComplete initialized');
+            else window.log('✗ onboardingComplete should be false', false);
+
+            if (Array.isArray(data.playingSessions)) window.log('✓ playingSessions is array');
+            else window.log('✗ playingSessions should be array', false);
+
+            if (Array.isArray(data.stringChangeHistory)) window.log('✓ stringChangeHistory is array');
+            else window.log('✗ stringChangeHistory should be array', false);
+        };
+
+        window.testV2ToV3Migration = () => {
+            document.getElementById('results').innerHTML = '';
+            localStorage.clear();
+
+            window.log('Testing v2→v3 migration...');
+
+            // Simulate v2 data in main structure
+            const v2Data = {
+                version: 2,
+                guitars: [{ id: 'default', name: 'Taylor GS Mini Sapele' }],
+                activeGuitarId: 'default',
+                maintenanceStates: {},
+                humidityReadings: [
+                    { humidity: 47, temp: 70, timestamp: Date.now(), guitarId: 'default' }
+                ],
+                inspectionData: {}
+            };
+
+            localStorage.setItem('guitarTrackerData', JSON.stringify(v2Data));
+
+            // Simulate v2.0 separate keys
+            localStorage.setItem('onboardingComplete', 'true');
+            localStorage.setItem('playingFrequency', 'daily');
+            localStorage.setItem('playingHoursPerWeek', '7');
+            localStorage.setItem('hasHygrometer', 'true');
+            localStorage.setItem('playingSessions', JSON.stringify([
+                { timestamp: Date.now() - 86400000, duration: 30 },
+                { timestamp: Date.now(), duration: 45 }
+            ]));
+            localStorage.setItem('stringChangeHistory', JSON.stringify([
+                { date: Date.now() - 5184000000, brand: 'D\'Addario EJ16', daysFromPrevious: null },
+                { date: Date.now(), brand: 'Elixir', daysFromPrevious: 60 }
+            ]));
+
+            window.log('Created v2 data with separate keys');
+
+            // Run migration
+            const migrated = migrateV2ToV3(v2Data);
+
+            window.logData('Migrated Data', migrated);
+
+            // Verify migration
+            if (migrated.version === 3) window.log('✓ Version upgraded to 3');
+            else window.log('✗ Version should be 3, got ' + migrated.version, false);
+
+            if (migrated.onboardingComplete === true) window.log('✓ onboardingComplete migrated');
+            else window.log('✗ onboardingComplete not migrated correctly', false);
+
+            if (migrated.playingFrequency === 'daily') window.log('✓ playingFrequency migrated');
+            else window.log('✗ playingFrequency not migrated correctly', false);
+
+            if (migrated.playingHoursPerWeek === 7) window.log('✓ playingHoursPerWeek migrated');
+            else window.log('✗ playingHoursPerWeek not migrated correctly', false);
+
+            if (migrated.hasHygrometer === true) window.log('✓ hasHygrometer migrated');
+            else window.log('✗ hasHygrometer not migrated correctly', false);
+
+            if (Array.isArray(migrated.playingSessions) && migrated.playingSessions.length === 2) {
+                window.log('✓ playingSessions migrated (2 sessions)');
+            } else {
+                window.log('✗ playingSessions not migrated correctly', false);
+            }
+
+            if (Array.isArray(migrated.stringChangeHistory) && migrated.stringChangeHistory.length === 2) {
+                window.log('✓ stringChangeHistory migrated (2 changes)');
+            } else {
+                window.log('✗ stringChangeHistory not migrated correctly', false);
+            }
+
+            if (migrated.humidityReadings.length === 1) window.log('✓ Existing data preserved');
+            else window.log('✗ Existing data not preserved', false);
+        };
+    </script>
+</body>
+</html>

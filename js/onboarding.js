@@ -1,6 +1,6 @@
 // Onboarding module for first-time user setup
 import { MAINTENANCE_TASKS } from './config.js';
-import { saveData } from './storage.js';
+import { saveData, getVersionedData, saveVersionedData, getVersionedField } from './storage.js';
 import { updateDashboard } from './ui.js';
 
 let currentStep = 0;
@@ -20,7 +20,7 @@ const frequencyToHours = {
 
 // Check if onboarding should be shown
 export function shouldShowOnboarding() {
-    return !localStorage.getItem('onboardingComplete');
+    return !getVersionedField('onboardingComplete', false);
 }
 
 // Show onboarding modal
@@ -124,7 +124,9 @@ export function setHasHygrometer(hasIt) {
 // Skip onboarding
 export function skipOnboarding() {
     if (confirm('Skip setup? You can always enter this information later in the app.')) {
-        localStorage.setItem('onboardingComplete', 'true');
+        const data = getVersionedData();
+        data.onboardingComplete = true;
+        saveVersionedData(data);
         hideOnboarding();
     }
 }
@@ -143,7 +145,10 @@ export function completeOnboarding() {
         onboardingData.playingFrequency = frequencyInput.value;
     }
 
-    // Save to localStorage
+    // Get current versioned data
+    const data = getVersionedData();
+
+    // Save to versioned data structure
     if (onboardingData.lastStringChange) {
         // Find and update the string change task
         const stringChangeTask = MAINTENANCE_TASKS.eightweek.find(t => t.id === '8w-8');
@@ -153,14 +158,17 @@ export function completeOnboarding() {
         }
     }
 
-    localStorage.setItem('playingFrequency', onboardingData.playingFrequency);
-    localStorage.setItem('playingHoursPerWeek', frequencyToHours[onboardingData.playingFrequency]);
+    data.playingFrequency = onboardingData.playingFrequency;
+    data.playingHoursPerWeek = frequencyToHours[onboardingData.playingFrequency];
 
     if (onboardingData.hasHygrometer !== null) {
-        localStorage.setItem('hasHygrometer', onboardingData.hasHygrometer);
+        data.hasHygrometer = onboardingData.hasHygrometer;
     }
 
-    localStorage.setItem('onboardingComplete', 'true');
+    data.onboardingComplete = true;
+
+    // Save versioned data
+    saveVersionedData(data);
 
     // Save task data
     saveData();

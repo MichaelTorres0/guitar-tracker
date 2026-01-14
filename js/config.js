@@ -1,12 +1,22 @@
 // DATA VERSIONING & STORAGE CONFIGURATION
-export const DATA_VERSION = 2;
+// v1: Original separate keys (guitarMaintenanceData, humidityReadings, inspectionData)
+// v2: Consolidated to guitarTrackerData with guitars array
+// v3: Moved all v2.0 features (sessions, string history, onboarding) into versioned structure
+export const DATA_VERSION = 3;
 
 export const STORAGE_KEYS = {
     mainData: 'guitarTrackerData',
     legacy: {
         maintenance: 'guitarMaintenanceData',
         humidity: 'humidityReadings',
-        inspection: 'inspectionData'
+        inspection: 'inspectionData',
+        // v2.0 separate keys (now migrated into versioned structure)
+        onboardingComplete: 'onboardingComplete',
+        playingFrequency: 'playingFrequency',
+        playingHoursPerWeek: 'playingHoursPerWeek',
+        hasHygrometer: 'hasHygrometer',
+        playingSessions: 'playingSessions',
+        stringChangeHistory: 'stringChangeHistory'
     }
 };
 
