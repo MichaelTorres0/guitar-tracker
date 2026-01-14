@@ -100,8 +100,28 @@ export function init() {
 
 // Set up event handlers
 function setupEventHandlers() {
-    // Just Played button - timer display sets the handler dynamically
-    // No need to set up event handler here anymore
+    // Timer button - handled dynamically by updateTimerDisplay()
+    // (no setup needed here)
+
+    // Quick Complete Daily Tasks button
+    const quickCompleteDailyBtn = document.getElementById('quickCompleteDaily');
+    if (quickCompleteDailyBtn) {
+        quickCompleteDailyBtn.addEventListener('click', () => {
+            quickActionJustPlayed();
+            updateDashboard();
+            renderMaintenanceTasks();
+            checkForAlerts();
+
+            // Show confirmation
+            const originalText = quickCompleteDailyBtn.textContent;
+            quickCompleteDailyBtn.textContent = '✓ Daily Tasks Completed!';
+            quickCompleteDailyBtn.style.opacity = '0.8';
+            setTimeout(() => {
+                quickCompleteDailyBtn.textContent = originalText;
+                quickCompleteDailyBtn.style.opacity = '1';
+            }, 2000);
+        });
+    }
 
     // Theme toggle
     const themeToggle = document.querySelector('.theme-toggle');
