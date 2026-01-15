@@ -1,6 +1,7 @@
 // Task management functions
 import { MAINTENANCE_TASKS } from './config.js';
 import { saveData } from './storage.js';
+import { getVersionedField } from './storage.js';
 
 export function toggleTask(taskId) {
     for (let category in MAINTENANCE_TASKS) {
@@ -121,10 +122,19 @@ export function isCompletedWithinPeriod(task, category) {
     today.setHours(0, 0, 0, 0);
 
     if (category === 'daily') {
-        // Check if completed today
-        const completedDate = new Date(lastDate);
-        completedDate.setHours(0, 0, 0, 0);
-        return completedDate.getTime() === today.getTime();
+        // For daily tasks, check if completed after the most recent session
+        const mostRecentSession = getMostRecentSession();
+
+        // If no session logged, consider it complete if done today
+        if (!mostRecentSession) {
+            const completedDate = new Date(lastDate);
+            completedDate.setHours(0, 0, 0, 0);
+            return completedDate.getTime() === today.getTime();
+        }
+
+        // Check if completed after the most recent session
+        const sessionDate = new Date(mostRecentSession.timestamp);
+        return lastDate >= sessionDate;
     } else if (category === 'weekly') {
         // Check if completed within last 7 days
         const daysDiff = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
@@ -163,6 +173,30 @@ export function getRelativeTimeAgo(dateString) {
     return date.toLocaleDateString();
 }
 
+// Helper function to check if there's been a playing session since a given date
+function hasSessionSince(sinceDate) {
+    const sessions = getVersionedField('playingSessions', []);
+    if (sessions.length === 0) return null;
+
+    const sinceTimestamp = sinceDate ? new Date(sinceDate).getTime() : 0;
+    const sessionsSince = sessions.filter(s => s.timestamp > sinceTimestamp);
+
+    if (sessionsSince.length === 0) return null;
+
+    // Return the most recent session
+    return sessionsSince[sessionsSince.length - 1];
+}
+
+// Helper function to get the most recent playing session
+function getMostRecentSession() {
+    const sessions = getVersionedField('playingSessions', []);
+    if (sessions.length === 0) return null;
+
+    // Sort by timestamp descending and return the first (most recent)
+    const sorted = [...sessions].sort((a, b) => b.timestamp - a.timestamp);
+    return sorted[0];
+}
+
 export function quickActionJustPlayed() {
     const now = new Date().toISOString();
     MAINTENANCE_TASKS.daily.forEach(task => {
@@ -183,6 +217,49 @@ export function quickActionJustPlayed() {
 }
 
 export function calculateNextDue(task, category) {
+    // Special logic for daily tasks - they should only be due after a playing session
+    if (category === 'daily') {
+        const mostRecentSession = getMostRecentSession();
+
+        // If no sessions have ever been logged, daily tasks are not due
+        if (!mostRecentSession) {
+            return 'Not due (log a session first)';
+        }
+
+        const sessionDate = new Date(mostRecentSession.timestamp);
+        const lastCompleted = task.lastCompleted ? new Date(task.lastCompleted) : null;
+
+        // If task has never been completed, check if session was logged
+        if (!lastCompleted) {
+            // Check if session is older than 1 day
+            const now = new Date();
+            const hoursSinceSession = (now - sessionDate) / (1000 * 60 * 60);
+
+            if (hoursSinceSession > 24) {
+                return '⚠️ OVERDUE';
+            } else {
+                return 'Due after this session';
+            }
+        }
+
+        // If task was completed after the most recent session, it's not due yet
+        if (lastCompleted >= sessionDate) {
+            return 'Complete for this session';
+        }
+
+        // Task was completed before the most recent session
+        // Check if it's been more than 24 hours since the session
+        const now = new Date();
+        const hoursSinceSession = (now - sessionDate) / (1000 * 60 * 60);
+
+        if (hoursSinceSession > 24) {
+            return '⚠️ OVERDUE';
+        } else {
+            return 'Due after last session';
+        }
+    }
+
+    // For non-daily tasks, use the original time-based logic
     if (!task.lastCompleted) {
         return 'ASAP';
     }
@@ -190,9 +267,7 @@ export function calculateNextDue(task, category) {
     const lastDate = new Date(task.lastCompleted);
     let nextDate = new Date(lastDate);
 
-    if (category === 'daily') {
-        nextDate.setDate(nextDate.getDate() + 1);
-    } else if (category === 'weekly') {
+    if (category === 'weekly') {
         nextDate.setDate(nextDate.getDate() + 7);
     } else if (category === 'eightweek') {
         nextDate.setDate(nextDate.getDate() + 56);
