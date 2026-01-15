@@ -155,6 +155,8 @@
             width: 120px;
             height: 120px;
             transform: rotate(-90deg);
+            display: block;
+            margin: 0 auto;
         }
 
         .ring-bg {
@@ -171,6 +173,15 @@
             font-weight: 700;
             transform: rotate(90deg);
             transform-origin: center;
+        }
+
+        /* String Life Calculator Container */
+        .string-life-ring-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0;
         }
 
         @media (max-width: 768px) {
