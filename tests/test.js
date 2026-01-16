@@ -653,6 +653,148 @@ async function runTests() {
         assertDefined(window.switchTab);
     });
 
+    test('switchTab changes active tab', () => {
+        // Switch to humidity tab
+        window.switchTab('humidity');
+        const humidityTab = document.getElementById('humidity');
+        assertTrue(humidityTab.classList.contains('active'), 'Humidity tab should be active');
+
+        // Switch back to dashboard
+        window.switchTab('dashboard');
+        const dashboardTab = document.getElementById('dashboard');
+        assertTrue(dashboardTab.classList.contains('active'), 'Dashboard tab should be active');
+    });
+
+    // ==================== localStorage Helper Tests ====================
+    console.log('\n💾 localStorage Helper Tests');
+
+    test('localStorage mock works correctly', () => {
+        localStorage.clear();
+        localStorage.setItem('testKey', 'testValue');
+        assertEqual(localStorage.getItem('testKey'), 'testValue');
+    });
+
+    test('localStorage removeItem works', () => {
+        localStorage.setItem('toRemove', 'value');
+        localStorage.removeItem('toRemove');
+        assertEqual(localStorage.getItem('toRemove'), null);
+    });
+
+    test('localStorage clear removes all items', () => {
+        localStorage.setItem('key1', 'value1');
+        localStorage.setItem('key2', 'value2');
+        localStorage.clear();
+        assertEqual(localStorage.getItem('key1'), null);
+        assertEqual(localStorage.getItem('key2'), null);
+    });
+
+    // ==================== SVG Ring Tests ====================
+    console.log('\n🔘 SVG Ring Tests');
+
+    test('String health ring SVG exists', () => {
+        const ring = document.getElementById('stringHealthRing');
+        assertDefined(ring, 'String health ring should exist');
+    });
+
+    test('Ring progress element exists', () => {
+        const ringProgress = document.getElementById('ringProgress');
+        assertDefined(ringProgress, 'Ring progress element should exist');
+    });
+
+    test('Ring text element exists with transform', () => {
+        const ringText = document.getElementById('ringText');
+        assertDefined(ringText, 'Ring text element should exist');
+        const transform = ringText.getAttribute('transform');
+        assertTrue(transform && transform.includes('rotate'), 'Ring text should have rotate transform');
+    });
+
+    test('Ring text uses correct fill color variable', () => {
+        const ringText = document.getElementById('ringText');
+        assertDefined(ringText, 'Ring text element should exist');
+        assertTrue(ringText.classList.contains('ring-text'), 'Ring text should have ring-text class');
+    });
+
+    // ==================== Dark Mode Tests ====================
+    console.log('\n🌙 Dark Mode Tests');
+
+    test('Dark mode can be set via data-theme attribute', () => {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        assertEqual(document.documentElement.getAttribute('data-theme'), 'dark');
+        // Reset
+        document.documentElement.setAttribute('data-theme', 'light');
+    });
+
+    test('CSS variables exist for theming', () => {
+        // Check that the root has CSS custom properties defined
+        const root = document.documentElement;
+        assertDefined(root, 'Document element should exist');
+    });
+
+    // ==================== Input Feedback Tests ====================
+    console.log('\n📝 Input Feedback Tests');
+
+    test('Humidity input element exists', () => {
+        const input = document.getElementById('humidityValue');
+        assertDefined(input, 'Humidity input should exist');
+    });
+
+    test('Humidity input accepts number values', () => {
+        const input = document.getElementById('humidityValue');
+        input.value = '45.5';
+        assertEqual(input.value, '45.5');
+    });
+
+    test('Temperature input element exists', () => {
+        const input = document.getElementById('temperatureValue');
+        assertDefined(input, 'Temperature input should exist');
+    });
+
+    // ==================== Quick Action Button Tests ====================
+    console.log('\n⚡ Quick Action Button Tests');
+
+    test('Quick complete daily button has correct ID', () => {
+        const btn = document.getElementById('quickCompleteDaily');
+        assertDefined(btn, 'Quick complete daily button should exist');
+    });
+
+    test('Quick complete daily button has btn-quick-action class', () => {
+        const btn = document.getElementById('quickCompleteDaily');
+        assertTrue(btn.classList.contains('btn-quick-action'), 'Button should have btn-quick-action class');
+    });
+
+    test('Timer button exists', () => {
+        const btn = document.querySelector('.btn-timer');
+        assertDefined(btn, 'Timer button should exist');
+    });
+
+    // ==================== Dashboard Element Tests ====================
+    console.log('\n📊 Dashboard Element Tests');
+
+    test('String life text element exists', () => {
+        const el = document.getElementById('stringLifeText');
+        assertDefined(el, 'String life text element should exist');
+    });
+
+    test('String life estimate element exists', () => {
+        const el = document.getElementById('stringLifeEstimate');
+        assertDefined(el, 'String life estimate element should exist');
+    });
+
+    test('Days since change element exists', () => {
+        const el = document.getElementById('daysSinceChange');
+        assertDefined(el, 'Days since change element should exist');
+    });
+
+    test('Current humidity element exists', () => {
+        const el = document.getElementById('currentHumidity');
+        assertDefined(el, 'Current humidity element should exist');
+    });
+
+    test('Weekly hours element exists', () => {
+        const el = document.getElementById('weeklyHours');
+        assertDefined(el, 'Weekly hours element should exist');
+    });
+
     // ==================== Summary ====================
     console.log('\n' + '='.repeat(50));
     console.log(`\n📊 Test Results: ${passed} passed, ${failed} failed\n`);

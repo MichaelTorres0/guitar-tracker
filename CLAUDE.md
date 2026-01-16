@@ -48,7 +48,7 @@ guitar-tracker/
 │   └── stringHistory.js # String change history & average life (v2.0)
 ├── tests/
 │   ├── test-setup.js    # Test framework setup
-│   └── test.js          # Test suite (63 tests)
+│   └── test.js          # Test suite (84 tests)
 ├── test.html            # Test runner page
 ├── manifest.json        # PWA manifest
 └── RELEASE_NOTES.md     # Version history and features (v2.0)
@@ -257,7 +257,7 @@ if (exportCsvBtn) exportCsvBtn.addEventListener('click', exportAsCSV);
 
 ### Testing Workflow
 1. **During development:** Refresh browser, check console
-2. **Before committing:** Run `npm test` - all 63 tests must pass
+2. **Before committing:** Run `npm test` - all 84 tests must pass
 3. **Before deploying:** Test on actual iPhone Safari if possible
 
 ### Debugging Tips
