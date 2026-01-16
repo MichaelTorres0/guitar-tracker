@@ -171,8 +171,6 @@
             font-size: 10px;
             fill: var(--color-text);
             font-weight: 700;
-            transform: rotate(90deg);
-            transform-origin: center;
         }
 
         /* String Life Calculator Container */
@@ -961,17 +959,30 @@
         /* Real-time Input Feedback */
         .input-safe {
             border-color: #48bb78 !important;
-            background-color: #f0fff4 !important;
+            background-color: rgba(72, 187, 120, 0.1) !important;
         }
 
         .input-warning {
             border-color: #ecc94b !important;
-            background-color: #fffff0 !important;
+            background-color: rgba(236, 201, 75, 0.1) !important;
         }
 
         .input-danger {
             border-color: #f56565 !important;
-            background-color: #fff5f5 !important;
+            background-color: rgba(245, 101, 101, 0.1) !important;
+        }
+
+        /* Dark mode adjustments for input feedback */
+        [data-theme="dark"] .input-safe {
+            background-color: rgba(72, 187, 120, 0.2) !important;
+        }
+
+        [data-theme="dark"] .input-warning {
+            background-color: rgba(236, 201, 75, 0.2) !important;
+        }
+
+        [data-theme="dark"] .input-danger {
+            background-color: rgba(245, 101, 101, 0.2) !important;
         }
 
         /* Info Icon */
