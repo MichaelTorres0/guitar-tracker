@@ -1,11 +1,48 @@
 // Storage and data migration functions
 import { DATA_VERSION, STORAGE_KEYS, DEFAULT_GUITAR, MAINTENANCE_TASKS } from './config.js';
 
+// Helper to get localStorage - works in both browser and Node.js test environments
+function getLocalStorage() {
+    // Check globalThis first (works in both browser and Node.js)
+    if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
+        return globalThis.localStorage;
+    }
+    // Then check window (browser fallback)
+    if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage;
+    }
+    // Finally check bare localStorage (browser global)
+    if (typeof localStorage !== 'undefined') {
+        return localStorage;
+    }
+    return null;
+}
+
+// Wrapper for localStorage operations with fallback
+const storage = {
+    getItem(key) {
+        const ls = getLocalStorage();
+        return ls ? ls.getItem(key) : null;
+    },
+    setItem(key, value) {
+        const ls = getLocalStorage();
+        if (ls) ls.setItem(key, value);
+    },
+    removeItem(key) {
+        const ls = getLocalStorage();
+        if (ls) ls.removeItem(key);
+    },
+    clear() {
+        const ls = getLocalStorage();
+        if (ls) ls.clear();
+    }
+};
+
 // MIGRATION FUNCTIONS
 export function migrateData() {
     try {
         // Check for new format data first
-        const newData = localStorage.getItem(STORAGE_KEYS.mainData);
+        const newData = storage.getItem(STORAGE_KEYS.mainData);
         if (newData) {
             const parsed = JSON.parse(newData);
 
@@ -37,9 +74,9 @@ export function migrateData() {
         }
 
         // Check for legacy data (pre-versioning)
-        const legacyMaintenance = localStorage.getItem(STORAGE_KEYS.legacy.maintenance);
-        const legacyHumidity = localStorage.getItem(STORAGE_KEYS.legacy.humidity);
-        const legacyInspection = localStorage.getItem(STORAGE_KEYS.legacy.inspection);
+        const legacyMaintenance = storage.getItem(STORAGE_KEYS.legacy.maintenance);
+        const legacyHumidity = storage.getItem(STORAGE_KEYS.legacy.humidity);
+        const legacyInspection = storage.getItem(STORAGE_KEYS.legacy.inspection);
 
         if (legacyMaintenance || legacyHumidity || legacyInspection) {
             console.log('Migrating legacy data to version', DATA_VERSION);
@@ -104,28 +141,28 @@ export function migrateV2ToV3(v2Data) {
 
     // Consolidate v2.0 features from separate keys if not already in structure
     if (!data.onboardingComplete) {
-        const onboardingComplete = localStorage.getItem(STORAGE_KEYS.legacy.onboardingComplete);
+        const onboardingComplete = storage.getItem(STORAGE_KEYS.legacy.onboardingComplete);
         data.onboardingComplete = onboardingComplete === 'true';
     }
 
     if (!data.playingFrequency) {
-        const playingFrequency = localStorage.getItem(STORAGE_KEYS.legacy.playingFrequency);
+        const playingFrequency = storage.getItem(STORAGE_KEYS.legacy.playingFrequency);
         data.playingFrequency = playingFrequency || 'weekly';
     }
 
     if (!data.playingHoursPerWeek) {
-        const playingHoursPerWeek = localStorage.getItem(STORAGE_KEYS.legacy.playingHoursPerWeek);
+        const playingHoursPerWeek = storage.getItem(STORAGE_KEYS.legacy.playingHoursPerWeek);
         data.playingHoursPerWeek = playingHoursPerWeek ? parseFloat(playingHoursPerWeek) : 2.5;
     }
 
     if (!data.hasHygrometer) {
-        const hasHygrometer = localStorage.getItem(STORAGE_KEYS.legacy.hasHygrometer);
+        const hasHygrometer = storage.getItem(STORAGE_KEYS.legacy.hasHygrometer);
         data.hasHygrometer = hasHygrometer === 'true' ? true : (hasHygrometer === 'false' ? false : null);
     }
 
     if (!data.playingSessions) {
         try {
-            const playingSessions = localStorage.getItem(STORAGE_KEYS.legacy.playingSessions);
+            const playingSessions = storage.getItem(STORAGE_KEYS.legacy.playingSessions);
             data.playingSessions = playingSessions ? JSON.parse(playingSessions) : [];
         } catch (e) {
             console.error('Error migrating playing sessions:', e);
@@ -135,7 +172,7 @@ export function migrateV2ToV3(v2Data) {
 
     if (!data.stringChangeHistory) {
         try {
-            const stringChangeHistory = localStorage.getItem(STORAGE_KEYS.legacy.stringChangeHistory);
+            const stringChangeHistory = storage.getItem(STORAGE_KEYS.legacy.stringChangeHistory);
             data.stringChangeHistory = stringChangeHistory ? JSON.parse(stringChangeHistory) : [];
         } catch (e) {
             console.error('Error migrating string change history:', e);
@@ -225,9 +262,9 @@ export function migrateLegacyData(maintenanceJson, humidityJson, inspectionJson)
     const v4Data = migrateV3ToV4(v3Data);
 
     // Clean up legacy keys (commented out for safety - can be enabled after verification)
-    // localStorage.removeItem(STORAGE_KEYS.legacy.maintenance);
-    // localStorage.removeItem(STORAGE_KEYS.legacy.humidity);
-    // localStorage.removeItem(STORAGE_KEYS.legacy.inspection);
+    // storage.removeItem(STORAGE_KEYS.legacy.maintenance);
+    // storage.removeItem(STORAGE_KEYS.legacy.humidity);
+    // storage.removeItem(STORAGE_KEYS.legacy.inspection);
 
     return v4Data;
 }
@@ -283,7 +320,7 @@ export function createDefaultData() {
 export function saveVersionedData(data) {
     try {
         data.version = DATA_VERSION;
-        localStorage.setItem(STORAGE_KEYS.mainData, JSON.stringify(data));
+        storage.setItem(STORAGE_KEYS.mainData, JSON.stringify(data));
         return true;
     } catch (e) {
         console.error('Error saving versioned data:', e);
@@ -295,7 +332,7 @@ export function saveVersionedData(data) {
 // Get current versioned data (loads and migrates if needed)
 export function getVersionedData() {
     try {
-        const data = localStorage.getItem(STORAGE_KEYS.mainData);
+        const data = storage.getItem(STORAGE_KEYS.mainData);
         if (data) {
             const parsed = JSON.parse(data);
             // Ensure it's at the current version
@@ -327,7 +364,7 @@ export function getVersionedField(field, defaultValue = null) {
 // Legacy compatibility functions
 export function loadData() {
     const DATA_KEY = STORAGE_KEYS.legacy.maintenance;
-    const saved = localStorage.getItem(DATA_KEY);
+    const saved = storage.getItem(DATA_KEY);
     if (saved) {
         const data = JSON.parse(saved);
         for (let category in data) {
@@ -354,12 +391,12 @@ export function saveData() {
             lastCompleted: task.lastCompleted || null
         }));
     }
-    localStorage.setItem(DATA_KEY, JSON.stringify(data));
+    storage.setItem(DATA_KEY, JSON.stringify(data));
 }
 
 export function loadInspectionData() {
     let inspectionData = {};
-    const saved = localStorage.getItem('inspectionData');
+    const saved = storage.getItem('inspectionData');
     if (saved) {
         inspectionData = JSON.parse(saved);
     }

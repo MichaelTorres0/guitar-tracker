@@ -2,6 +2,7 @@
 import { STORAGE_KEYS, MAINTENANCE_TASKS } from './config.js';
 import { validateHumidity, validateTemperature, showFeedback, hideFeedback } from './validators.js';
 import { calculateNextDue } from './tasks.js';
+import { ls } from './localStorage.js';
 
 const HUMIDITY_KEY = STORAGE_KEYS.legacy.humidity;
 
@@ -51,10 +52,10 @@ export function addHumidityReading() {
         timestamp: new Date(`${date}T${time}`).toISOString()
     };
 
-    let readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
+    let readings = JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
     readings.push(reading);
     readings.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    localStorage.setItem(HUMIDITY_KEY, JSON.stringify(readings));
+    ls.setItem(HUMIDITY_KEY, JSON.stringify(readings));
 
     document.getElementById('humidityValue').value = '';
     document.getElementById('temperatureValue').value = '';
@@ -85,10 +86,10 @@ export function addHumidityReadingSimplified() {
         source: 'manual'
     };
 
-    let readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
+    let readings = JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
     readings.unshift(reading);
     readings.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    localStorage.setItem(HUMIDITY_KEY, JSON.stringify(readings));
+    ls.setItem(HUMIDITY_KEY, JSON.stringify(readings));
 
     document.getElementById('humidityValue').value = '';
     document.getElementById('temperatureValue').value = '';
@@ -106,13 +107,13 @@ export function addHumidityReadingSimplified() {
 }
 
 export function deleteHumidityReading(id) {
-    let readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
+    let readings = JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
     readings = readings.filter(r => r.id !== id);
-    localStorage.setItem(HUMIDITY_KEY, JSON.stringify(readings));
+    ls.setItem(HUMIDITY_KEY, JSON.stringify(readings));
 }
 
 export function renderHumidityTable(filteredReadings = null) {
-    const readings = filteredReadings || JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
+    const readings = filteredReadings || JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
     const tbody = document.getElementById('humidityTable');
     if (!tbody) return;
 
@@ -147,7 +148,7 @@ export function renderHumidityTable(filteredReadings = null) {
 
 export function checkForAlerts() {
     const alerts = [];
-    const readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
+    const readings = JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
 
     if (readings.length > 0) {
         const latest = readings[0];
@@ -236,7 +237,7 @@ let activeFilters = null;
 
 // Filter humidity readings
 export function filterHumidityReadings(fromDate, toDate, location) {
-    let readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
+    let readings = JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
 
     if (fromDate) {
         const from = new Date(fromDate);
@@ -280,13 +281,13 @@ export function clearHumidityFilters() {
 // Get filtered readings for export
 export function getFilteredReadings() {
     if (!activeFilters) {
-        return JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
+        return JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
     }
     return filterHumidityReadings(activeFilters.fromDate, activeFilters.toDate, activeFilters.location);
 }
 
 export function drawHumidityChart() {
-    const readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
+    const readings = JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
     const chartContainer = document.getElementById('humidityChartContainer');
     const canvas = document.getElementById('humidityChart');
 

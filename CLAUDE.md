@@ -37,6 +37,7 @@ guitar-tracker/
 │   ├── app.js           # Entry point, event wiring, init()
 │   ├── config.js        # MAINTENANCE_TASKS, EQUIPMENT_ITEMS, thresholds
 │   ├── storage.js       # localStorage operations, migration
+│   ├── localStorage.js  # Cross-platform localStorage helper (v2.1.2)
 │   ├── validators.js    # Input validation (humidity, temperature)
 │   ├── humidity.js      # Humidity logging, analysis, charts
 │   ├── tasks.js         # Task toggle, calculations, string life
@@ -47,7 +48,7 @@ guitar-tracker/
 │   └── stringHistory.js # String change history & average life (v2.0)
 ├── tests/
 │   ├── test-setup.js    # Test framework setup
-│   └── test.js          # Test suite (62 tests)
+│   └── test.js          # Test suite (63 tests)
 ├── test.html            # Test runner page
 ├── manifest.json        # PWA manifest
 └── RELEASE_NOTES.md     # Version history and features (v2.0)
@@ -58,7 +59,8 @@ guitar-tracker/
 | Module | Purpose |
 |--------|---------|
 | `config.js` | Data constants, task definitions, humidity thresholds |
-| `storage.js` | Data persistence, v1→v2→v3 migration, legacy compatibility, versioned data helpers |
+| `storage.js` | Data persistence, v1→v2→v3→v4 migration, legacy compatibility, versioned data helpers |
+| `localStorage.js` | **v2.1.2** Cross-platform localStorage helper for browser and Node.js test environments |
 | `validators.js` | Input validation with error/warning feedback |
 | `humidity.js` | Humidity logging, chart rendering, alerts |
 | `tasks.js` | Task completion, string life calculator, string change hook |
@@ -255,7 +257,7 @@ if (exportCsvBtn) exportCsvBtn.addEventListener('click', exportAsCSV);
 
 ### Testing Workflow
 1. **During development:** Refresh browser, check console
-2. **Before committing:** Open `test.html` - all 62 tests must pass
+2. **Before committing:** Run `npm test` - all 63 tests must pass
 3. **Before deploying:** Test on actual iPhone Safari if possible
 
 ### Debugging Tips
