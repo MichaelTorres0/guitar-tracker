@@ -2,6 +2,7 @@
 import { MAINTENANCE_TASKS } from './config.js';
 import { saveData } from './storage.js';
 import { getVersionedField } from './storage.js';
+import { ls } from './localStorage.js';
 
 export function toggleTask(taskId) {
     for (let category in MAINTENANCE_TASKS) {
@@ -205,15 +206,17 @@ export function quickActionJustPlayed() {
     });
     saveData();
 
-    // Show confirmation feedback
-    const btn = document.querySelector('.btn-just-played');
-    const originalText = btn.textContent;
-    btn.textContent = '✓ Daily Tasks Logged!';
-    btn.style.background = 'var(--color-success)';
-    setTimeout(() => {
-        btn.textContent = originalText;
-        btn.style.background = '';
-    }, 2000);
+    // Show confirmation feedback - look for button by ID or class
+    const btn = document.getElementById('quickCompleteDaily') || document.querySelector('.btn-quick-action');
+    if (btn) {
+        const originalText = btn.textContent;
+        btn.textContent = '✓ Daily Tasks Logged!';
+        btn.style.background = 'var(--color-success)';
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.background = '';
+        }, 2000);
+    }
 }
 
 export function calculateNextDue(task, category) {
@@ -345,7 +348,7 @@ export function resetWeeklyTasks() {
 export function confirmReset() {
     if (confirm('⚠️ This will DELETE ALL data including maintenance history and humidity logs. This cannot be undone. Are you sure?')) {
         if (confirm('Really delete everything? Last chance!')) {
-            localStorage.clear();
+            ls.clear();
             location.reload();
         }
     }
@@ -355,7 +358,7 @@ export function confirmReset() {
 let inspectionData = {};
 
 export function recordInspection(type, frequency) {
-    const saved = localStorage.getItem('inspectionData');
+    const saved = ls.getItem('inspectionData');
     if (saved) {
         inspectionData = JSON.parse(saved);
     }
@@ -380,7 +383,7 @@ export function recordInspection(type, frequency) {
         }
     });
 
-    localStorage.setItem('inspectionData', JSON.stringify(inspectionData));
+    ls.setItem('inspectionData', JSON.stringify(inspectionData));
 
     // Update result display
     const resultId = type + 'CheckResult';

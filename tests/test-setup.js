@@ -5,7 +5,8 @@ export async function setupWindow(win) {
     // Set up global references for modules that use global localStorage/document
     global.window = win;
     global.document = win.document;
-    global.localStorage = win.localStorage;
+    // Don't overwrite global.localStorage - keep using the mock set up by test.js
+    // global.localStorage = win.localStorage;  // This was overwriting our mock with JSDOM's undefined localStorage
     global.alert = win.alert || (() => {});
     global.confirm = win.confirm || (() => true);
 

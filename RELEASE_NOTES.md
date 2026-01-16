@@ -2,6 +2,57 @@
 
 ---
 
+# v2.1.2 - Complete All Tasks Button & Test Fixes
+
+**Release Date:** January 2026
+
+## Summary
+
+This patch release fixes the "Complete Daily Tasks" button functionality and resolves critical test infrastructure issues. All 63 tests now pass.
+
+## Bug Fixes
+
+### Complete All Tasks Button Fix
+- **Fixed:** The "Complete Daily Tasks" button (`quickActionJustPlayed()`) was looking for `.btn-just-played` class which no longer existed
+- **Solution:** Updated button selector to use `#quickCompleteDaily` ID or `.btn-quick-action` class
+- **Added:** Null check to prevent errors if button element is not found
+
+### localStorage Cross-Platform Compatibility
+- **Fixed:** localStorage operations failed in Node.js test environment due to ES module scope issues
+- **Solution:** Created new `localStorage.js` helper module that provides a cross-platform localStorage API
+- **Impact:** All modules now import `ls` from `localStorage.js` instead of accessing `localStorage` directly
+
+### Test Setup Fix
+- **Fixed:** `test-setup.js` was overwriting `globalThis.localStorage` with JSDOM's undefined localStorage
+- **Solution:** Removed the localStorage overwrite line, keeping the test file's mock in place
+
+### CSS Print Styles Update
+- **Fixed:** Print styles still referenced old `.btn-just-played` class
+- **Solution:** Updated to use `.btn-quick-action` and `.btn-timer` classes
+
+## Technical Details
+
+| Metric | Value |
+|--------|-------|
+| Files Modified | 9 |
+| Tests Passing | 63/63 |
+| Breaking Changes | None |
+
+## Files Changed
+
+1. `js/localStorage.js` - **NEW** Cross-platform localStorage helper
+2. `js/tasks.js` - Fixed button selector, updated localStorage imports
+3. `js/ui.js` - Updated localStorage imports
+4. `js/humidity.js` - Updated localStorage imports
+5. `js/export.js` - Updated localStorage imports
+6. `js/app.js` - Updated localStorage imports
+7. `js/storage.js` - Added cross-platform getLocalStorage() helper
+8. `css/styles.css` - Updated print styles for new button classes
+9. `tests/test.js` - Fixed button selector test, updated localStorage mock
+10. `tests/test-setup.js` - Fixed localStorage overwrite issue
+
+---
+
 # v2.1.1 - Test Infrastructure Fixes
 
 **Release Date:** January 2026

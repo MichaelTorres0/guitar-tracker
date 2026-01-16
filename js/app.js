@@ -10,6 +10,7 @@ import { initOnboarding } from './onboarding.js';
 import { initSessions, showSessionModal } from './sessions.js';
 import { initStringHistory } from './stringHistory.js';
 import { renderInventory, updateRestockAlerts } from './inventory.js';
+import { ls } from './localStorage.js';
 
 // Guitar settings functions
 function loadGuitarSettings() {
@@ -329,7 +330,7 @@ function setupEventHandlers() {
 }
 
 // Load theme
-const savedTheme = localStorage.getItem('theme') || 'light';
+const savedTheme = ls.getItem('theme') || 'light';
 document.documentElement.setAttribute('data-theme', savedTheme);
 const themeToggleText = document.querySelector('.theme-toggle');
 if (themeToggleText) {
