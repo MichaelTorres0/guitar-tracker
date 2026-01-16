@@ -1,6 +1,7 @@
 // Export and download functions
 import { MAINTENANCE_TASKS, STORAGE_KEYS, DATA_VERSION } from './config.js';
 import { getVersionedData } from './storage.js';
+import { ls } from './localStorage.js';
 
 const HUMIDITY_KEY = STORAGE_KEYS.legacy.humidity;
 
@@ -21,7 +22,7 @@ export function exportAsCSV(filteredReadings = null) {
 
     csv += filteredReadings ? '=== FILTERED HUMIDITY LOG ===\n' : '=== HUMIDITY LOG ===\n';
     csv += 'Date,Time,RH %,Temp °F,Location,Status\n';
-    const readings = filteredReadings || JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
+    const readings = filteredReadings || JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
     readings.forEach(r => {
         const date = new Date(r.timestamp);
         csv += `"${date.toLocaleDateString()}","${date.toLocaleTimeString()}","${r.humidity}","${r.temp}","${r.location}"\n`;
@@ -35,7 +36,7 @@ export function exportAsJSON() {
     const data = {
         exportDate: new Date().toISOString(),
         tasks: MAINTENANCE_TASKS,
-        humidity: JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]')
+        humidity: JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]')
     };
 
     downloadFile(JSON.stringify(data, null, 2), 'guitar-maintenance-backup.json', 'application/json');
@@ -56,11 +57,16 @@ export function downloadFile(content, filename, type) {
 // Get localStorage data size
 export function getDataSize() {
     let totalSize = 0;
-    for (let key in localStorage) {
-        if (localStorage.hasOwnProperty(key)) {
-            totalSize += localStorage[key].length + key.length;
-        }
-    }
+    // Get size of main data keys
+    const mainData = ls.getItem(STORAGE_KEYS.mainData) || '';
+    const theme = ls.getItem('theme') || '';
+    const humidityData = ls.getItem(HUMIDITY_KEY) || '';
+    const inspectionData = ls.getItem('inspectionData') || '';
+    const lastBackup = ls.getItem('lastBackupDate') || '';
+
+    totalSize = mainData.length + theme.length + humidityData.length +
+                inspectionData.length + lastBackup.length;
+
     // Convert to KB
     const sizeKB = (totalSize / 1024).toFixed(2);
     return sizeKB + ' KB';
@@ -68,7 +74,7 @@ export function getDataSize() {
 
 // Get last backup date
 export function getLastBackupDate() {
-    const lastBackup = localStorage.getItem('lastBackupDate');
+    const lastBackup = ls.getItem('lastBackupDate');
     return lastBackup ? new Date(lastBackup).toLocaleString() : 'Never';
 }
 
@@ -94,11 +100,11 @@ export function createBackup() {
         // Include all versioned data fields
         versionedData: versionedData,
         // Include theme preference (stored separately)
-        theme: localStorage.getItem('theme') || 'light'
+        theme: ls.getItem('theme') || 'light'
     };
 
     // Save backup timestamp
-    localStorage.setItem('lastBackupDate', new Date().toISOString());
+    ls.setItem('lastBackupDate', new Date().toISOString());
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
     downloadFile(JSON.stringify(data, null, 2), `guitar-backup-${timestamp}.json`, 'application/json');
@@ -156,17 +162,17 @@ export function restoreFromBackup(fileContent) {
 
         // Restore versioned data structure
         if (data.versionedData) {
-            localStorage.setItem(STORAGE_KEYS.mainData, JSON.stringify(data.versionedData));
+            ls.setItem(STORAGE_KEYS.mainData, JSON.stringify(data.versionedData));
         } else {
             // Old format - restore to legacy keys and let migration handle it
             if (data.tasks) {
-                localStorage.setItem('guitarMaintenanceData', JSON.stringify(data.tasks));
+                ls.setItem('guitarMaintenanceData', JSON.stringify(data.tasks));
             }
             if (data.humidity) {
-                localStorage.setItem(HUMIDITY_KEY, JSON.stringify(data.humidity));
+                ls.setItem(HUMIDITY_KEY, JSON.stringify(data.humidity));
             }
             if (data.inspections) {
-                localStorage.setItem('inspectionData', JSON.stringify(data.inspections));
+                ls.setItem('inspectionData', JSON.stringify(data.inspections));
             }
         }
 
@@ -186,7 +192,7 @@ export function restoreFromBackup(fileContent) {
 
         // Restore theme
         if (data.theme) {
-            localStorage.setItem('theme', data.theme);
+            ls.setItem('theme', data.theme);
         }
 
         // Show success and reload

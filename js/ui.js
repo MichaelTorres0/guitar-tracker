@@ -4,6 +4,7 @@ import { calculateNextDue, getAllNextDueDates, isCompletedWithinPeriod, getRelat
 import { getVersionedData, saveVersionedData, getVersionedField } from './storage.js';
 import { calculatePracticeStreak, getStreakEmoji, getThisWeekHours } from './sessions.js';
 import { updateRestockAlerts } from './inventory.js';
+import { ls } from './localStorage.js';
 
 const HUMIDITY_KEY = STORAGE_KEYS.legacy.humidity;
 
@@ -182,7 +183,7 @@ if (typeof window !== 'undefined') {
 
 export function updateDashboard() {
     // Update playing schedule in header if set
-    const playingHours = localStorage.getItem('playingHoursPerWeek');
+    const playingHours = ls.getItem('playingHoursPerWeek');
     if (playingHours) {
         const headerSubtitle = document.querySelector('.header p:not(.model-badge)');
         if (headerSubtitle) {
@@ -192,7 +193,7 @@ export function updateDashboard() {
     }
 
     // Update weekly hours display
-    const sessions = JSON.parse(localStorage.getItem('playingSessions') || '[]');
+    const sessions = JSON.parse(ls.getItem('playingSessions') || '[]');
     const weeklyHoursEl = document.getElementById('weeklyHours');
     const calculatorBasisEl = document.getElementById('calculatorBasis');
 
@@ -249,7 +250,7 @@ export function updateDashboard() {
     updatePeriodCompletion('annual', '--color-annual');
 
     // Humidity stats
-    const readings = JSON.parse(localStorage.getItem(HUMIDITY_KEY) || '[]');
+    const readings = JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
     if (readings.length > 0) {
         const latest = readings[0];
         const humidity = latest.humidity;
@@ -566,7 +567,7 @@ export function toggleTheme() {
     const current = html.getAttribute('data-theme');
     const newTheme = current === 'dark' ? 'light' : 'dark';
     html.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
+    ls.setItem('theme', newTheme);
     const themeToggle = document.querySelector('.theme-toggle');
     if (themeToggle) {
         themeToggle.textContent = newTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
