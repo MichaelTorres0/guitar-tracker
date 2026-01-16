@@ -11,6 +11,35 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Create localStorage mock early - must be set on globalThis BEFORE any other imports
+// because ES modules execute at import time and need access to localStorage
+class EarlyLocalStorageMock {
+    constructor() {
+        this.store = {};
+    }
+    clear() {
+        this.store = {};
+    }
+    getItem(key) {
+        return this.store[key] || null;
+    }
+    setItem(key, value) {
+        this.store[key] = String(value);
+    }
+    removeItem(key) {
+        delete this.store[key];
+    }
+    get length() {
+        return Object.keys(this.store).length;
+    }
+    key(index) {
+        return Object.keys(this.store)[index] || null;
+    }
+}
+
+// Set up localStorage on globalThis immediately - always use our mock for consistent testing
+globalThis.localStorage = new EarlyLocalStorageMock();
+
 // Test results tracking
 let passed = 0;
 let failed = 0;
@@ -59,30 +88,8 @@ function assertArrayLength(arr, length, message = '') {
     }
 }
 
-// Simple in-memory localStorage implementation for testing
-class LocalStorageMock {
-    constructor() {
-        this.store = {};
-    }
-    clear() {
-        this.store = {};
-    }
-    getItem(key) {
-        return this.store[key] || null;
-    }
-    setItem(key, value) {
-        this.store[key] = String(value);
-    }
-    removeItem(key) {
-        delete this.store[key];
-    }
-    get length() {
-        return Object.keys(this.store).length;
-    }
-    key(index) {
-        return Object.keys(this.store)[index] || null;
-    }
-}
+// Use the early localStorage mock as the shared instance
+const sharedLocalStorage = globalThis.localStorage;
 
 // Setup DOM environment BEFORE importing modules
 function setupGlobalDOM() {
@@ -96,13 +103,12 @@ function setupGlobalDOM() {
         url: 'file://' + path.join(__dirname, '..') + '/'
     });
 
-    // Create localStorage mock if not available
-    const localStorageMock = new LocalStorageMock();
-
+    // Use the shared localStorage instance for consistency
     // Set up global references BEFORE modules are imported
     global.window = dom.window;
     global.document = dom.window.document;
-    global.localStorage = dom.window.localStorage || localStorageMock;
+    global.localStorage = sharedLocalStorage;
+    globalThis.localStorage = sharedLocalStorage;
     global.alert = () => {};
     global.confirm = () => true;
     global.HTMLElement = dom.window.HTMLElement;
@@ -110,12 +116,15 @@ function setupGlobalDOM() {
     global.Node = dom.window.Node;
     global.URL = dom.window.URL;
 
-    // Also set on the window object
-    if (!dom.window.localStorage) {
-        dom.window.localStorage = localStorageMock;
-    }
+    // Set localStorage on the window object
+    dom.window.localStorage = sharedLocalStorage;
 
     return dom;
+}
+
+// Helper function to access localStorage consistently in tests
+function getLS() {
+    return sharedLocalStorage;
 }
 
 // ==================== TEST SUITES ====================
@@ -133,8 +142,8 @@ async function runTests() {
     const { setupWindow } = await import('./test-setup.js');
     await setupWindow(window);
 
-    // Use global.localStorage for tests (set by setupWindow)
-    const localStorage = global.localStorage;
+    // Use the helper function for localStorage access in tests
+    const localStorage = getLS();
 
     // ==================== HTML Structure Tests ====================
     console.log('\n📄 HTML Structure Tests');
@@ -165,9 +174,9 @@ async function runTests() {
         assertTrue(dashboardTab.classList.contains('active'), 'Dashboard should be active');
     });
 
-    test('Just Played button exists', () => {
-        const btn = document.querySelector('.btn-just-played');
-        assertDefined(btn, 'Just Played button not found');
+    test('Quick Complete Daily button exists', () => {
+        const btn = document.getElementById('quickCompleteDaily') || document.querySelector('.btn-quick-action');
+        assertDefined(btn, 'Quick Complete Daily button not found');
     });
 
     test('Theme toggle button exists', () => {
@@ -467,19 +476,26 @@ async function runTests() {
         assertDefined(window.calculateNextDue);
     });
 
-    test('Never completed task shows ASAP', () => {
+    test('Never completed task shows ASAP for non-daily tasks', () => {
         const task = { id: 'test', lastCompleted: null };
-        const result = window.calculateNextDue(task, 'daily');
+        const result = window.calculateNextDue(task, 'weekly');
         assertEqual(result, 'ASAP');
     });
 
-    test('Overdue task shows OVERDUE', () => {
+    test('Overdue task shows OVERDUE for weekly tasks', () => {
         const pastDate = new Date();
         pastDate.setDate(pastDate.getDate() - 10); // 10 days ago
 
         const task = { id: 'test', lastCompleted: pastDate.toISOString() };
-        const result = window.calculateNextDue(task, 'daily');
+        const result = window.calculateNextDue(task, 'weekly');
         assertTrue(result.includes('OVERDUE'), 'Should show OVERDUE');
+    });
+
+    test('Daily task without session shows not due message', () => {
+        const task = { id: 'test', lastCompleted: null };
+        const result = window.calculateNextDue(task, 'daily');
+        // Daily tasks require a session to be logged first
+        assertTrue(result.includes('Not due') || result.includes('session'), 'Daily tasks should mention session requirement');
     });
 
     test('Future task shows days remaining', () => {
