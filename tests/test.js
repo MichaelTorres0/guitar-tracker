@@ -894,6 +894,31 @@ async function runTests() {
         assertDefined(el, 'Weekly hours element should exist');
     });
 
+    // ==================== Backup Merge Tests ====================
+    console.log('\n🔀 Backup Merge Tests');
+
+    test('mergeBackupData function exists', () => {
+        assertDefined(window.mergeBackupData, 'mergeBackupData should be defined');
+    });
+
+    test('mergeBackupData combines humidity readings by timestamp', () => {
+        const current = {
+            humidityReadings: [
+                { id: 1, timestamp: '2026-01-25T10:00:00.000Z', humidity: 45 },
+                { id: 2, timestamp: '2026-01-26T10:00:00.000Z', humidity: 48 }
+            ]
+        };
+        const backup = {
+            humidityReadings: [
+                { id: 100, timestamp: '2026-01-24T10:00:00.000Z', humidity: 42 },
+                { id: 101, timestamp: '2026-01-25T10:00:00.000Z', humidity: 45 } // duplicate
+            ]
+        };
+
+        const result = window.mergeBackupData(current, backup);
+        assertEqual(result.humidityReadings.length, 3, 'Should have 3 unique readings');
+    });
+
     // ==================== Summary ====================
     console.log('\n' + '='.repeat(50));
     console.log(`\n📊 Test Results: ${passed} passed, ${failed} failed\n`);
