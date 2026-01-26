@@ -2,9 +2,7 @@
 import { STORAGE_KEYS, MAINTENANCE_TASKS } from './config.js';
 import { validateHumidity, validateTemperature, showFeedback, hideFeedback } from './validators.js';
 import { calculateNextDue } from './tasks.js';
-import { ls } from './localStorage.js';
-
-const HUMIDITY_KEY = STORAGE_KEYS.legacy.humidity;
+import { getHumidityReadings, saveHumidityReadings, addHumidityReading as addHumidityReadingToStorage, removeHumidityReading } from './storage.js';
 
 export function addHumidityReading() {
     const date = document.getElementById('humidityDate').value;
@@ -52,10 +50,8 @@ export function addHumidityReading() {
         timestamp: new Date(`${date}T${time}`).toISOString()
     };
 
-    let readings = JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
-    readings.push(reading);
-    readings.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    ls.setItem(HUMIDITY_KEY, JSON.stringify(readings));
+    // Use consolidated versioned storage
+    addHumidityReadingToStorage(reading);
 
     document.getElementById('humidityValue').value = '';
     document.getElementById('temperatureValue').value = '';
@@ -69,51 +65,73 @@ export function addHumidityReadingSimplified() {
     const temp = parseFloat(document.getElementById('temperatureValue').value) || null;
     const location = document.getElementById('guitarLocation').value;
 
+    // Get optional date/time (default to now)
+    const dateInput = document.getElementById('humidityDateSimple');
+    const timeInput = document.getElementById('humidityTimeSimple');
+
+    let timestamp;
+    if (dateInput && dateInput.value && timeInput && timeInput.value) {
+        timestamp = new Date(`${dateInput.value}T${timeInput.value}`);
+    } else if (dateInput && dateInput.value) {
+        // Date only - use noon
+        timestamp = new Date(`${dateInput.value}T12:00`);
+    } else {
+        timestamp = new Date();
+    }
+
     if (isNaN(humidity) || humidity < 0 || humidity > 100) {
         alert('Please enter a valid humidity percentage (0-100)');
         return;
     }
 
-    const now = new Date();
+    // Validate date isn't in future
+    if (timestamp > new Date()) {
+        alert('Cannot log readings for future dates');
+        return;
+    }
+
     const reading = {
         id: Date.now(),
-        date: now.toISOString().split('T')[0],
-        time: now.toTimeString().slice(0, 5),
+        date: timestamp.toISOString().split('T')[0],
+        time: timestamp.toTimeString().slice(0, 5),
         humidity,
         temp,
         location,
-        timestamp: now.toISOString(),
+        timestamp: timestamp.toISOString(),
         source: 'manual'
     };
 
-    let readings = JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
-    readings.unshift(reading);
-    readings.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    ls.setItem(HUMIDITY_KEY, JSON.stringify(readings));
+    // Use consolidated versioned storage
+    addHumidityReadingToStorage(reading);
 
+    // Clear form
     document.getElementById('humidityValue').value = '';
     document.getElementById('temperatureValue').value = '';
+    if (dateInput) dateInput.value = '';
+    if (timeInput) timeInput.value = '';
 
-    // Show confirmation
-    const confirmation = document.getElementById('logConfirmation');
-    if (confirmation) {
-        confirmation.style.display = 'block';
-        setTimeout(() => {
-            confirmation.style.display = 'none';
-        }, 3000);
+    // Show confirmation with date info
+    const isBackdated = reading.date !== new Date().toISOString().split('T')[0];
+    const confirmEl = document.getElementById('logConfirmation');
+    if (confirmEl) {
+        confirmEl.textContent = isBackdated
+            ? `✅ Reading logged for ${reading.date}`
+            : '✅ Reading logged successfully';
+        confirmEl.style.display = 'block';
+        setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
     }
 
     return reading;
 }
 
 export function deleteHumidityReading(id) {
-    let readings = JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
-    readings = readings.filter(r => r.id !== id);
-    ls.setItem(HUMIDITY_KEY, JSON.stringify(readings));
+    // Use consolidated versioned storage
+    removeHumidityReading(id);
 }
 
 export function renderHumidityTable(filteredReadings = null) {
-    const readings = filteredReadings || JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
+    // Use consolidated versioned storage
+    const readings = filteredReadings || getHumidityReadings();
     const tbody = document.getElementById('humidityTable');
     if (!tbody) return;
 
@@ -148,7 +166,8 @@ export function renderHumidityTable(filteredReadings = null) {
 
 export function checkForAlerts() {
     const alerts = [];
-    const readings = JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
+    // Use consolidated versioned storage
+    const readings = getHumidityReadings();
 
     if (readings.length > 0) {
         const latest = readings[0];
@@ -237,7 +256,8 @@ let activeFilters = null;
 
 // Filter humidity readings
 export function filterHumidityReadings(fromDate, toDate, location) {
-    let readings = JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
+    // Use consolidated versioned storage
+    let readings = getHumidityReadings();
 
     if (fromDate) {
         const from = new Date(fromDate);
@@ -281,13 +301,15 @@ export function clearHumidityFilters() {
 // Get filtered readings for export
 export function getFilteredReadings() {
     if (!activeFilters) {
-        return JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
+        // Use consolidated versioned storage
+        return getHumidityReadings();
     }
     return filterHumidityReadings(activeFilters.fromDate, activeFilters.toDate, activeFilters.location);
 }
 
 export function drawHumidityChart() {
-    const readings = JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
+    // Use consolidated versioned storage
+    const readings = getHumidityReadings();
     const chartContainer = document.getElementById('humidityChartContainer');
     const canvas = document.getElementById('humidityChart');
 
