@@ -21,6 +21,7 @@ export async function setupWindow(win) {
     const { renderCalendar, toggleTheme, updateDashboard, switchTab, openBridgeRecommendations, closeBridgeModal, openActionRecommendations, closeActionModal, openFretRecommendations, closeFretModal } = await import('../js/ui.js');
     const { exportAsCSV, exportAsJSON, downloadFile } = await import('../js/export.js');
     const { setupKeyboardShortcuts } = await import('../js/app.js');
+    const { togglePracticeTimer } = await import('../js/sessions.js');
 
     window.MAINTENANCE_TASKS = MAINTENANCE_TASKS;
     window.EQUIPMENT_ITEMS = EQUIPMENT_ITEMS;
@@ -57,6 +58,7 @@ export async function setupWindow(win) {
     window.openFretRecommendations = openFretRecommendations;
     window.closeFretModal = closeFretModal;
     window.setupKeyboardShortcuts = setupKeyboardShortcuts;
+    window.togglePracticeTimer = togglePracticeTimer;
 
     // Set up keyboard shortcuts for testing
     setupKeyboardShortcuts();

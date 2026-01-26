@@ -401,6 +401,20 @@ async function runTests() {
         assertEqual(document.activeElement, humidityInput, 'H key should focus humidity input');
     });
 
+    test('Pressing S key toggles practice timer', () => {
+        // Verify the timer toggle function is called
+        let toggleCalled = false;
+        const originalToggle = window.togglePracticeTimer;
+        window.togglePracticeTimer = () => { toggleCalled = true; };
+
+        // Simulate S key press (not in an input field)
+        const event = new window.KeyboardEvent('keydown', { key: 's', bubbles: true });
+        document.dispatchEvent(event);
+
+        window.togglePracticeTimer = originalToggle;
+        assertEqual(toggleCalled, true, 'S key should toggle practice timer');
+    });
+
     // ==================== Dashboard Tests ====================
     console.log('\n📈 Dashboard Tests');
 
