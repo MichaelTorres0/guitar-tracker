@@ -570,6 +570,19 @@
             margin-left: 8px;
         }
 
+        /* String Life Factors */
+        .string-factors .factor-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .string-factors .factor-row:last-child {
+            border-bottom: none;
+        }
+
         input[type="text"],
         input[type="number"],
         input[type="date"],

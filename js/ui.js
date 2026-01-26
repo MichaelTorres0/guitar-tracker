@@ -403,6 +403,7 @@ export function updateDashboard() {
     const ringProgressEl = document.getElementById('ringProgress');
     const ringTextEl = document.getElementById('ringText');
     const stringLifeEstimateEl = document.getElementById('stringLifeEstimate');
+    const factorsEl = document.getElementById('stringLifeFactors');
 
     if (stringChangeDate) {
         const today = new Date();
@@ -449,6 +450,18 @@ export function updateDashboard() {
             const cleaningStatus = smartLife.cleaningRate >= 0.6 ? 'good' : 'low';
             calculatorBasisEl.textContent = `Based on ${smartLife.actualHoursPerWeek} hrs/week playing + ${cleaningStatus} cleaning (${Math.round(targetDays / 7)} week target)`;
         }
+
+        // Update factors breakdown display
+        if (factorsEl) {
+            factorsEl.style.display = 'block';
+            const factorPlayingEl = document.getElementById('factorPlaying');
+            const factorCleaningEl = document.getElementById('factorCleaning');
+            const factorTargetEl = document.getElementById('factorTarget');
+
+            if (factorPlayingEl) factorPlayingEl.textContent = `${smartLife.actualHoursPerWeek} hrs/week`;
+            if (factorCleaningEl) factorCleaningEl.textContent = smartLife.cleaningRate >= 0.6 ? 'Good' : 'Low';
+            if (factorTargetEl) factorTargetEl.textContent = `${Math.round(targetDays / 7)} weeks`;
+        }
     } else {
         // Empty state for string life
         if (stringLifeTextEl) stringLifeTextEl.innerHTML = '<span class="empty-state">Complete setup to start tracking</span>';
@@ -461,6 +474,9 @@ export function updateDashboard() {
         }
         if (stringLifeEstimateEl) {
             stringLifeEstimateEl.innerHTML = '<span class="empty-state">Log a string change to activate calculator</span>';
+        }
+        if (factorsEl) {
+            factorsEl.style.display = 'none';
         }
     }
 
