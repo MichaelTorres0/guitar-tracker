@@ -1,7 +1,7 @@
 // Main application entry point
 import { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS, DATA_VERSION } from './config.js';
 import { migrateData, loadData, saveData } from './storage.js';
-import { toggleTask, quickActionJustPlayed, resetDailyTasks, resetWeeklyTasks, confirmReset, recordInspection, setDefaultDate, calculateNextDue, setCustomCompletionDate, calculateSmartStringLife } from './tasks.js';
+import { toggleTask, quickActionJustPlayed, resetDailyTasks, resetWeeklyTasks, confirmReset, recordInspection, setDefaultDate, calculateNextDue, setCustomCompletionDate, calculateSmartStringLife, getDetailedDueDates } from './tasks.js';
 import { addHumidityReading, addHumidityReadingSimplified, deleteHumidityReading, renderHumidityTable, checkForAlerts, drawHumidityChart, applyHumidityFilters, clearHumidityFilters, getFilteredReadings } from './humidity.js';
 import { renderMaintenanceTasks, renderInventoryChecklist, updateDashboard, switchTab, toggleTheme, toggleExpand, openBridgeRecommendations, closeBridgeModal, openActionRecommendations, closeActionModal, openFretRecommendations, closeFretModal } from './ui.js';
 import { exportAsCSV, exportAsJSON, createBackup, initBackupRestore } from './export.js';
@@ -394,6 +394,7 @@ window.setCustomCompletionDate = setCustomCompletionDate;
 window.renderMaintenanceTasks = renderMaintenanceTasks;
 window.updateDashboard = updateDashboard;
 window.calculateSmartStringLife = calculateSmartStringLife;
+window.getDetailedDueDates = getDetailedDueDates;
 
 // Humidity trend info modal functions
 window.showHumidityTrendInfo = function() {
