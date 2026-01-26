@@ -22,7 +22,7 @@ A Progressive Web App for tracking maintenance, humidity, and care for a Taylor 
 
 - **Live URL:** https://michaeltorres0.github.io/guitar-tracker/
 - **Architecture:** ES modules with separate CSS
-- **Data storage:** localStorage with versioned schema (DATA_VERSION = 3)
+- **Data storage:** localStorage with versioned schema (DATA_VERSION = 5)
 - **Target device:** iPhone Safari (iOS 16.4+)
 
 ## Architecture
@@ -45,10 +45,11 @@ guitar-tracker/
 │   ├── export.js        # CSV/JSON export functions
 │   ├── onboarding.js    # First-time user onboarding wizard (v2.0)
 │   ├── sessions.js      # Playing session tracking & calculations (v2.0)
-│   └── stringHistory.js # String change history & average life (v2.0)
+│   ├── stringHistory.js # String change history & average life (v2.0)
+│   └── history.js       # Maintenance history timeline (v2.1)
 ├── tests/
 │   ├── test-setup.js    # Test framework setup
-│   └── test.js          # Test suite (84 tests)
+│   └── test.js          # Test suite (94 tests)
 ├── test.html            # Test runner page
 ├── manifest.json        # PWA manifest
 └── RELEASE_NOTES.md     # Version history and features (v2.0)
@@ -59,42 +60,56 @@ guitar-tracker/
 | Module | Purpose |
 |--------|---------|
 | `config.js` | Data constants, task definitions, humidity thresholds |
-| `storage.js` | Data persistence, v1→v2→v3→v4 migration, legacy compatibility, versioned data helpers |
+| `storage.js` | Data persistence, v1→v2→v3→v4→v5 migration, consolidated storage helpers, data integrity verification |
 | `localStorage.js` | **v2.1.2** Cross-platform localStorage helper for browser and Node.js test environments |
 | `validators.js` | Input validation with error/warning feedback |
-| `humidity.js` | Humidity logging, chart rendering, alerts |
+| `humidity.js` | Humidity logging, chart rendering, alerts (uses consolidated storage v5+) |
 | `tasks.js` | Task completion, string life calculator, string change hook |
 | `ui.js` | DOM manipulation, tab switching, theme toggle, dashboard updates |
 | `export.js` | CSV and JSON export generation |
 | `onboarding.js` | **v2.0** First-time user wizard, data collection, setup flow |
 | `sessions.js` | **v2.0** Playing session tracking, rolling averages, weekly hours |
 | `stringHistory.js` | **v2.0** String change history, brand tracking, average life calc |
+| `history.js` | **v2.1** Maintenance history timeline, event aggregation |
 | `app.js` | Application init, event handler wiring, module initialization |
 
-### localStorage Schema (v3 - Current)
+### localStorage Schema (v5 - Current)
 ```javascript
 // Key: 'guitarTrackerData' - ALL data is now consolidated in this versioned structure
 {
-    version: 3,
+    version: 5,
     guitars: [{ id, name, settings: { targetHumidity, stringChangeWeeks, ... } }],
     activeGuitarId: 'default',
+    // v5: Task states now stored here (previously in separate key)
     maintenanceStates: { daily: [...], weekly: [...], eightweek: [...], ... },
-    humidityReadings: [{ humidity, temp, timestamp, guitarId }],
+    // v5: Humidity readings now stored here (previously in separate key)
+    humidityReadings: [{ id, humidity, temp, timestamp, location, source }],
     inspectionData: { ... },
-    // v2.0 features - now consolidated into versioned structure (v3+)
+    // v2.0 features - consolidated in v3+
     onboardingComplete: false,
     playingFrequency: 'weekly',
     playingHoursPerWeek: 2.5,
     hasHygrometer: null,
     playingSessions: [{ timestamp, duration }],
-    stringChangeHistory: [{ date, brand, daysFromPrevious }]
+    stringChangeHistory: [{ date, brand, notes, daysFromPrevious }],
+    // v3.1+ features
+    equipmentList: [...],
+    currentStringType: string,
+    lastStringChangeDate: string | null,
+    // v4+ features
+    timerState: { running, startTimestamp },
+    practiceHistory: [...],
+    inventory: { items: [...] }
 }
 ```
 
 ### Migration History
 - **v1 → v2**: Consolidated separate keys into `guitarTrackerData` with guitars array
 - **v2 → v3**: Moved v2.0 session/string tracking from separate keys into versioned structure
+- **v3 → v4**: Added practice stopwatch, streak tracking, inventory system
+- **v4 → v5**: **CRITICAL FIX** - Consolidated ALL data (humidity readings, task states) into single versioned structure to prevent data loss when browser clears individual localStorage keys
 - All migrations are automatic and backward-compatible
+- v5 includes data integrity verification on load
 
 ### Legacy Keys (for migration)
 **v1 keys** (migrated to v2/v3):
@@ -112,6 +127,21 @@ guitar-tracker/
 
 **Separate keys** (not versioned):
 - `theme` - Light/dark mode preference (stored separately for quick access)
+
+### V5 Storage Helper Functions (storage.js)
+Use these functions instead of direct localStorage access:
+
+| Function | Purpose |
+|----------|---------|
+| `getHumidityReadings()` | Get all humidity readings from versioned storage |
+| `saveHumidityReadings(readings)` | Save humidity readings array |
+| `addHumidityReading(reading)` | Add single reading (auto-sorts by timestamp) |
+| `removeHumidityReading(id)` | Delete reading by ID |
+| `getPlayingSessions()` | Get all playing sessions |
+| `savePlayingSessions(sessions)` | Save sessions array |
+| `syncTasksFromVersionedData()` | Load task states from versioned storage into MAINTENANCE_TASKS |
+| `syncTasksToVersionedData()` | Save MAINTENANCE_TASKS state to versioned storage |
+| `verifyDataIntegrity(data)` | Check and repair missing fields, recover orphaned data |
 
 ### Data Flow
 
