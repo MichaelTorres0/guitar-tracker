@@ -321,7 +321,26 @@ Already configured with:
 - [ ] No horizontal scroll at 390px
 - [ ] Works offline after first load
 
-## Future Enhancements (v2.1+)
+## Backup & Restore Features (v2.2)
+
+| Feature | Description |
+|---------|-------------|
+| Full Restore | Replaces all data with backup (existing behavior) |
+| Merge Backup | Adds missing historical data without overwriting |
+| Backdate Humidity | Log readings for past dates via date/time picker |
+| Backdate Tasks | Mark tasks completed for past dates (in task expand view) |
+| Backdate Sessions | Log practice sessions for past dates |
+
+### Key Functions (export.js)
+
+| Function | Purpose |
+|----------|---------|
+| `mergeBackupData(current, backup)` | Combines two data objects, deduplicating by timestamp |
+| `mergeFromBackup(fileContent)` | Parses backup file and merges with current data |
+| `createBackup()` | Creates full JSON backup of all data |
+| `restoreFromBackup(fileContent)` | Full restore (replaces all data) |
+
+## Future Enhancements (v2.3+)
 
 - Govee API integration for auto humidity logging
 - Browser notifications (iOS 16.4+)
