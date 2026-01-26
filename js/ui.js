@@ -644,12 +644,14 @@ export function switchTab(tabName) {
     const tabContent = document.getElementById(tabName);
     if (tabContent) tabContent.classList.add('active');
 
-    // Find and activate the corresponding tab button
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        if (btn.textContent.toLowerCase().includes(tabName.split('-')[0])) {
-            btn.classList.add('active');
-        }
-    });
+    // Find and activate the corresponding tab button by index
+    // This is more reliable than text matching (e.g., 'inventory' tab has 'Equipment' button text)
+    const tabs = ['dashboard', 'maintenance', 'humidity', 'inspection', 'inventory', 'export'];
+    const tabIndex = tabs.indexOf(tabName);
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    if (tabIndex >= 0 && tabBtns[tabIndex]) {
+        tabBtns[tabIndex].classList.add('active');
+    }
 }
 
 export function toggleTheme() {

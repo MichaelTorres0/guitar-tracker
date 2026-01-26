@@ -764,6 +764,20 @@ async function runTests() {
         assertTrue(dashboardTab.classList.contains('active'), 'Dashboard tab should be active');
     });
 
+    test('switchTab highlights correct button for inventory tab', () => {
+        // The "inventory" tab has a button labeled "Equipment" - this tests index-based matching
+        window.switchTab('inventory');
+        const inventoryTab = document.getElementById('inventory');
+        assertTrue(inventoryTab.classList.contains('active'), 'Inventory tab content should be active');
+
+        // Check that the 5th button (index 4) is active (Equipment tab)
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        assertTrue(tabBtns[4].classList.contains('active'), 'Equipment button (index 4) should be active');
+
+        // Switch back to dashboard
+        window.switchTab('dashboard');
+    });
+
     // ==================== localStorage Helper Tests ====================
     console.log('\n💾 localStorage Helper Tests');
 
