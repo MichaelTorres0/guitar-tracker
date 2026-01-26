@@ -109,6 +109,20 @@
             transform: translateY(0);
         }
 
+        .btn-log-past {
+            background: var(--color-surface);
+            border: 2px dashed var(--color-border);
+            color: var(--color-text-light);
+            padding: 12px 16px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-log-past:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
         .string-life-container {
             background: linear-gradient(135deg, var(--color-surface), var(--color-bg));
             border: 1px solid var(--color-border);

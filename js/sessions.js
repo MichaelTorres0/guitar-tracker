@@ -194,10 +194,37 @@ export function showSessionModal() {
     if (modal) modal.classList.add('show');
 }
 
+// Show session modal with date picker focused for past sessions
+export function showPastSessionModal() {
+    const modal = document.getElementById('sessionDurationModal');
+    const dateInput = document.getElementById('sessionDate');
+    const header = modal ? modal.querySelector('.modal-header') : null;
+
+    if (modal) {
+        modal.classList.add('show');
+        // Set header to indicate this is for past sessions
+        if (header) header.textContent = 'Log a past practice session';
+        // Set date to yesterday as default for past sessions
+        if (dateInput) {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            dateInput.value = yesterday.toISOString().split('T')[0];
+            dateInput.max = new Date().toISOString().split('T')[0];
+        }
+    }
+}
+
 // Hide session duration modal
 export function hideSessionModal() {
     const modal = document.getElementById('sessionDurationModal');
+    const header = modal ? modal.querySelector('.modal-header') : null;
+    const dateInput = document.getElementById('sessionDate');
+
     if (modal) modal.classList.remove('show');
+    // Reset header text
+    if (header) header.textContent = 'How long did you play?';
+    // Clear date input
+    if (dateInput) dateInput.value = '';
 }
 
 // Start practice timer
@@ -308,6 +335,12 @@ export function initSessions() {
     const closeBtn = document.getElementById('closeSessionModal');
     if (closeBtn) {
         closeBtn.addEventListener('click', hideSessionModal);
+    }
+
+    // Wire up log past session button
+    const logPastBtn = document.getElementById('logPastSession');
+    if (logPastBtn) {
+        logPastBtn.addEventListener('click', showPastSessionModal);
     }
 
     // Update display on load
