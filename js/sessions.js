@@ -56,6 +56,7 @@ export function logPlayingSession(durationMinutes, sessionDate = null) {
     updateDashboard();
     renderMaintenanceTasks();
     checkForAlerts();
+    renderSessionHistory();
 
     // Show confirmation briefly
     const isBackdated = sessionDate && sessionDate !== new Date().toISOString().split('T')[0];
@@ -356,6 +357,19 @@ export function initSessions() {
         // Show start button
         updateTimerDisplay();
     }
+
+    // Delete session buttons - event delegation
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('btn-delete-session')) {
+            const timestamp = parseInt(e.target.dataset.timestamp);
+            if (confirm('Delete this session?')) {
+                deleteSession(timestamp);
+            }
+        }
+    });
+
+    // Render session history on load
+    renderSessionHistory();
 }
 
 // Toggle practice timer (start if stopped, stop if running)
@@ -366,6 +380,53 @@ export function togglePracticeTimer() {
     } else {
         startPracticeTimer();
     }
+}
+
+// Render session history
+export function renderSessionHistory() {
+    const container = document.getElementById('sessionHistory');
+    const noSessionsMsg = document.getElementById('noSessionsMessage');
+    if (!container) return;
+
+    const sessions = getVersionedField('playingSessions', []);
+
+    if (sessions.length === 0) {
+        container.innerHTML = '';
+        if (noSessionsMsg) noSessionsMsg.style.display = 'block';
+        return;
+    }
+
+    if (noSessionsMsg) noSessionsMsg.style.display = 'none';
+
+    // Show last 7 sessions, newest first
+    const recentSessions = [...sessions]
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, 7);
+
+    container.innerHTML = recentSessions.map(session => {
+        const date = new Date(session.timestamp);
+        const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        const duration = session.duration >= 60
+            ? `${(session.duration / 60).toFixed(1)} hrs`
+            : `${session.duration} min`;
+
+        return `
+            <div class="session-item">
+                <span class="session-date">${dateStr}</span>
+                <span class="session-duration">${duration}</span>
+                <button class="btn-delete-session" data-timestamp="${session.timestamp}" title="Delete">×</button>
+            </div>
+        `;
+    }).join('');
+}
+
+// Delete a session by timestamp
+export function deleteSession(timestamp) {
+    const data = getVersionedData();
+    data.playingSessions = data.playingSessions.filter(s => s.timestamp !== timestamp);
+    saveVersionedData(data);
+    renderSessionHistory();
+    updateDashboard();
 }
 
 // Expose functions to window
@@ -380,4 +441,5 @@ if (typeof window !== 'undefined') {
     window.stopPracticeTimer = stopPracticeTimer;
     window.discardTimer = discardTimer;
     window.togglePracticeTimer = togglePracticeTimer;
+    window.deleteSession = deleteSession;
 }
