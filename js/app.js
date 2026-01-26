@@ -350,6 +350,16 @@ export function setupKeyboardShortcuts() {
                 e.preventDefault();
             }
         }
+
+        // S key - toggle practice timer
+        if (e.key === 's' || e.key === 'S') {
+            if (window.togglePracticeTimer) {
+                // Switch to dashboard tab if not already there
+                switchTab('dashboard');
+                window.togglePracticeTimer();
+                e.preventDefault();
+            }
+        }
     });
 }
 

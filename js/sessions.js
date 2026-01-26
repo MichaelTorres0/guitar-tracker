@@ -303,6 +303,16 @@ export function initSessions() {
     }
 }
 
+// Toggle practice timer (start if stopped, stop if running)
+export function togglePracticeTimer() {
+    const data = getVersionedData();
+    if (data.timerState && data.timerState.running) {
+        stopPracticeTimer();
+    } else {
+        startPracticeTimer();
+    }
+}
+
 // Expose functions to window
 if (typeof window !== 'undefined') {
     window.logSessionWithDuration = logPlayingSession;
@@ -310,4 +320,5 @@ if (typeof window !== 'undefined') {
     window.startPracticeTimer = startPracticeTimer;
     window.stopPracticeTimer = stopPracticeTimer;
     window.discardTimer = discardTimer;
+    window.togglePracticeTimer = togglePracticeTimer;
 }
