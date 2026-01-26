@@ -10,6 +10,7 @@ import { initOnboarding } from './onboarding.js';
 import { initSessions, showSessionModal } from './sessions.js';
 import { initStringHistory } from './stringHistory.js';
 import { renderInventory, updateRestockAlerts } from './inventory.js';
+import { initHistory, renderHistoryTimeline } from './history.js';
 import { ls } from './localStorage.js';
 
 // Guitar settings functions
@@ -422,4 +423,5 @@ renderHumidityTable();
 drawHumidityChart();
 initSessions();
 initStringHistory();
+initHistory();
 initOnboarding();
