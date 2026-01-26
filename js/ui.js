@@ -181,9 +181,9 @@ if (typeof window !== 'undefined') {
 
 export function updateDashboard() {
     // Update header with current string type and playing hours
+    const playingHours = getVersionedField('playingHoursPerWeek', 2.5);
     const headerSubtitle = document.querySelector('.header p:not(.model-badge)');
     if (headerSubtitle) {
-        const playingHours = getVersionedField('playingHoursPerWeek', 2.5);
         const stringType = getVersionedField('currentStringType', "D'Addario EJ16 Phosphor Bronze Light (.012-.053)");
         headerSubtitle.textContent = `Playing: ${playingHours} hrs/week | ${stringType}`;
     }
