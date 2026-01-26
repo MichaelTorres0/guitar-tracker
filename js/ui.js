@@ -1,6 +1,6 @@
 // UI rendering and interaction functions
 import { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS } from './config.js';
-import { calculateNextDue, getAllNextDueDates, isCompletedWithinPeriod, getRelativeTimeAgo, calculateSmartStringLife } from './tasks.js';
+import { calculateNextDue, getAllNextDueDates, isCompletedWithinPeriod, getRelativeTimeAgo, calculateSmartStringLife, getDetailedDueDates } from './tasks.js';
 import { getVersionedData, saveVersionedData, getVersionedField, getHumidityReadings, getPlayingSessions } from './storage.js';
 import { calculatePracticeStreak, getStreakEmoji, getThisWeekHours } from './sessions.js';
 import { updateRestockAlerts } from './inventory.js';
@@ -545,29 +545,98 @@ export function renderCalendar() {
         container.appendChild(header);
     });
 
-    const nextDueDates = getAllNextDueDates();
+    // Get detailed due dates for color-coded dots
+    const detailedDates = getDetailedDueDates(35); // Get 5 weeks ahead
+    const dateTaskMap = new Map();
+    detailedDates.forEach(item => {
+        const dateKey = item.date.toDateString();
+        dateTaskMap.set(dateKey, item.tasks);
+    });
+
     let current = new Date(startDate);
 
     for (let i = 0; i < 42; i++) {
         const dayEl = document.createElement('div');
         dayEl.className = 'calendar-day';
+        const dateKey = current.toDateString();
+        const tasksForDay = dateTaskMap.get(dateKey) || [];
+
+        // Build day content
+        const dayContent = document.createElement('span');
+        dayContent.textContent = current.getDate();
+        dayEl.appendChild(dayContent);
+
+        // Add color-coded dots for tasks
+        if (tasksForDay.length > 0) {
+            const dotsContainer = document.createElement('div');
+            dotsContainer.className = 'calendar-dots';
+
+            // Get unique categories for this day
+            const categories = [...new Set(tasksForDay.map(t => t.color))];
+            categories.slice(0, 3).forEach(color => {
+                const dot = document.createElement('span');
+                dot.className = `calendar-dot color-${color}`;
+                dotsContainer.appendChild(dot);
+            });
+            if (categories.length > 3) {
+                const more = document.createElement('span');
+                more.className = 'calendar-dot-more';
+                more.textContent = '+';
+                dotsContainer.appendChild(more);
+            }
+
+            dayEl.appendChild(dotsContainer);
+        }
 
         if (current.toDateString() === today.toDateString()) {
             dayEl.classList.add('today');
-            dayEl.textContent = current.getDate();
-        } else if (nextDueDates.some(d => d.toDateString() === current.toDateString())) {
+        } else if (tasksForDay.length > 0) {
             dayEl.classList.add('upcoming');
-            dayEl.textContent = current.getDate();
-        } else if (current.getMonth() === month) {
-            dayEl.textContent = current.getDate();
-        } else {
+        } else if (current.getMonth() !== month) {
             dayEl.style.opacity = '0.3';
-            dayEl.textContent = current.getDate();
         }
 
         container.appendChild(dayEl);
         current.setDate(current.getDate() + 1);
     }
+
+    // Render agenda view
+    renderAgenda(detailedDates.slice(0, 7)); // Show next 7 days with tasks
+}
+
+// Render agenda view below calendar
+function renderAgenda(detailedDates) {
+    const agendaContainer = document.getElementById('calendarAgenda');
+    if (!agendaContainer) return;
+
+    if (detailedDates.length === 0) {
+        agendaContainer.innerHTML = '<div style="text-align: center; color: var(--color-text-light); padding: 16px;">No tasks due in the next 2 weeks!</div>';
+        return;
+    }
+
+    let html = '<div class="agenda-header">Upcoming Tasks</div>';
+
+    detailedDates.forEach(item => {
+        const date = item.date;
+        const isToday = date.toDateString() === new Date().toDateString();
+        const dateLabel = isToday ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+        html += `<div class="agenda-day${isToday ? ' agenda-today' : ''}">`;
+        html += `<div class="agenda-date">${dateLabel}</div>`;
+        html += '<div class="agenda-tasks">';
+
+        item.tasks.forEach(task => {
+            html += `<div class="agenda-task">
+                <span class="agenda-dot color-${task.color}"></span>
+                <span class="agenda-task-name">${task.name}</span>
+                <span class="agenda-task-label">${task.label}</span>
+            </div>`;
+        });
+
+        html += '</div></div>';
+    });
+
+    agendaContainer.innerHTML = html;
 }
 
 export function switchTab(tabName) {
