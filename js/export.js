@@ -1,6 +1,6 @@
 // Export and download functions
 import { MAINTENANCE_TASKS, STORAGE_KEYS, DATA_VERSION } from './config.js';
-import { getVersionedData, getHumidityReadings } from './storage.js';
+import { getVersionedData, getHumidityReadings, saveVersionedData } from './storage.js';
 import { ls } from './localStorage.js';
 
 export function exportAsCSV(filteredReadings = null) {
@@ -216,6 +216,72 @@ export function mergeBackupData(currentData, backupData) {
     return merged;
 }
 
+// Merge from backup file (non-destructive)
+export function mergeFromBackup(fileContent) {
+    try {
+        const backupData = JSON.parse(fileContent);
+
+        // Validate backup structure
+        if (!backupData.versionedData && !backupData.tasks) {
+            throw new Error('Invalid backup file structure');
+        }
+
+        // Get current data
+        const currentData = getVersionedData();
+        const backupVersionedData = backupData.versionedData || {};
+
+        // Preview what will be merged
+        const currentHumidity = (currentData.humidityReadings || []).length;
+        const backupHumidity = (backupVersionedData.humidityReadings || []).length;
+        const currentSessions = (currentData.playingSessions || []).length;
+        const backupSessions = (backupVersionedData.playingSessions || []).length;
+
+        let previewMsg = 'Merge Preview:\n\n';
+        previewMsg += `Current data: ${currentHumidity} humidity readings, ${currentSessions} sessions\n`;
+        previewMsg += `Backup data: ${backupHumidity} humidity readings, ${backupSessions} sessions\n\n`;
+        previewMsg += 'This will ADD missing historical data from the backup.\n';
+        previewMsg += 'Existing data will NOT be overwritten.\n\n';
+        previewMsg += 'Continue with merge?';
+
+        if (!confirm(previewMsg)) {
+            return { success: false, reason: 'cancelled' };
+        }
+
+        // Perform merge
+        const mergedData = mergeBackupData(currentData, backupVersionedData);
+
+        // Save merged data
+        saveVersionedData(mergedData);
+
+        // Calculate what was added
+        const addedHumidity = (mergedData.humidityReadings || []).length - currentHumidity;
+        const addedSessions = (mergedData.playingSessions || []).length - currentSessions;
+
+        // Show success
+        const confirmation = document.getElementById('mergeConfirmation');
+        if (confirmation) {
+            confirmation.className = 'form-feedback success';
+            confirmation.textContent = `✅ Merged! Added ${addedHumidity} humidity readings, ${addedSessions} sessions. Reloading...`;
+            confirmation.style.display = 'block';
+        }
+
+        setTimeout(() => {
+            location.reload();
+        }, 2000);
+
+        return { success: true, addedHumidity, addedSessions };
+
+    } catch (error) {
+        const confirmation = document.getElementById('mergeConfirmation');
+        if (confirmation) {
+            confirmation.className = 'form-feedback error';
+            confirmation.textContent = '❌ Error: ' + error.message;
+            confirmation.style.display = 'block';
+        }
+        return { success: false, error: error.message };
+    }
+}
+
 // Restore from backup
 export function restoreFromBackup(fileContent) {
     try {
@@ -314,19 +380,38 @@ export function restoreFromBackup(fileContent) {
 // Initialize backup file input handler
 export function initBackupRestore() {
     const restoreBtn = document.getElementById('restoreBackup');
-    const fileInput = document.getElementById('restoreFile');
+    const restoreFile = document.getElementById('restoreFile');
+    const mergeBtn = document.getElementById('mergeBackup');
+    const mergeFile = document.getElementById('mergeFile');
 
-    if (restoreBtn && fileInput) {
+    if (restoreBtn && restoreFile) {
         restoreBtn.addEventListener('click', () => {
-            fileInput.click();
+            restoreFile.click();
         });
 
-        fileInput.addEventListener('change', (e) => {
+        restoreFile.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     restoreFromBackup(event.target.result);
+                };
+                reader.readAsText(file);
+            }
+        });
+    }
+
+    if (mergeBtn && mergeFile) {
+        mergeBtn.addEventListener('click', () => {
+            mergeFile.click();
+        });
+
+        mergeFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    mergeFromBackup(event.target.result);
                 };
                 reader.readAsText(file);
             }
