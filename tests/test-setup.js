@@ -22,6 +22,7 @@ export async function setupWindow(win) {
     const { exportAsCSV, exportAsJSON, downloadFile } = await import('../js/export.js');
     const { setupKeyboardShortcuts } = await import('../js/app.js');
     const { togglePracticeTimer } = await import('../js/sessions.js');
+    const { getHistoryEvents, renderHistoryTimeline } = await import('../js/history.js');
 
     window.MAINTENANCE_TASKS = MAINTENANCE_TASKS;
     window.EQUIPMENT_ITEMS = EQUIPMENT_ITEMS;
@@ -61,6 +62,8 @@ export async function setupWindow(win) {
     window.togglePracticeTimer = togglePracticeTimer;
     window.calculateSmartStringLife = calculateSmartStringLife;
     window.getDetailedDueDates = getDetailedDueDates;
+    window.getHistoryEvents = getHistoryEvents;
+    window.renderHistoryTimeline = renderHistoryTimeline;
 
     // Set up keyboard shortcuts for testing
     setupKeyboardShortcuts();

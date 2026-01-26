@@ -506,6 +506,22 @@ async function runTests() {
         assertTrue(percent >= 16 && percent <= 17, `Overall should be ~17%, got ${percent}%`);
     });
 
+    // ==================== Maintenance History Tests ====================
+    console.log('\n📜 Maintenance History Tests');
+
+    test('getHistoryEvents function exists', () => {
+        assertDefined(window.getHistoryEvents, 'getHistoryEvents should be defined');
+    });
+
+    test('getHistoryEvents returns array', () => {
+        const events = window.getHistoryEvents();
+        assertTrue(Array.isArray(events), 'Should return an array');
+    });
+
+    test('renderHistoryTimeline function exists', () => {
+        assertDefined(window.renderHistoryTimeline, 'renderHistoryTimeline should be defined');
+    });
+
     // ==================== Alert Tests ====================
     console.log('\n🚨 Alert Tests');
 
