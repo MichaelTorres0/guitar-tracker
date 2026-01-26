@@ -812,6 +812,10 @@
             <button id="closeSessionModal" class="modal-close">&times;</button>
             <div class="modal-header">How long did you play?</div>
             <p style="font-size: 13px; color: var(--color-text-light); margin-bottom: 16px;">This helps calculate accurate string life and maintenance needs.</p>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Session Date <span class="keyboard-hint">Leave blank for today</span></label>
+                <input type="date" id="sessionDate" style="width: 100%;">
+            </div>
             <div class="duration-options">
                 <button class="duration-btn" onclick="logSessionWithDuration(15)">
                     <span class="duration-time">15 min</span>

@@ -19,11 +19,26 @@ function getStartOfWeek() {
 }
 
 // Log a playing session
-export function logPlayingSession(durationMinutes) {
+export function logPlayingSession(durationMinutes, sessionDate = null) {
     const data = getVersionedData();
 
+    // Use provided date or current time
+    let timestamp;
+    if (sessionDate) {
+        // Set to noon on the specified date
+        timestamp = new Date(`${sessionDate}T12:00:00`).getTime();
+    } else {
+        timestamp = Date.now();
+    }
+
+    // Validate date isn't in future
+    if (timestamp > Date.now()) {
+        alert('Cannot log sessions for future dates');
+        return;
+    }
+
     data.playingSessions.push({
-        timestamp: Date.now(),
+        timestamp,
         duration: durationMinutes
     });
 
@@ -33,14 +48,21 @@ export function logPlayingSession(durationMinutes) {
     // Close modal
     hideSessionModal();
 
+    // Clear date input
+    const dateInput = document.getElementById('sessionDate');
+    if (dateInput) dateInput.value = '';
+
     // Update UI
     updateDashboard();
     renderMaintenanceTasks();
     checkForAlerts();
 
     // Show confirmation briefly
+    const isBackdated = sessionDate && sessionDate !== new Date().toISOString().split('T')[0];
+    const dateStr = isBackdated ? ` for ${sessionDate}` : '';
+
     setTimeout(() => {
-        alert(`✓ ${durationMinutes} min practice session logged!`);
+        alert(`✓ ${durationMinutes} min practice session logged${dateStr}!`);
     }, 100);
 }
 
@@ -315,7 +337,11 @@ export function togglePracticeTimer() {
 
 // Expose functions to window
 if (typeof window !== 'undefined') {
-    window.logSessionWithDuration = logPlayingSession;
+    window.logSessionWithDuration = function(minutes) {
+        const dateInput = document.getElementById('sessionDate');
+        const sessionDate = dateInput && dateInput.value ? dateInput.value : null;
+        logPlayingSession(minutes, sessionDate);
+    };
     window.showSessionModal = showSessionModal;
     window.startPracticeTimer = startPracticeTimer;
     window.stopPracticeTimer = stopPracticeTimer;
