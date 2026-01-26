@@ -415,6 +415,45 @@ async function runTests() {
         assertEqual(toggleCalled, true, 'S key should toggle practice timer');
     });
 
+    // ==================== Smart String Life Tests ====================
+    console.log('\n🎸 Smart String Life Tests');
+
+    test('calculateSmartStringLife function exists', () => {
+        assertDefined(window.calculateSmartStringLife);
+    });
+
+    test('calculateSmartStringLife returns object with targetDays', () => {
+        const result = window.calculateSmartStringLife();
+        assertDefined(result.targetDays, 'Should have targetDays property');
+        assertTrue(result.targetDays >= 28 && result.targetDays <= 112,
+            `targetDays should be between 4-16 weeks (28-112 days), got ${result.targetDays}`);
+    });
+
+    test('calculateSmartStringLife adjusts for high playtime', () => {
+        // Store original value
+        const data = JSON.parse(localStorage.getItem('guitarTrackerData') || '{}');
+        const originalSessions = data.playingSessions || [];
+
+        // Simulate high playtime - 10 hours this week
+        const now = Date.now();
+        data.playingSessions = [
+            { timestamp: now - 86400000, duration: 120 }, // 2 hours yesterday
+            { timestamp: now - 172800000, duration: 180 }, // 3 hours 2 days ago
+            { timestamp: now - 259200000, duration: 300 }, // 5 hours 3 days ago
+        ];
+        localStorage.setItem('guitarTrackerData', JSON.stringify(data));
+
+        const result = window.calculateSmartStringLife();
+
+        // Restore original
+        data.playingSessions = originalSessions;
+        localStorage.setItem('guitarTrackerData', JSON.stringify(data));
+
+        // High playtime should reduce target days
+        assertTrue(result.targetDays < 56,
+            `High playtime (10 hrs/week) should reduce targetDays below 56, got ${result.targetDays}`);
+    });
+
     // ==================== Dashboard Tests ====================
     console.log('\n📈 Dashboard Tests');
 

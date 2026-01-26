@@ -15,7 +15,7 @@ export async function setupWindow(win) {
     // Now dynamically import modules after globals are set
     const { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS, DATA_VERSION } = await import('../js/config.js');
     const { migrateData, loadData, saveData } = await import('../js/storage.js');
-    const { toggleTask, quickActionJustPlayed, calculateNextDue, resetDailyTasks, resetWeeklyTasks, confirmReset, recordInspection, getAllNextDueDates } = await import('../js/tasks.js');
+    const { toggleTask, quickActionJustPlayed, calculateNextDue, resetDailyTasks, resetWeeklyTasks, confirmReset, recordInspection, getAllNextDueDates, calculateSmartStringLife } = await import('../js/tasks.js');
     const { validateHumidity, validateTemperature } = await import('../js/validators.js');
     const { addHumidityReadingSimplified, deleteHumidityReading, checkForAlerts, drawHumidityChart } = await import('../js/humidity.js');
     const { renderCalendar, toggleTheme, updateDashboard, switchTab, openBridgeRecommendations, closeBridgeModal, openActionRecommendations, closeActionModal, openFretRecommendations, closeFretModal } = await import('../js/ui.js');
@@ -59,6 +59,7 @@ export async function setupWindow(win) {
     window.closeFretModal = closeFretModal;
     window.setupKeyboardShortcuts = setupKeyboardShortcuts;
     window.togglePracticeTimer = togglePracticeTimer;
+    window.calculateSmartStringLife = calculateSmartStringLife;
 
     // Set up keyboard shortcuts for testing
     setupKeyboardShortcuts();
