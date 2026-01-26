@@ -1414,6 +1414,11 @@
                 font-size: 22px;
             }
 
+            /* Hide keyboard hints on mobile - they're not useful */
+            .keyboard-hint {
+                display: none;
+            }
+
             /* Make tabs horizontally scrollable with snap */
             .tabs {
                 overflow-x: auto;
