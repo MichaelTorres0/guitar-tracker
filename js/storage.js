@@ -48,28 +48,37 @@ export function migrateData() {
 
             // Check if already at current version
             if (parsed.version === DATA_VERSION) {
-                return parsed;
+                return verifyDataIntegrity(parsed);
             }
 
-            // Migrate from v3 to v4
+            // Migrate from v4 to v5
+            if (parsed.version === 4) {
+                console.log('Migrating from v4 to v5 - consolidating all data');
+                return migrateV4ToV5(parsed);
+            }
+
+            // Migrate from v3 to v5 (through v4 first)
             if (parsed.version === 3) {
-                console.log('Migrating from v3 to v4 - adding practice stopwatch and inventory');
-                return migrateV3ToV4(parsed);
+                console.log('Migrating from v3 to v5 - adding practice stopwatch, inventory, and consolidating');
+                const v4Data = migrateV3ToV4(parsed);
+                return migrateV4ToV5(v4Data);
             }
 
-            // Migrate from v2 to v4 (through v3 first)
+            // Migrate from v2 to v5 (through v3 and v4 first)
             if (parsed.version === 2) {
-                console.log('Migrating from v2 to v4 - consolidating fragmented keys');
+                console.log('Migrating from v2 to v5 - consolidating fragmented keys');
                 const v3Data = migrateV2ToV3(parsed);
-                return migrateV3ToV4(v3Data);
+                const v4Data = migrateV3ToV4(v3Data);
+                return migrateV4ToV5(v4Data);
             }
 
-            // Migrate from v1 to v4 (through v2 and v3 first)
+            // Migrate from v1 to v5 (through v2, v3, and v4 first)
             if (parsed.version === 1 || !parsed.version) {
-                console.log('Migrating from v1 to v4');
+                console.log('Migrating from v1 to v5');
                 const v2Data = migrateV1ToV2(parsed);
                 const v3Data = migrateV2ToV3(v2Data);
-                return migrateV3ToV4(v3Data);
+                const v4Data = migrateV3ToV4(v3Data);
+                return migrateV4ToV5(v4Data);
             }
         }
 
@@ -128,6 +137,70 @@ export function migrateV3ToV4(v3Data) {
     saveVersionedData(data);
 
     console.log('✓ Migration to v4 complete - practice tracking and inventory added');
+
+    return data;
+}
+
+// Migrate from v4 to v5 - consolidate ALL data into versioned structure
+// This fixes data persistence issues where legacy keys could be cleared independently
+export function migrateV4ToV5(v4Data) {
+    const data = {
+        ...v4Data,
+        version: 5
+    };
+
+    // Consolidate humidity readings from legacy key if not already in versioned structure
+    if (!data.humidityReadings || data.humidityReadings.length === 0) {
+        const legacyHumidity = storage.getItem(STORAGE_KEYS.legacy.humidity);
+        if (legacyHumidity) {
+            try {
+                data.humidityReadings = JSON.parse(legacyHumidity);
+                console.log(`  - Migrated ${data.humidityReadings.length} humidity readings from legacy key`);
+            } catch (e) {
+                console.error('Error parsing legacy humidity readings:', e);
+                data.humidityReadings = [];
+            }
+        } else {
+            data.humidityReadings = [];
+        }
+    }
+
+    // Consolidate task states from legacy key if not already properly migrated
+    const legacyMaintenance = storage.getItem(STORAGE_KEYS.legacy.maintenance);
+    if (legacyMaintenance) {
+        try {
+            const legacyTasks = JSON.parse(legacyMaintenance);
+            // Merge with existing maintenanceStates, preserving any newer data
+            if (!data.maintenanceStates) {
+                data.maintenanceStates = {};
+            }
+            for (const category in legacyTasks) {
+                if (!data.maintenanceStates[category]) {
+                    data.maintenanceStates[category] = legacyTasks[category];
+                } else {
+                    // Merge: use the one with more recent lastCompleted dates
+                    legacyTasks[category].forEach(legacyTask => {
+                        const existingTask = data.maintenanceStates[category].find(t => t.id === legacyTask.id);
+                        if (!existingTask) {
+                            data.maintenanceStates[category].push(legacyTask);
+                        } else if (legacyTask.lastCompleted && (!existingTask.lastCompleted ||
+                            new Date(legacyTask.lastCompleted) > new Date(existingTask.lastCompleted))) {
+                            existingTask.completed = legacyTask.completed;
+                            existingTask.lastCompleted = legacyTask.lastCompleted;
+                        }
+                    });
+                }
+            }
+            console.log('  - Consolidated task states from legacy key');
+        } catch (e) {
+            console.error('Error parsing legacy maintenance data:', e);
+        }
+    }
+
+    // Save the consolidated data
+    saveVersionedData(data);
+
+    console.log('✓ Migration to v5 complete - all data consolidated into single versioned structure');
 
     return data;
 }
@@ -257,16 +330,17 @@ export function migrateLegacyData(maintenanceJson, humidityJson, inspectionJson)
     data.version = 2;
     saveVersionedData(data);
 
-    // Now migrate v2 → v3 → v4 to pick up any v2.0 separate keys and add v4 features
+    // Now migrate v2 → v3 → v4 → v5 to pick up any v2.0 separate keys and consolidate
     const v3Data = migrateV2ToV3(data);
     const v4Data = migrateV3ToV4(v3Data);
+    const v5Data = migrateV4ToV5(v4Data);
 
     // Clean up legacy keys (commented out for safety - can be enabled after verification)
     // storage.removeItem(STORAGE_KEYS.legacy.maintenance);
     // storage.removeItem(STORAGE_KEYS.legacy.humidity);
     // storage.removeItem(STORAGE_KEYS.legacy.inspection);
 
-    return v4Data;
+    return v5Data;
 }
 
 export function createDefaultData() {
@@ -361,8 +435,26 @@ export function getVersionedField(field, defaultValue = null) {
     return data[field] !== undefined ? data[field] : defaultValue;
 }
 
-// Legacy compatibility functions
+// Legacy compatibility functions - now use versioned storage as primary source
 export function loadData() {
+    // First try to load from versioned storage (v5+)
+    const versionedData = getVersionedData();
+    if (versionedData.maintenanceStates && Object.keys(versionedData.maintenanceStates).length > 0) {
+        for (let category in versionedData.maintenanceStates) {
+            if (MAINTENANCE_TASKS[category]) {
+                versionedData.maintenanceStates[category].forEach(task => {
+                    const original = MAINTENANCE_TASKS[category].find(t => t.id === task.id);
+                    if (original) {
+                        original.completed = task.completed || false;
+                        original.lastCompleted = task.lastCompleted || null;
+                    }
+                });
+            }
+        }
+        return;
+    }
+
+    // Fallback to legacy key for backward compatibility
     const DATA_KEY = STORAGE_KEYS.legacy.maintenance;
     const saved = storage.getItem(DATA_KEY);
     if (saved) {
@@ -382,6 +474,10 @@ export function loadData() {
 }
 
 export function saveData() {
+    // Save to versioned storage (primary)
+    syncTasksToVersionedData();
+
+    // Also save to legacy key for backward compatibility
     const DATA_KEY = STORAGE_KEYS.legacy.maintenance;
     const data = {};
     for (let category in MAINTENANCE_TASKS) {
@@ -401,4 +497,194 @@ export function loadInspectionData() {
         inspectionData = JSON.parse(saved);
     }
     return inspectionData;
+}
+
+// ============================================================
+// V5 DATA INTEGRITY AND HELPER FUNCTIONS
+// ============================================================
+
+// Verify data integrity and fix any issues
+export function verifyDataIntegrity(data) {
+    let needsSave = false;
+    const issues = [];
+
+    // Ensure all required fields exist
+    if (!data.humidityReadings) {
+        data.humidityReadings = [];
+        issues.push('humidityReadings was missing');
+        needsSave = true;
+    }
+
+    if (!data.maintenanceStates) {
+        data.maintenanceStates = {};
+        issues.push('maintenanceStates was missing');
+        needsSave = true;
+    }
+
+    if (!data.playingSessions) {
+        data.playingSessions = [];
+        issues.push('playingSessions was missing');
+        needsSave = true;
+    }
+
+    if (!data.stringChangeHistory) {
+        data.stringChangeHistory = [];
+        issues.push('stringChangeHistory was missing');
+        needsSave = true;
+    }
+
+    if (!data.inventory) {
+        data.inventory = { items: [] };
+        issues.push('inventory was missing');
+        needsSave = true;
+    }
+
+    if (!data.timerState) {
+        data.timerState = { running: false, startTimestamp: null };
+        issues.push('timerState was missing');
+        needsSave = true;
+    }
+
+    if (!data.practiceHistory) {
+        data.practiceHistory = [];
+        issues.push('practiceHistory was missing');
+        needsSave = true;
+    }
+
+    // Check for legacy data that should be merged
+    const legacyHumidity = storage.getItem(STORAGE_KEYS.legacy.humidity);
+    if (legacyHumidity) {
+        try {
+            const legacyReadings = JSON.parse(legacyHumidity);
+            if (legacyReadings.length > 0) {
+                // Merge any readings not in versioned data (by ID)
+                const existingIds = new Set(data.humidityReadings.map(r => r.id));
+                const newReadings = legacyReadings.filter(r => !existingIds.has(r.id));
+                if (newReadings.length > 0) {
+                    data.humidityReadings = [...data.humidityReadings, ...newReadings];
+                    data.humidityReadings.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    issues.push(`Recovered ${newReadings.length} humidity readings from legacy storage`);
+                    needsSave = true;
+                }
+            }
+        } catch (e) {
+            console.error('Error checking legacy humidity:', e);
+        }
+    }
+
+    if (issues.length > 0) {
+        console.log('Data integrity check found issues:', issues);
+        if (needsSave) {
+            saveVersionedData(data);
+            console.log('Data integrity issues repaired and saved');
+        }
+    }
+
+    return data;
+}
+
+// ============================================================
+// HUMIDITY READINGS - Consolidated Storage Functions
+// ============================================================
+
+// Get humidity readings from versioned storage
+export function getHumidityReadings() {
+    const data = getVersionedData();
+    return data.humidityReadings || [];
+}
+
+// Save humidity readings to versioned storage
+export function saveHumidityReadings(readings) {
+    const data = getVersionedData();
+    data.humidityReadings = readings;
+    saveVersionedData(data);
+
+    // Also update legacy key for backward compatibility during transition
+    // This can be removed in a future version once all users have migrated
+    storage.setItem(STORAGE_KEYS.legacy.humidity, JSON.stringify(readings));
+}
+
+// Add a single humidity reading
+export function addHumidityReading(reading) {
+    const readings = getHumidityReadings();
+    readings.unshift(reading);
+    readings.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    saveHumidityReadings(readings);
+    return reading;
+}
+
+// Delete a humidity reading by ID
+export function removeHumidityReading(id) {
+    let readings = getHumidityReadings();
+    readings = readings.filter(r => r.id !== id);
+    saveHumidityReadings(readings);
+}
+
+// ============================================================
+// TASK STATES - Consolidated Storage Functions
+// ============================================================
+
+// Sync in-memory MAINTENANCE_TASKS from versioned storage
+export function syncTasksFromVersionedData() {
+    const data = getVersionedData();
+    if (data.maintenanceStates) {
+        for (const category in data.maintenanceStates) {
+            if (MAINTENANCE_TASKS[category]) {
+                data.maintenanceStates[category].forEach(savedTask => {
+                    const task = MAINTENANCE_TASKS[category].find(t => t.id === savedTask.id);
+                    if (task) {
+                        task.completed = savedTask.completed || false;
+                        task.lastCompleted = savedTask.lastCompleted || null;
+                    }
+                });
+            }
+        }
+    }
+}
+
+// Sync in-memory MAINTENANCE_TASKS to versioned storage
+export function syncTasksToVersionedData() {
+    const data = getVersionedData();
+    data.maintenanceStates = {};
+
+    for (const category in MAINTENANCE_TASKS) {
+        data.maintenanceStates[category] = MAINTENANCE_TASKS[category].map(task => ({
+            id: task.id,
+            completed: task.completed || false,
+            lastCompleted: task.lastCompleted || null
+        }));
+    }
+
+    saveVersionedData(data);
+
+    // Also update legacy key for backward compatibility during transition
+    const legacyData = {};
+    for (const category in MAINTENANCE_TASKS) {
+        legacyData[category] = MAINTENANCE_TASKS[category].map(task => ({
+            id: task.id,
+            completed: task.completed || false,
+            lastCompleted: task.lastCompleted || null
+        }));
+    }
+    storage.setItem(STORAGE_KEYS.legacy.maintenance, JSON.stringify(legacyData));
+}
+
+// ============================================================
+// PLAYING SESSIONS - Consolidated Storage Functions
+// ============================================================
+
+// Get playing sessions from versioned storage
+export function getPlayingSessions() {
+    const data = getVersionedData();
+    return data.playingSessions || [];
+}
+
+// Save playing sessions to versioned storage
+export function savePlayingSessions(sessions) {
+    const data = getVersionedData();
+    data.playingSessions = sessions;
+    saveVersionedData(data);
+
+    // Also update legacy key for backward compatibility
+    storage.setItem(STORAGE_KEYS.legacy.playingSessions, JSON.stringify(sessions));
 }

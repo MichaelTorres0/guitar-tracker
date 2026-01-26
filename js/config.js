@@ -3,7 +3,8 @@
 // v2: Consolidated to guitarTrackerData with guitars array
 // v3: Moved all v2.0 features (sessions, string history, onboarding) into versioned structure
 // v4: Practice stopwatch, streak tracking, string health ring, consumables inventory, string change notes
-export const DATA_VERSION = 4;
+// v5: Full consolidation - humidity readings and task states now in versioned structure (fixes data persistence)
+export const DATA_VERSION = 5;
 
 export const STORAGE_KEYS = {
     mainData: 'guitarTrackerData',
