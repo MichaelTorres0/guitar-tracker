@@ -387,6 +387,20 @@ async function runTests() {
         assertDefined(window.deleteHumidityReading);
     });
 
+    // ==================== Quick Capture Mode Tests ====================
+    console.log('\n⌨️ Quick Capture Mode Tests');
+
+    test('Pressing H key focuses humidity input', () => {
+        const humidityInput = document.getElementById('humidityValue');
+        humidityInput.blur(); // Ensure not focused
+
+        // Simulate H key press (not in an input field)
+        const event = new window.KeyboardEvent('keydown', { key: 'h', bubbles: true });
+        document.dispatchEvent(event);
+
+        assertEqual(document.activeElement, humidityInput, 'H key should focus humidity input');
+    });
+
     // ==================== Dashboard Tests ====================
     console.log('\n📈 Dashboard Tests');
 

@@ -560,6 +560,16 @@
             margin-bottom: 4px;
         }
 
+        .keyboard-hint {
+            font-size: 10px;
+            font-weight: 400;
+            color: var(--color-text-light);
+            background: var(--color-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+
         input[type="text"],
         input[type="number"],
         input[type="date"],

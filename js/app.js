@@ -327,6 +327,30 @@ function setupEventHandlers() {
             exportAsCSV(filtered);
         });
     }
+
+    // Quick Capture Mode - Keyboard shortcuts
+    setupKeyboardShortcuts();
+}
+
+// Quick Capture Mode - Keyboard shortcuts (exported for testing)
+export function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // Ignore if user is typing in an input field
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+            return;
+        }
+
+        // H key - focus humidity input
+        if (e.key === 'h' || e.key === 'H') {
+            const humidityInput = document.getElementById('humidityValue');
+            if (humidityInput) {
+                // Switch to humidity tab first if not already there
+                switchTab('humidity');
+                humidityInput.focus();
+                e.preventDefault();
+            }
+        }
+    });
 }
 
 // Load theme

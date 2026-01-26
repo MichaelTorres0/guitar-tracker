@@ -20,6 +20,7 @@ export async function setupWindow(win) {
     const { addHumidityReadingSimplified, deleteHumidityReading, checkForAlerts, drawHumidityChart } = await import('../js/humidity.js');
     const { renderCalendar, toggleTheme, updateDashboard, switchTab, openBridgeRecommendations, closeBridgeModal, openActionRecommendations, closeActionModal, openFretRecommendations, closeFretModal } = await import('../js/ui.js');
     const { exportAsCSV, exportAsJSON, downloadFile } = await import('../js/export.js');
+    const { setupKeyboardShortcuts } = await import('../js/app.js');
 
     window.MAINTENANCE_TASKS = MAINTENANCE_TASKS;
     window.EQUIPMENT_ITEMS = EQUIPMENT_ITEMS;
@@ -55,6 +56,10 @@ export async function setupWindow(win) {
     window.closeActionModal = closeActionModal;
     window.openFretRecommendations = openFretRecommendations;
     window.closeFretModal = closeFretModal;
+    window.setupKeyboardShortcuts = setupKeyboardShortcuts;
+
+    // Set up keyboard shortcuts for testing
+    setupKeyboardShortcuts();
 
     // Mock functions that aren't exposed
     window.saveInspectionData = () => {};
