@@ -1,8 +1,72 @@
 // Task management functions
 import { MAINTENANCE_TASKS } from './config.js';
 import { saveData } from './storage.js';
-import { getVersionedField } from './storage.js';
+import { getVersionedField, getPlayingSessions } from './storage.js';
 import { ls } from './localStorage.js';
+
+// Constants for string life calculation
+const BASE_STRING_LIFE_DAYS = 56; // 8 weeks
+const DEFAULT_HOURS_PER_WEEK = 2.5;
+const MIN_STRING_LIFE_DAYS = 28; // 4 weeks minimum
+const MAX_STRING_LIFE_DAYS = 112; // 16 weeks maximum
+
+/**
+ * Calculate smart string life based on actual playing sessions
+ * @returns {Object} { targetDays, actualHoursPerWeek, cleaningRate, factors }
+ */
+export function calculateSmartStringLife() {
+    const sessions = getPlayingSessions();
+    const now = Date.now();
+    const twoWeeksAgo = now - (14 * 24 * 60 * 60 * 1000);
+
+    // Calculate actual hours per week from recent sessions
+    const recentSessions = sessions.filter(s => s.timestamp > twoWeeksAgo);
+    let actualHoursPerWeek = DEFAULT_HOURS_PER_WEEK;
+
+    if (recentSessions.length >= 2) {
+        const totalMinutes = recentSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+        actualHoursPerWeek = (totalMinutes / 60) / 2; // Average over 2 weeks
+    }
+
+    // Calculate daily cleaning compliance rate
+    const dailyCleaningTask = MAINTENANCE_TASKS.daily.find(t => t.id === 'daily-1');
+    let cleaningRate = 0.6; // Default to 60%
+    if (dailyCleaningTask && dailyCleaningTask.lastCompleted) {
+        // Check how often cleaning has been done in last 2 weeks
+        // For now, use a simple heuristic: if completed recently, assume good compliance
+        const daysSinceLastCleaning = Math.floor((now - new Date(dailyCleaningTask.lastCompleted).getTime()) / (1000 * 60 * 60 * 24));
+        if (daysSinceLastCleaning <= 1) {
+            cleaningRate = 0.9;
+        } else if (daysSinceLastCleaning <= 3) {
+            cleaningRate = 0.7;
+        } else if (daysSinceLastCleaning <= 7) {
+            cleaningRate = 0.5;
+        } else {
+            cleaningRate = 0.3;
+        }
+    }
+
+    // Calculate target days based on playtime ratio
+    // Formula: baseDays * (defaultHours / actualHours) * cleaningMultiplier
+    const playtimeRatio = DEFAULT_HOURS_PER_WEEK / Math.max(actualHoursPerWeek, 0.5);
+    const cleaningMultiplier = cleaningRate >= 0.6 ? 1.0 : 0.75;
+
+    let targetDays = Math.round(BASE_STRING_LIFE_DAYS * playtimeRatio * cleaningMultiplier);
+
+    // Clamp to reasonable range
+    targetDays = Math.max(MIN_STRING_LIFE_DAYS, Math.min(MAX_STRING_LIFE_DAYS, targetDays));
+
+    return {
+        targetDays,
+        actualHoursPerWeek: parseFloat(actualHoursPerWeek.toFixed(1)),
+        cleaningRate: parseFloat(cleaningRate.toFixed(2)),
+        factors: {
+            playtimeRatio: parseFloat(playtimeRatio.toFixed(2)),
+            cleaningMultiplier,
+            sessionCount: recentSessions.length
+        }
+    };
+}
 
 export function toggleTask(taskId) {
     for (let category in MAINTENANCE_TASKS) {

@@ -1,12 +1,10 @@
 // UI rendering and interaction functions
 import { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS } from './config.js';
-import { calculateNextDue, getAllNextDueDates, isCompletedWithinPeriod, getRelativeTimeAgo } from './tasks.js';
-import { getVersionedData, saveVersionedData, getVersionedField } from './storage.js';
+import { calculateNextDue, getAllNextDueDates, isCompletedWithinPeriod, getRelativeTimeAgo, calculateSmartStringLife } from './tasks.js';
+import { getVersionedData, saveVersionedData, getVersionedField, getHumidityReadings, getPlayingSessions } from './storage.js';
 import { calculatePracticeStreak, getStreakEmoji, getThisWeekHours } from './sessions.js';
 import { updateRestockAlerts } from './inventory.js';
 import { ls } from './localStorage.js';
-
-const HUMIDITY_KEY = STORAGE_KEYS.legacy.humidity;
 
 export function renderMaintenanceTasks() {
     const container = document.getElementById('maintenanceContainer');
@@ -192,8 +190,8 @@ export function updateDashboard() {
         }
     }
 
-    // Update weekly hours display
-    const sessions = JSON.parse(ls.getItem('playingSessions') || '[]');
+    // Update weekly hours display - use consolidated versioned storage
+    const sessions = getPlayingSessions();
     const weeklyHoursEl = document.getElementById('weeklyHours');
     const calculatorBasisEl = document.getElementById('calculatorBasis');
 
@@ -249,8 +247,8 @@ export function updateDashboard() {
     updatePeriodCompletion('quarterly', '--color-quarterly');
     updatePeriodCompletion('annual', '--color-annual');
 
-    // Humidity stats
-    const readings = JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
+    // Humidity stats - use consolidated versioned storage
+    const readings = getHumidityReadings();
     if (readings.length > 0) {
         const latest = readings[0];
         const humidity = latest.humidity;
@@ -400,7 +398,7 @@ export function updateDashboard() {
         daysSinceChangeEl.style.fontSize = '14px';
     }
 
-    // String Life Calculator with Health Ring
+    // String Life Calculator with Health Ring (using smart calculation)
     const stringLifeTextEl = document.getElementById('stringLifeText');
     const ringProgressEl = document.getElementById('ringProgress');
     const ringTextEl = document.getElementById('ringText');
@@ -409,7 +407,10 @@ export function updateDashboard() {
     if (stringChangeDate) {
         const today = new Date();
         const daysSince = Math.floor((today - stringChangeDate) / (1000 * 60 * 60 * 24));
-        const targetDays = 56; // 8 weeks
+
+        // Use smart string life calculation
+        const smartLife = calculateSmartStringLife();
+        const targetDays = smartLife.targetDays;
         const percentage = Math.min(Math.round((daysSince / targetDays) * 100), 100);
 
         // Update ring
@@ -434,13 +435,19 @@ export function updateDashboard() {
 
         if (stringLifeEstimateEl) {
             if (daysRemaining > 14) {
-                stringLifeEstimateEl.innerHTML = `~${weeksRemaining} weeks remaining<br><span style="font-size: 11px;">Based on 2.5 hrs/week</span>`;
+                stringLifeEstimateEl.innerHTML = `~${weeksRemaining} weeks remaining<br><span style="font-size: 11px;">Based on ${smartLife.actualHoursPerWeek} hrs/week</span>`;
             } else if (daysRemaining > 1) {
-                stringLifeEstimateEl.innerHTML = `~${daysRemaining} days remaining<br><span style="font-size: 11px;">Based on 2.5 hrs/week</span>`;
+                stringLifeEstimateEl.innerHTML = `~${daysRemaining} days remaining<br><span style="font-size: 11px;">Based on ${smartLife.actualHoursPerWeek} hrs/week</span>`;
             } else {
                 stringLifeEstimateEl.innerHTML = '<strong style="color: var(--color-error);">Change strings soon!</strong>';
             }
             stringLifeEstimateEl.classList.remove('empty-state');
+        }
+
+        // Update calculator basis text
+        if (calculatorBasisEl) {
+            const cleaningStatus = smartLife.cleaningRate >= 0.6 ? 'good' : 'low';
+            calculatorBasisEl.textContent = `Based on ${smartLife.actualHoursPerWeek} hrs/week playing + ${cleaningStatus} cleaning (${Math.round(targetDays / 7)} week target)`;
         }
     } else {
         // Empty state for string life
