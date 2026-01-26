@@ -1,9 +1,7 @@
 // Export and download functions
 import { MAINTENANCE_TASKS, STORAGE_KEYS, DATA_VERSION } from './config.js';
-import { getVersionedData } from './storage.js';
+import { getVersionedData, getHumidityReadings } from './storage.js';
 import { ls } from './localStorage.js';
-
-const HUMIDITY_KEY = STORAGE_KEYS.legacy.humidity;
 
 export function exportAsCSV(filteredReadings = null) {
     let csv = 'TAYLOR GS MINI MAINTENANCE TRACKER - CSV EXPORT\n\n';
@@ -22,7 +20,8 @@ export function exportAsCSV(filteredReadings = null) {
 
     csv += filteredReadings ? '=== FILTERED HUMIDITY LOG ===\n' : '=== HUMIDITY LOG ===\n';
     csv += 'Date,Time,RH %,Temp °F,Location,Status\n';
-    const readings = filteredReadings || JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]');
+    // Use consolidated versioned storage
+    const readings = filteredReadings || getHumidityReadings();
     readings.forEach(r => {
         const date = new Date(r.timestamp);
         csv += `"${date.toLocaleDateString()}","${date.toLocaleTimeString()}","${r.humidity}","${r.temp}","${r.location}"\n`;
@@ -36,7 +35,8 @@ export function exportAsJSON() {
     const data = {
         exportDate: new Date().toISOString(),
         tasks: MAINTENANCE_TASKS,
-        humidity: JSON.parse(ls.getItem(HUMIDITY_KEY) || '[]')
+        // Use consolidated versioned storage
+        humidity: getHumidityReadings()
     };
 
     downloadFile(JSON.stringify(data, null, 2), 'guitar-maintenance-backup.json', 'application/json');
@@ -57,14 +57,15 @@ export function downloadFile(content, filename, type) {
 // Get localStorage data size
 export function getDataSize() {
     let totalSize = 0;
-    // Get size of main data keys
+    // Get size of main data keys (primary is now versioned storage)
     const mainData = ls.getItem(STORAGE_KEYS.mainData) || '';
     const theme = ls.getItem('theme') || '';
-    const humidityData = ls.getItem(HUMIDITY_KEY) || '';
+    // Legacy keys may still exist during transition
+    const legacyHumidityData = ls.getItem(STORAGE_KEYS.legacy.humidity) || '';
     const inspectionData = ls.getItem('inspectionData') || '';
     const lastBackup = ls.getItem('lastBackupDate') || '';
 
-    totalSize = mainData.length + theme.length + humidityData.length +
+    totalSize = mainData.length + theme.length + legacyHumidityData.length +
                 inspectionData.length + lastBackup.length;
 
     // Convert to KB
@@ -122,6 +123,99 @@ export function createBackup() {
     }
 }
 
+// Merge backup data with current data (non-destructive)
+export function mergeBackupData(currentData, backupData) {
+    const merged = JSON.parse(JSON.stringify(currentData)); // Deep clone
+
+    // Merge humidity readings by timestamp (avoid duplicates)
+    if (backupData.humidityReadings && Array.isArray(backupData.humidityReadings)) {
+        const existingTimestamps = new Set(
+            (merged.humidityReadings || []).map(r => r.timestamp)
+        );
+
+        backupData.humidityReadings.forEach(reading => {
+            if (!existingTimestamps.has(reading.timestamp)) {
+                merged.humidityReadings = merged.humidityReadings || [];
+                merged.humidityReadings.push(reading);
+            }
+        });
+
+        // Sort by timestamp
+        if (merged.humidityReadings) {
+            merged.humidityReadings.sort((a, b) =>
+                new Date(a.timestamp) - new Date(b.timestamp)
+            );
+        }
+    }
+
+    // Merge playing sessions by timestamp
+    if (backupData.playingSessions && Array.isArray(backupData.playingSessions)) {
+        const existingTimestamps = new Set(
+            (merged.playingSessions || []).map(s => s.timestamp)
+        );
+
+        backupData.playingSessions.forEach(session => {
+            if (!existingTimestamps.has(session.timestamp)) {
+                merged.playingSessions = merged.playingSessions || [];
+                merged.playingSessions.push(session);
+            }
+        });
+
+        // Sort by timestamp
+        if (merged.playingSessions) {
+            merged.playingSessions.sort((a, b) => a.timestamp - b.timestamp);
+        }
+    }
+
+    // Merge string change history by date
+    if (backupData.stringChangeHistory && Array.isArray(backupData.stringChangeHistory)) {
+        const existingDates = new Set(
+            (merged.stringChangeHistory || []).map(s => s.date)
+        );
+
+        backupData.stringChangeHistory.forEach(change => {
+            if (!existingDates.has(change.date)) {
+                merged.stringChangeHistory = merged.stringChangeHistory || [];
+                merged.stringChangeHistory.push(change);
+            }
+        });
+
+        // Sort by date
+        if (merged.stringChangeHistory) {
+            merged.stringChangeHistory.sort((a, b) =>
+                new Date(a.date) - new Date(b.date)
+            );
+        }
+    }
+
+    // Merge task lastCompleted dates (keep the most recent)
+    if (backupData.maintenanceStates) {
+        merged.maintenanceStates = merged.maintenanceStates || {};
+
+        for (const category in backupData.maintenanceStates) {
+            if (!merged.maintenanceStates[category]) {
+                merged.maintenanceStates[category] = backupData.maintenanceStates[category];
+            } else {
+                // For each task, keep the most recent lastCompleted
+                backupData.maintenanceStates[category].forEach(backupTask => {
+                    const existingTask = merged.maintenanceStates[category].find(t => t.id === backupTask.id);
+                    if (existingTask) {
+                        if (backupTask.lastCompleted && (!existingTask.lastCompleted ||
+                            new Date(backupTask.lastCompleted) > new Date(existingTask.lastCompleted))) {
+                            existingTask.lastCompleted = backupTask.lastCompleted;
+                            existingTask.completed = backupTask.completed;
+                        }
+                    } else {
+                        merged.maintenanceStates[category].push(backupTask);
+                    }
+                });
+            }
+        }
+    }
+
+    return merged;
+}
+
 // Restore from backup
 export function restoreFromBackup(fileContent) {
     try {
@@ -169,7 +263,7 @@ export function restoreFromBackup(fileContent) {
                 ls.setItem('guitarMaintenanceData', JSON.stringify(data.tasks));
             }
             if (data.humidity) {
-                ls.setItem(HUMIDITY_KEY, JSON.stringify(data.humidity));
+                ls.setItem(STORAGE_KEYS.legacy.humidity, JSON.stringify(data.humidity));
             }
             if (data.inspections) {
                 ls.setItem('inspectionData', JSON.stringify(data.inspections));

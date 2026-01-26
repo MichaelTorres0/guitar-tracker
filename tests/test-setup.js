@@ -19,7 +19,7 @@ export async function setupWindow(win) {
     const { validateHumidity, validateTemperature } = await import('../js/validators.js');
     const { addHumidityReadingSimplified, deleteHumidityReading, checkForAlerts, drawHumidityChart } = await import('../js/humidity.js');
     const { renderCalendar, toggleTheme, updateDashboard, switchTab, openBridgeRecommendations, closeBridgeModal, openActionRecommendations, closeActionModal, openFretRecommendations, closeFretModal } = await import('../js/ui.js');
-    const { exportAsCSV, exportAsJSON, downloadFile } = await import('../js/export.js');
+    const { exportAsCSV, exportAsJSON, downloadFile, mergeBackupData } = await import('../js/export.js');
     const { setupKeyboardShortcuts } = await import('../js/app.js');
     const { togglePracticeTimer } = await import('../js/sessions.js');
     const { getHistoryEvents, renderHistoryTimeline } = await import('../js/history.js');
@@ -40,6 +40,7 @@ export async function setupWindow(win) {
     window.exportAsCSV = exportAsCSV;
     window.exportAsJSON = exportAsJSON;
     window.downloadFile = downloadFile;
+    window.mergeBackupData = mergeBackupData;
     window.migrateData = migrateData;
     window.renderCalendar = renderCalendar;
     window.toggleTheme = toggleTheme;
