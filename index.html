@@ -265,7 +265,14 @@
                             <option value="out">Out of Case</option>
                         </select>
                     </div>
-                    <button id="addHumiditySimplified" class="btn-primary" style="width: 100%;">📍 Log Reading Now</button>
+                    <div class="form-group">
+                        <label class="form-label">Date & Time <span class="keyboard-hint">Leave blank for now</span></label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <input type="date" id="humidityDateSimple" placeholder="Today">
+                            <input type="time" id="humidityTimeSimple" placeholder="Now">
+                        </div>
+                    </div>
+                    <button id="addHumiditySimplified" class="btn-primary" style="width: 100%;">📍 Log Reading</button>
                     <div id="humidityFeedback" class="form-feedback" style="display: none;"></div>
                     <div id="logConfirmation" class="form-feedback success" style="display: none;">✅ Reading logged successfully</div>
                 </div>
