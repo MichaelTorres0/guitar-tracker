@@ -454,6 +454,22 @@ async function runTests() {
             `High playtime (10 hrs/week) should reduce targetDays below 56, got ${result.targetDays}`);
     });
 
+    // ==================== Calendar Detailed Due Dates Tests ====================
+    console.log('\n📅 Calendar Detailed Due Dates Tests');
+
+    test('getDetailedDueDates function exists', () => {
+        assertDefined(window.getDetailedDueDates, 'getDetailedDueDates should be defined');
+    });
+
+    test('getDetailedDueDates returns array with date and tasks', () => {
+        const result = window.getDetailedDueDates();
+        assertTrue(Array.isArray(result), 'Should return an array');
+        if (result.length > 0) {
+            assertDefined(result[0].date, 'Each item should have a date');
+            assertDefined(result[0].tasks, 'Each item should have tasks array');
+        }
+    });
+
     // ==================== Dashboard Tests ====================
     console.log('\n📈 Dashboard Tests');
 

@@ -387,6 +387,81 @@ export function getAllNextDueDates() {
     return dates;
 }
 
+// Get detailed due dates with task info for calendar agenda view
+export function getDetailedDueDates(daysAhead = 14) {
+    const dueDates = new Map(); // Map<dateString, {date, tasks[]}>
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(today.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+
+    const categoryColors = {
+        daily: 'daily',
+        weekly: 'weekly',
+        eightweek: '8week',
+        quarterly: 'quarterly',
+        annual: 'annual'
+    };
+
+    const categoryLabels = {
+        daily: 'Daily',
+        weekly: 'Weekly',
+        eightweek: '8-Week',
+        quarterly: 'Quarterly',
+        annual: 'Annual'
+    };
+
+    for (let category in MAINTENANCE_TASKS) {
+        MAINTENANCE_TASKS[category].forEach(task => {
+            let nextDate;
+
+            if (!task.lastCompleted) {
+                // Never completed = due today
+                nextDate = new Date(today);
+            } else {
+                const lastDate = new Date(task.lastCompleted);
+                nextDate = new Date(lastDate);
+
+                if (category === 'daily') {
+                    nextDate.setDate(nextDate.getDate() + 1);
+                } else if (category === 'weekly') {
+                    nextDate.setDate(nextDate.getDate() + 7);
+                } else if (category === 'eightweek') {
+                    nextDate.setDate(nextDate.getDate() + 56);
+                } else if (category === 'quarterly') {
+                    nextDate.setDate(nextDate.getDate() + 84);
+                } else if (category === 'annual') {
+                    nextDate.setFullYear(nextDate.getFullYear() + 1);
+                }
+            }
+
+            // Check if within range
+            nextDate.setHours(0, 0, 0, 0);
+            if (nextDate >= today && nextDate <= endDate) {
+                const dateKey = nextDate.toISOString().split('T')[0];
+
+                if (!dueDates.has(dateKey)) {
+                    dueDates.set(dateKey, {
+                        date: new Date(nextDate),
+                        tasks: []
+                    });
+                }
+
+                dueDates.get(dateKey).tasks.push({
+                    id: task.id,
+                    name: task.name,
+                    category: category,
+                    color: categoryColors[category],
+                    label: categoryLabels[category],
+                    isOverdue: nextDate < today
+                });
+            }
+        });
+    }
+
+    // Convert to sorted array
+    return Array.from(dueDates.values()).sort((a, b) => a.date - b.date);
+}
+
 export function resetDailyTasks() {
     if (confirm('Reset all daily tasks? This will uncheck them for today.')) {
         MAINTENANCE_TASKS.daily.forEach(task => {
