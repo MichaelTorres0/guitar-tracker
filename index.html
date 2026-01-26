@@ -980,39 +980,6 @@
         </div>
     </div>
 
-    <!-- Debug: Global error handler to catch module loading errors -->
-    <script>
-        window.onerror = function(msg, url, line, col, error) {
-            var panel = document.getElementById('debugPanel');
-            if (!panel) {
-                panel = document.createElement('div');
-                panel.id = 'debugPanel';
-                panel.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-height:200px;overflow-y:auto;background:#1a1a2e;color:#0f0;font-family:monospace;font-size:11px;padding:8px;z-index:99999;border-top:2px solid #f00;';
-                panel.innerHTML = '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><strong style="color:#f00;">ERROR LOG</strong><button onclick="this.parentElement.parentElement.remove()" style="background:#f00;color:#fff;border:none;padding:2px 8px;">X</button></div><div id="debugLog"></div>';
-                document.body.appendChild(panel);
-            }
-            var log = document.getElementById('debugLog');
-            if (log) {
-                log.innerHTML += '<div style="color:#f00">[GLOBAL ERROR] ' + msg + ' at ' + url + ':' + line + '</div>';
-            }
-            return false;
-        };
-        window.addEventListener('unhandledrejection', function(e) {
-            var panel = document.getElementById('debugPanel');
-            if (!panel) {
-                panel = document.createElement('div');
-                panel.id = 'debugPanel';
-                panel.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-height:200px;overflow-y:auto;background:#1a1a2e;color:#0f0;font-family:monospace;font-size:11px;padding:8px;z-index:99999;border-top:2px solid #f00;';
-                panel.innerHTML = '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><strong style="color:#f00;">ERROR LOG</strong><button onclick="this.parentElement.parentElement.remove()" style="background:#f00;color:#fff;border:none;padding:2px 8px;">X</button></div><div id="debugLog"></div>';
-                document.body.appendChild(panel);
-            }
-            var log = document.getElementById('debugLog');
-            if (log) {
-                log.innerHTML += '<div style="color:#f00">[PROMISE REJECTION] ' + (e.reason ? (e.reason.message || e.reason) : 'Unknown') + '</div>';
-            }
-        });
-        console.log('Global error handlers installed');
-    </script>
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
