@@ -180,14 +180,12 @@ if (typeof window !== 'undefined') {
 }
 
 export function updateDashboard() {
-    // Update playing schedule in header if set
-    const playingHours = ls.getItem('playingHoursPerWeek');
-    if (playingHours) {
-        const headerSubtitle = document.querySelector('.header p:not(.model-badge)');
-        if (headerSubtitle) {
-            const stringGauge = getVersionedField("currentStringType", "D'Addario EJ16 Phosphor Bronze Light (.012-.053)");
-            headerSubtitle.textContent = `Playing Schedule: ${playingHours} hrs/week | ${stringGauge}`;
-        }
+    // Update header with current string type and playing hours
+    const headerSubtitle = document.querySelector('.header p:not(.model-badge)');
+    if (headerSubtitle) {
+        const playingHours = getVersionedField('playingHoursPerWeek', 2.5);
+        const stringType = getVersionedField('currentStringType', "D'Addario EJ16 Phosphor Bronze Light (.012-.053)");
+        headerSubtitle.textContent = `Playing: ${playingHours} hrs/week | ${stringType}`;
     }
 
     // Update weekly hours display - use consolidated versioned storage
