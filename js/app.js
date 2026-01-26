@@ -364,12 +364,42 @@ export function setupKeyboardShortcuts() {
     });
 }
 
+// Debug panel for iOS Safari troubleshooting
+function createDebugPanel() {
+    const panel = document.createElement('div');
+    panel.id = 'debugPanel';
+    panel.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-height:200px;overflow-y:auto;background:#1a1a2e;color:#0f0;font-family:monospace;font-size:11px;padding:8px;z-index:99999;border-top:2px solid #0f0;';
+    panel.innerHTML = '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><strong>Debug Log</strong><button onclick="this.parentElement.parentElement.remove()" style="background:#f00;color:#fff;border:none;padding:2px 8px;cursor:pointer;">X</button></div><div id="debugLog"></div>';
+    document.body.appendChild(panel);
+}
+
+function debugLog(msg, isError = false) {
+    const log = document.getElementById('debugLog');
+    if (log) {
+        const time = new Date().toLocaleTimeString();
+        const color = isError ? '#f00' : '#0f0';
+        log.innerHTML += `<div style="color:${color}">[${time}] ${msg}</div>`;
+        log.scrollTop = log.scrollHeight;
+    }
+    console.log(msg);
+}
+
+// Create debug panel immediately
+createDebugPanel();
+debugLog('Debug panel initialized');
+
 // Load theme
-const savedTheme = ls.getItem('theme') || 'light';
-document.documentElement.setAttribute('data-theme', savedTheme);
-const themeToggleText = document.querySelector('.theme-toggle');
-if (themeToggleText) {
-    themeToggleText.textContent = savedTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+try {
+    debugLog('Loading theme...');
+    const savedTheme = ls.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    const themeToggleText = document.querySelector('.theme-toggle');
+    if (themeToggleText) {
+        themeToggleText.textContent = savedTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+    }
+    debugLog('Theme loaded: ' + savedTheme);
+} catch (e) {
+    debugLog('ERROR loading theme: ' + e.message, true);
 }
 
 // Expose key objects and functions to window for testing and debugging
@@ -415,13 +445,80 @@ if (closeHumidityTrendX) closeHumidityTrendX.addEventListener('click', window.hi
 const closeHumidityTrendBtn = document.getElementById('closeHumidityTrendBtn');
 if (closeHumidityTrendBtn) closeHumidityTrendBtn.addEventListener('click', window.hideHumidityTrendInfo);
 
-// Initialize app
-init();
-setupEventHandlers();
-checkForAlerts();
-renderHumidityTable();
-drawHumidityChart();
-initSessions();
-initStringHistory();
-initHistory();
-initOnboarding();
+// Initialize app with debug logging
+try {
+    debugLog('Starting init()...');
+    init();
+    debugLog('init() complete');
+} catch (e) {
+    debugLog('ERROR in init(): ' + e.message + ' | ' + e.stack, true);
+}
+
+try {
+    debugLog('Starting setupEventHandlers()...');
+    setupEventHandlers();
+    debugLog('setupEventHandlers() complete');
+} catch (e) {
+    debugLog('ERROR in setupEventHandlers(): ' + e.message + ' | ' + e.stack, true);
+}
+
+try {
+    debugLog('Starting checkForAlerts()...');
+    checkForAlerts();
+    debugLog('checkForAlerts() complete');
+} catch (e) {
+    debugLog('ERROR in checkForAlerts(): ' + e.message, true);
+}
+
+try {
+    debugLog('Starting renderHumidityTable()...');
+    renderHumidityTable();
+    debugLog('renderHumidityTable() complete');
+} catch (e) {
+    debugLog('ERROR in renderHumidityTable(): ' + e.message, true);
+}
+
+try {
+    debugLog('Starting drawHumidityChart()...');
+    drawHumidityChart();
+    debugLog('drawHumidityChart() complete');
+} catch (e) {
+    debugLog('ERROR in drawHumidityChart(): ' + e.message, true);
+}
+
+try {
+    debugLog('Starting initSessions()...');
+    initSessions();
+    debugLog('initSessions() complete');
+} catch (e) {
+    debugLog('ERROR in initSessions(): ' + e.message, true);
+}
+
+try {
+    debugLog('Starting initStringHistory()...');
+    initStringHistory();
+    debugLog('initStringHistory() complete');
+} catch (e) {
+    debugLog('ERROR in initStringHistory(): ' + e.message, true);
+}
+
+try {
+    debugLog('Starting initHistory()...');
+    initHistory();
+    debugLog('initHistory() complete');
+} catch (e) {
+    debugLog('ERROR in initHistory(): ' + e.message, true);
+}
+
+try {
+    debugLog('Starting initOnboarding()...');
+    initOnboarding();
+    debugLog('initOnboarding() complete');
+} catch (e) {
+    debugLog('ERROR in initOnboarding(): ' + e.message, true);
+}
+
+debugLog('=== All initialization complete ===');
+
+// Expose debugLog globally for other modules
+window.debugLog = debugLog;
