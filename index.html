@@ -120,8 +120,25 @@
                     <div style="text-align: center; font-size: 12px; color: var(--color-text-light);" id="stringLifeEstimate">—</div>
                 </div>
 
+                <!-- Factors Breakdown -->
+                <div id="stringLifeFactors" class="string-factors" style="display: none; margin-top: 12px; padding: 12px; background: var(--color-bg); border-radius: 8px;">
+                    <div style="font-size: 11px; font-weight: 600; margin-bottom: 8px;">Calculation Factors:</div>
+                    <div class="factor-row">
+                        <span>Playing rate:</span>
+                        <span id="factorPlaying">2.5 hrs/week</span>
+                    </div>
+                    <div class="factor-row">
+                        <span>Cleaning rate:</span>
+                        <span id="factorCleaning">Good</span>
+                    </div>
+                    <div class="factor-row">
+                        <span>Target life:</span>
+                        <span id="factorTarget">8 weeks</span>
+                    </div>
+                </div>
+
                 <div style="font-size: 11px; color: var(--color-text-light); margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-border);">
-                    <strong>ℹ️ How it works:</strong> Calculates remaining string life based on your playing schedule and cleaning habits. Adjust playing hours in settings to customize.
+                    <strong>ℹ️ Smart calculation:</strong> Adjusts target based on your actual playing hours and cleaning habits. More accurate than fixed schedules.
                 </div>
             </div>
 
