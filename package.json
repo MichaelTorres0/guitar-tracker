@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node tests/test.js",
     "dev": "vercel dev",
-    "deploy": "vercel --prod"
+    "deploy": "vercel --prod",
+    "pre-deploy": "node scripts/pre-deploy-check.js"
   },
   "dependencies": {
     "@notionhq/client": "^2.2.15",
