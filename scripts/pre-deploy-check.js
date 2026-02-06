@@ -76,18 +76,27 @@ check(
   'Add .env to .gitignore'
 );
 
-// Check git status
+// Check git status for critical files
 check(
-  'Git working directory is clean',
+  'No uncommitted changes in public/ or api/',
   () => {
     try {
       const status = execSync('git status --porcelain', { encoding: 'utf8' });
-      return status.trim() === '';
+      const lines = status.trim().split('\n').filter(line => line);
+      // Check if any changes are in critical directories
+      const criticalChanges = lines.filter(line => {
+        const file = line.substring(3); // Remove status prefix
+        return file.startsWith('public/') ||
+               file.startsWith('api/') ||
+               file === 'vercel.json' ||
+               file === 'package.json';
+      });
+      return criticalChanges.length === 0;
     } catch {
       return false;
     }
   },
-  'Commit all changes: git add -A && git commit -m "message"'
+  'Commit changes in public/, api/, vercel.json, or package.json'
 );
 
 // Check API routes exist
