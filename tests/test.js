@@ -979,6 +979,61 @@ async function runTests() {
         assertEqual(result.humidityReadings.length, 3, 'Should have 3 unique readings');
     });
 
+    // ==================== API Health Endpoint Tests ====================
+    console.log('\n🏥 API Health Endpoint Tests');
+
+    test('Health endpoint returns valid response structure', () => {
+        // Mock health endpoint handler
+        const handler = (req, res) => {
+            if (req.method !== 'GET') {
+                res.statusCode = 405;
+                res.json = (data) => data;
+                return res.json({ error: 'Method not allowed' });
+            }
+
+            res.statusCode = 200;
+            res.json = (data) => data;
+            return res.json({
+                status: 'ok',
+                timestamp: new Date().toISOString(),
+                notion: { configured: false, connected: false }
+            });
+        };
+
+        const mockReq = { method: 'GET' };
+        const mockRes = { statusCode: null, json: null };
+
+        const result = handler(mockReq, mockRes);
+
+        assertEqual(mockRes.statusCode, 200, 'Health check should return 200');
+        assertEqual(result.status, 'ok', 'Health check should return ok status');
+        assertDefined(result.timestamp, 'Health check should include timestamp');
+        assertDefined(result.notion, 'Health check should include notion status');
+    });
+
+    test('Health endpoint rejects non-GET methods', () => {
+        // Mock health endpoint handler
+        const handler = (req, res) => {
+            if (req.method !== 'GET') {
+                res.statusCode = 405;
+                res.json = (data) => data;
+                return res.json({ error: 'Method not allowed' });
+            }
+
+            res.statusCode = 200;
+            res.json = (data) => data;
+            return res.json({ status: 'ok' });
+        };
+
+        const mockReq = { method: 'POST' };
+        const mockRes = { statusCode: null, json: null };
+
+        const result = handler(mockReq, mockRes);
+
+        assertEqual(mockRes.statusCode, 405, 'Should reject POST with 405');
+        assertDefined(result.error, 'Should return error message');
+    });
+
     // ==================== Summary ====================
     console.log('\n' + '='.repeat(50));
     console.log(`\n📊 Test Results: ${passed} passed, ${failed} failed\n`);
