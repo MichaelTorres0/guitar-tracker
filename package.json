@@ -9,7 +9,8 @@
     "deploy": "vercel --prod"
   },
   "dependencies": {
-    "@notionhq/client": "^2.2.15"
+    "@notionhq/client": "^2.2.15",
+    "dotenv": "^17.2.4"
   },
   "devDependencies": {
     "jsdom": "^24.1.3",
