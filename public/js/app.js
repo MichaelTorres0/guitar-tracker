@@ -1,6 +1,6 @@
 // Main application entry point
 import { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS, DATA_VERSION } from './config.js';
-import { migrateData, loadData, saveData } from './storage.js';
+import { migrateData, loadData, saveData, getActiveGuitarId, setActiveGuitarId } from './storage.js';
 import { toggleTask, quickActionJustPlayed, resetDailyTasks, resetWeeklyTasks, confirmReset, recordInspection, setDefaultDate, calculateNextDue, setCustomCompletionDate, calculateSmartStringLife, getDetailedDueDates } from './tasks.js';
 import { addHumidityReading, addHumidityReadingSimplified, deleteHumidityReading, renderHumidityTable, checkForAlerts, drawHumidityChart, applyHumidityFilters, clearHumidityFilters, getFilteredReadings } from './humidity.js';
 import { renderMaintenanceTasks, renderInventoryChecklist, updateDashboard, switchTab, toggleTheme, toggleExpand, openBridgeRecommendations, closeBridgeModal, openActionRecommendations, closeActionModal, openFretRecommendations, closeFretModal } from './ui.js';
@@ -92,6 +92,11 @@ export function init() {
     // Load migrated data into tasks
     loadData();
 
+    // Set guitar selector to active guitar
+    const activeId = getActiveGuitarId();
+    const selector = document.getElementById('activeGuitar');
+    if (selector) selector.value = activeId;
+
     renderMaintenanceTasks();
     renderInventoryChecklist();
     renderInventory();
@@ -129,6 +134,18 @@ function setupEventHandlers() {
     const themeToggle = document.querySelector('.theme-toggle');
     if (themeToggle) {
         themeToggle.addEventListener('click', toggleTheme);
+    }
+
+    // Guitar selector
+    const guitarSelector = document.getElementById('activeGuitar');
+    if (guitarSelector) {
+        guitarSelector.addEventListener('change', (e) => {
+            setActiveGuitarId(e.target.value);
+            // Re-render everything
+            updateDashboard();
+            renderMaintenanceTasks();
+            drawHumidityChart();
+        });
     }
 
     // Tab buttons
