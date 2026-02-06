@@ -51,6 +51,40 @@ If Notion connection fails:
 }
 ```
 
+### GET /api/songs
+
+Fetch all songs from Notion Song Library database.
+
+**Response:**
+```json
+{
+  "songs": [
+    {
+      "id": "page-id",
+      "title": "Song Title",
+      "artist": "Artist Name",
+      "tuning": "Standard",
+      "capo": 0,
+      "difficulty": "Medium",
+      "notes": "Practice notes",
+      "lastPlayed": "2026-02-06",
+      "url": "https://notion.so/..."
+    }
+  ],
+  "count": 1,
+  "timestamp": "2026-02-06T12:00:00.000Z"
+}
+```
+
+**Error Response:**
+```json
+{
+  "error": "Failed to fetch songs",
+  "message": "Error details",
+  "timestamp": "2026-02-06T12:00:00.000Z"
+}
+```
+
 ## Local Development
 
 ```bash

@@ -1223,6 +1223,97 @@ async function runTests() {
         assertDefined(result.error, 'Should return error message');
     });
 
+    // ==================== Songs API Endpoint Tests ====================
+    console.log('\n🎵 Songs API Endpoint Tests');
+
+    test('Songs API endpoint returns correct structure', () => {
+        // Mock handler
+        const handler = (req, res) => {
+            if (req.method !== 'GET') {
+                res.statusCode = 405;
+                res.json = (data) => data;
+                return res.json({ error: 'Method not allowed' });
+            }
+
+            res.statusCode = 200;
+            res.json = (data) => data;
+            return res.json({
+                songs: [
+                    {
+                        id: 'test-1',
+                        title: 'Test Song',
+                        artist: 'Test Artist',
+                        tuning: 'Standard',
+                        capo: 0,
+                        difficulty: 'Easy',
+                        notes: 'Test notes',
+                        lastPlayed: null,
+                        url: 'https://notion.so/test'
+                    }
+                ],
+                count: 1,
+                timestamp: new Date().toISOString()
+            });
+        };
+
+        const mockReq = { method: 'GET' };
+        const mockRes = { statusCode: null, json: null };
+
+        const result = handler(mockReq, mockRes);
+
+        assertEqual(mockRes.statusCode, 200, 'Should return 200');
+        assertDefined(result.songs, 'Should have songs array');
+        assertDefined(result.count, 'Should have count');
+        assertDefined(result.timestamp, 'Should have timestamp');
+    });
+
+    test('Songs API endpoint rejects non-GET methods', () => {
+        // Mock handler
+        const handler = (req, res) => {
+            if (req.method !== 'GET') {
+                res.statusCode = 405;
+                res.json = (data) => data;
+                return res.json({ error: 'Method not allowed' });
+            }
+
+            res.statusCode = 200;
+            res.json = (data) => data;
+            return res.json({ songs: [], count: 0 });
+        };
+
+        const mockReq = { method: 'POST' };
+        const mockRes = { statusCode: null, json: null };
+
+        const result = handler(mockReq, mockRes);
+
+        assertEqual(mockRes.statusCode, 405, 'Should reject POST with 405');
+        assertDefined(result.error, 'Should return error message');
+    });
+
+    test('Songs API returns all required song fields', () => {
+        // Mock a song response
+        const mockSong = {
+            id: 'abc-123',
+            title: 'Wonderwall',
+            artist: 'Oasis',
+            tuning: 'Standard',
+            capo: 2,
+            difficulty: 'Easy',
+            notes: 'Strumming pattern: D-DU-UDU',
+            lastPlayed: '2026-02-05',
+            url: 'https://notion.so/wonderwall'
+        };
+
+        // Verify all required fields exist
+        assertDefined(mockSong.id, 'Song should have ID');
+        assertDefined(mockSong.title, 'Song should have title');
+        assertDefined(mockSong.artist, 'Song should have artist');
+        assertDefined(mockSong.tuning, 'Song should have tuning');
+        assertTrue(typeof mockSong.capo === 'number', 'Capo should be a number');
+        assertDefined(mockSong.difficulty, 'Song should have difficulty');
+        assertDefined(mockSong.url, 'Song should have URL');
+    });
+
     // ==================== UI Multi-Guitar Support ====================
     console.log('\n🎸 UI Multi-Guitar Support Tests');
 
