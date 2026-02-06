@@ -1,0 +1,7 @@
+# Don't deploy these to Vercel
+tests/
+docs/
+*.md
+.git/
+.github/
+CLAUDE.md

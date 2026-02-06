@@ -93,14 +93,14 @@ const sharedLocalStorage = globalThis.localStorage;
 
 // Setup DOM environment BEFORE importing modules
 function setupGlobalDOM() {
-    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    const html = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
     // Remove the script tag to prevent module loading issues
     const htmlWithoutScript = html.replace(/<script type="module".*?<\/script>/s, '');
 
     const dom = new JSDOM(htmlWithoutScript, {
         runScripts: 'outside-only',
         pretendToBeVisual: true,
-        url: 'file://' + path.join(__dirname, '..') + '/'
+        url: 'file://' + path.join(__dirname, '..', 'public') + '/'
     });
 
     // Use the shared localStorage instance for consistency

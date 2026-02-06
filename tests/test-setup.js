@@ -13,16 +13,16 @@ export async function setupWindow(win) {
     const window = win;
 
     // Now dynamically import modules after globals are set
-    const { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS, DATA_VERSION } = await import('../js/config.js');
-    const { migrateData, loadData, saveData } = await import('../js/storage.js');
-    const { toggleTask, quickActionJustPlayed, calculateNextDue, resetDailyTasks, resetWeeklyTasks, confirmReset, recordInspection, getAllNextDueDates, calculateSmartStringLife, getDetailedDueDates } = await import('../js/tasks.js');
-    const { validateHumidity, validateTemperature } = await import('../js/validators.js');
-    const { addHumidityReadingSimplified, deleteHumidityReading, checkForAlerts, drawHumidityChart } = await import('../js/humidity.js');
-    const { renderCalendar, toggleTheme, updateDashboard, switchTab, openBridgeRecommendations, closeBridgeModal, openActionRecommendations, closeActionModal, openFretRecommendations, closeFretModal } = await import('../js/ui.js');
-    const { exportAsCSV, exportAsJSON, downloadFile, mergeBackupData, mergeFromBackup } = await import('../js/export.js');
-    const { setupKeyboardShortcuts } = await import('../js/app.js');
-    const { togglePracticeTimer } = await import('../js/sessions.js');
-    const { getHistoryEvents, renderHistoryTimeline } = await import('../js/history.js');
+    const { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS, DATA_VERSION } = await import('../public/js/config.js');
+    const { migrateData, loadData, saveData } = await import('../public/js/storage.js');
+    const { toggleTask, quickActionJustPlayed, calculateNextDue, resetDailyTasks, resetWeeklyTasks, confirmReset, recordInspection, getAllNextDueDates, calculateSmartStringLife, getDetailedDueDates } = await import('../public/js/tasks.js');
+    const { validateHumidity, validateTemperature } = await import('../public/js/validators.js');
+    const { addHumidityReadingSimplified, deleteHumidityReading, checkForAlerts, drawHumidityChart } = await import('../public/js/humidity.js');
+    const { renderCalendar, toggleTheme, updateDashboard, switchTab, openBridgeRecommendations, closeBridgeModal, openActionRecommendations, closeActionModal, openFretRecommendations, closeFretModal } = await import('../public/js/ui.js');
+    const { exportAsCSV, exportAsJSON, downloadFile, mergeBackupData, mergeFromBackup } = await import('../public/js/export.js');
+    const { setupKeyboardShortcuts } = await import('../public/js/app.js');
+    const { togglePracticeTimer } = await import('../public/js/sessions.js');
+    const { getHistoryEvents, renderHistoryTimeline } = await import('../public/js/history.js');
 
     window.MAINTENANCE_TASKS = MAINTENANCE_TASKS;
     window.EQUIPMENT_ITEMS = EQUIPMENT_ITEMS;
