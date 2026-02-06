@@ -1,7 +1,7 @@
 // UI rendering and interaction functions
 import { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS } from './config.js';
 import { calculateNextDue, getAllNextDueDates, isCompletedWithinPeriod, getRelativeTimeAgo, calculateSmartStringLife, getDetailedDueDates } from './tasks.js';
-import { getVersionedData, saveVersionedData, getVersionedField, getHumidityReadings, getPlayingSessions } from './storage.js';
+import { getVersionedData, saveVersionedData, getVersionedField, getHumidityReadings, getPlayingSessions, getActiveGuitarId, getGuitarData, updateGuitarData } from './storage.js';
 import { calculatePracticeStreak, getStreakEmoji, getThisWeekHours } from './sessions.js';
 import { updateRestockAlerts } from './inventory.js';
 import { ls } from './localStorage.js';
@@ -117,7 +117,9 @@ export function renderInventoryChecklist() {
     const container = document.getElementById('inventoryChecklist');
     if (!container) return;
 
-    const equipmentList = getVersionedField('equipmentList', []);
+    const activeGuitarId = getActiveGuitarId();
+    const guitarData = getGuitarData(activeGuitarId);
+    const equipmentList = guitarData?.equipmentList || [];
 
     let html = '<div class="equipment-list">';
 
@@ -149,10 +151,11 @@ export function renderInventoryChecklist() {
         addBtn.addEventListener('click', () => {
             const item = input.value.trim();
             if (item) {
-                const data = getVersionedData();
-                if (!data.equipmentList) data.equipmentList = [];
-                data.equipmentList.push(item);
-                saveVersionedData(data);
+                const activeGuitarId = getActiveGuitarId();
+                const guitarData = getGuitarData(activeGuitarId);
+                if (!guitarData.equipmentList) guitarData.equipmentList = [];
+                guitarData.equipmentList.push(item);
+                updateGuitarData(activeGuitarId, guitarData);
                 input.value = '';
                 renderInventoryChecklist();
             }
@@ -171,25 +174,32 @@ export function renderInventoryChecklist() {
 if (typeof window !== 'undefined') {
     window.deleteEquipment = function(index) {
         if (confirm('Delete this equipment item?')) {
-            const data = getVersionedData();
-            data.equipmentList.splice(index, 1);
-            saveVersionedData(data);
+            const activeGuitarId = getActiveGuitarId();
+            const guitarData = getGuitarData(activeGuitarId);
+            guitarData.equipmentList.splice(index, 1);
+            updateGuitarData(activeGuitarId, guitarData);
             renderInventoryChecklist();
         }
     };
 }
 
 export function updateDashboard() {
+    // Get active guitar data
+    const activeGuitarId = getActiveGuitarId();
+    const guitarData = getGuitarData(activeGuitarId);
+
+    if (!guitarData) return;
+
     // Update header with current string type and playing hours
-    const playingHours = getVersionedField('playingHoursPerWeek', 2.5);
+    const playingHours = guitarData.settings.playingHoursPerWeek || 2.5;
     const headerSubtitle = document.querySelector('.header p:not(.model-badge)');
     if (headerSubtitle) {
-        const stringType = getVersionedField('currentStringType', "D'Addario EJ16 Phosphor Bronze Light (.012-.053)");
+        const stringType = guitarData.currentStringType || "D'Addario EJ16 Phosphor Bronze Light (.012-.053)";
         headerSubtitle.textContent = `Playing: ${playingHours} hrs/week | ${stringType}`;
     }
 
-    // Update weekly hours display - use consolidated versioned storage
-    const sessions = getPlayingSessions();
+    // Update weekly hours display - use guitar-specific sessions
+    const sessions = guitarData.playingSessions || [];
     const weeklyHoursEl = document.getElementById('weeklyHours');
     const calculatorBasisEl = document.getElementById('calculatorBasis');
 
@@ -245,8 +255,8 @@ export function updateDashboard() {
     updatePeriodCompletion('quarterly', '--color-quarterly');
     updatePeriodCompletion('annual', '--color-annual');
 
-    // Humidity stats - use consolidated versioned storage
-    const readings = getHumidityReadings();
+    // Humidity stats - use guitar-specific humidity readings
+    const readings = guitarData.humidityReadings || [];
     if (readings.length > 0) {
         const latest = readings[0];
         const humidity = latest.humidity;
