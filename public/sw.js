@@ -1,8 +1,8 @@
 // Service Worker for Guitar Tracker PWA
 // Provides offline caching and network-first strategies
 
-const CACHE_NAME = 'guitar-tracker-v7';
-const STATIC_CACHE = 'guitar-tracker-static-v7';
+const CACHE_NAME = 'guitar-tracker-v8';
+const STATIC_CACHE = 'guitar-tracker-static-v8';
 
 // Files to cache immediately
 const STATIC_FILES = [
@@ -94,11 +94,13 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // Clone response to cache it
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseClone);
-          });
+          // Only cache successful responses
+          if (response.status === 200 || response.status === 201) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
           return response;
         })
         .catch(() => {
