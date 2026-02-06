@@ -506,6 +506,52 @@ async function runTests() {
         assertTrue(percent >= 16 && percent <= 17, `Overall should be ~17%, got ${percent}%`);
     });
 
+    test('updateDashboard executes without errors with playing sessions', () => {
+        // Regression test for playingHours scoping bug (b0de808)
+        // Previously playingHours was defined inside if block but used outside,
+        // causing "Can't find variable: playingHours" error on iOS Safari
+        localStorage.clear();
+
+        // Set up test data with playing sessions to trigger code path at lines 216/219
+        const now = Date.now();
+        const testData = {
+            version: 5,
+            guitars: [{ id: 'default', name: 'Test Guitar', settings: {} }],
+            activeGuitarId: 'default',
+            maintenanceStates: {},
+            humidityReadings: [],
+            inspectionData: {},
+            onboardingComplete: true,
+            playingFrequency: 'weekly',
+            playingHoursPerWeek: 3.5,
+            hasHygrometer: true,
+            playingSessions: [
+                { timestamp: now - 86400000, duration: 30 },  // Yesterday
+                { timestamp: now - 172800000, duration: 45 }  // 2 days ago
+            ],
+            stringChangeHistory: [],
+            equipmentList: [],
+            currentStringType: 'Test Strings',
+            lastStringChangeDate: null,
+            timerState: { running: false, startTimestamp: null },
+            practiceHistory: [],
+            inventory: { items: [] }
+        };
+        localStorage.setItem('guitarTrackerData', JSON.stringify(testData));
+
+        // This should not throw "Can't find variable: playingHours" error
+        let errorThrown = false;
+        let errorMessage = '';
+        try {
+            window.updateDashboard();
+        } catch (error) {
+            errorThrown = true;
+            errorMessage = error.message;
+        }
+
+        assertFalse(errorThrown, `updateDashboard should not throw ReferenceError. Got: ${errorMessage}`);
+    });
+
     // ==================== Maintenance History Tests ====================
     console.log('\n📜 Maintenance History Tests');
 
