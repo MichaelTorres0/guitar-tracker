@@ -14,7 +14,7 @@ export async function setupWindow(win) {
 
     // Now dynamically import modules after globals are set
     const { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS, DATA_VERSION, GUITARS, PRS_MAINTENANCE_TASKS, ALL_GUITAR_TASKS } = await import('../public/js/config.js');
-    const { migrateData, loadData, saveData, migrateV5ToV6, createDefaultData, saveVersionedData, getActiveGuitarId, getGuitarData, setActiveGuitarId } = await import('../public/js/storage.js');
+    const { migrateData, loadData, saveData, migrateV5ToV6, createDefaultData, saveVersionedData, getActiveGuitarId, getGuitarData, setActiveGuitarId, getSongCache, setSongCache, clearSongCache } = await import('../public/js/storage.js');
     const { toggleTask, quickActionJustPlayed, calculateNextDue, resetDailyTasks, resetWeeklyTasks, confirmReset, recordInspection, getAllNextDueDates, calculateSmartStringLife, getDetailedDueDates, getTasksForGuitar } = await import('../public/js/tasks.js');
     const { validateHumidity, validateTemperature } = await import('../public/js/validators.js');
     const { addHumidityReadingSimplified, deleteHumidityReading, checkForAlerts, drawHumidityChart } = await import('../public/js/humidity.js');
@@ -23,6 +23,7 @@ export async function setupWindow(win) {
     const { setupKeyboardShortcuts } = await import('../public/js/app.js');
     const { togglePracticeTimer } = await import('../public/js/sessions.js');
     const { getHistoryEvents, renderHistoryTimeline } = await import('../public/js/history.js');
+    const { searchSongs, filterByDifficulty, filterByTuning } = await import('../public/js/songs.js');
 
     window.MAINTENANCE_TASKS = MAINTENANCE_TASKS;
     window.EQUIPMENT_ITEMS = EQUIPMENT_ITEMS;
@@ -76,6 +77,12 @@ export async function setupWindow(win) {
     window.getTasksForGuitar = getTasksForGuitar;
     window.getHistoryEvents = getHistoryEvents;
     window.renderHistoryTimeline = renderHistoryTimeline;
+    window.getSongCache = getSongCache;
+    window.setSongCache = setSongCache;
+    window.clearSongCache = clearSongCache;
+    window.searchSongs = searchSongs;
+    window.filterByDifficulty = filterByDifficulty;
+    window.filterByTuning = filterByTuning;
 
     // Set up keyboard shortcuts for testing
     setupKeyboardShortcuts();

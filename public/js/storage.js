@@ -839,3 +839,48 @@ export function savePlayingSessions(sessions) {
     // Also update legacy key for backward compatibility
     storage.setItem(STORAGE_KEYS.legacy.playingSessions, JSON.stringify(sessions));
 }
+
+// ============================================================
+// SONG LIBRARY CACHE - Separate from versioned data
+// ============================================================
+
+// Song library cache (separate from versioned data - expendable)
+const SONG_CACHE_KEY = 'guitarTrackerSongCache';
+const CACHE_DURATION_MS = 1000 * 60 * 60 * 24; // 24 hours
+
+export function getSongCache() {
+    try {
+        const cached = storage.getItem(SONG_CACHE_KEY);
+        if (!cached) return null;
+
+        const data = JSON.parse(cached);
+
+        // Check if cache is expired
+        if (Date.now() - data.timestamp > CACHE_DURATION_MS) {
+            storage.removeItem(SONG_CACHE_KEY);
+            return null;
+        }
+
+        return data.songs;
+    } catch (e) {
+        console.error('Error reading song cache:', e);
+        return null;
+    }
+}
+
+export function setSongCache(songs) {
+    try {
+        const data = {
+            songs,
+            timestamp: Date.now(),
+            version: 1
+        };
+        storage.setItem(SONG_CACHE_KEY, JSON.stringify(data));
+    } catch (e) {
+        console.error('Error setting song cache:', e);
+    }
+}
+
+export function clearSongCache() {
+    storage.removeItem(SONG_CACHE_KEY);
+}

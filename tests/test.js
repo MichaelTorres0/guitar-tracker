@@ -1314,6 +1314,183 @@ async function runTests() {
         assertDefined(mockSong.url, 'Song should have URL');
     });
 
+    // ==================== Song Cache Tests ====================
+    console.log('\n🎵 Song Cache Tests');
+
+    test('getSongCache function exists', () => {
+        assertDefined(window.getSongCache, 'getSongCache should be defined');
+    });
+
+    test('setSongCache function exists', () => {
+        assertDefined(window.setSongCache, 'setSongCache should be defined');
+    });
+
+    test('clearSongCache function exists', () => {
+        assertDefined(window.clearSongCache, 'clearSongCache should be defined');
+    });
+
+    test('Song cache stores and retrieves songs', () => {
+        localStorage.clear();
+        const testSongs = [
+            { id: '1', title: 'Test Song', artist: 'Test Artist', tuning: 'Standard', difficulty: 'Easy', notes: '' }
+        ];
+
+        window.setSongCache(testSongs);
+        const cached = window.getSongCache();
+
+        assertDefined(cached, 'Should retrieve cached songs');
+        assertEqual(cached.length, 1, 'Should have 1 song');
+        assertEqual(cached[0].title, 'Test Song', 'Should match cached data');
+    });
+
+    test('Song cache includes timestamp and version', () => {
+        localStorage.clear();
+        const testSongs = [{ id: '1', title: 'Test' }];
+
+        window.setSongCache(testSongs);
+
+        // Check raw storage
+        const rawCache = localStorage.getItem('guitarTrackerSongCache');
+        assertDefined(rawCache, 'Cache should be stored');
+
+        const parsed = JSON.parse(rawCache);
+        assertDefined(parsed.timestamp, 'Cache should have timestamp');
+        assertEqual(parsed.version, 1, 'Cache should have version 1');
+        assertDefined(parsed.songs, 'Cache should have songs array');
+    });
+
+    test('Expired song cache returns null', () => {
+        localStorage.clear();
+
+        // Create expired cache (25 hours ago)
+        const expiredTimestamp = Date.now() - (25 * 60 * 60 * 1000);
+        const expiredCache = {
+            songs: [{ id: '1', title: 'Old Song' }],
+            timestamp: expiredTimestamp,
+            version: 1
+        };
+        localStorage.setItem('guitarTrackerSongCache', JSON.stringify(expiredCache));
+
+        const cached = window.getSongCache();
+        assertEqual(cached, null, 'Should return null for expired cache');
+    });
+
+    test('clearSongCache removes cache', () => {
+        const testSongs = [{ id: '1', title: 'Test' }];
+        window.setSongCache(testSongs);
+
+        window.clearSongCache();
+
+        const cached = window.getSongCache();
+        assertEqual(cached, null, 'Cache should be null after clearing');
+    });
+
+    test('searchSongs function exists', () => {
+        assertDefined(window.searchSongs, 'searchSongs should be defined');
+    });
+
+    test('searchSongs filters by title', () => {
+        const songs = [
+            { title: 'Wonderwall', artist: 'Oasis', notes: '' },
+            { title: 'Blackbird', artist: 'Beatles', notes: 'fingerpicking' }
+        ];
+
+        const results = window.searchSongs(songs, 'black');
+        assertEqual(results.length, 1, 'Should find 1 song');
+        assertEqual(results[0].title, 'Blackbird', 'Should match title');
+    });
+
+    test('searchSongs filters by artist', () => {
+        const songs = [
+            { title: 'Wonderwall', artist: 'Oasis', notes: '' },
+            { title: 'Blackbird', artist: 'Beatles', notes: 'fingerpicking' }
+        ];
+
+        const results = window.searchSongs(songs, 'oasis');
+        assertEqual(results.length, 1, 'Should find 1 song by artist');
+        assertEqual(results[0].artist, 'Oasis', 'Should match artist');
+    });
+
+    test('searchSongs filters by notes', () => {
+        const songs = [
+            { title: 'Wonderwall', artist: 'Oasis', notes: '' },
+            { title: 'Blackbird', artist: 'Beatles', notes: 'fingerpicking' }
+        ];
+
+        const results = window.searchSongs(songs, 'finger');
+        assertEqual(results.length, 1, 'Should find 1 song by notes');
+        assertEqual(results[0].title, 'Blackbird', 'Should match notes content');
+    });
+
+    test('searchSongs is case insensitive', () => {
+        const songs = [
+            { title: 'Wonderwall', artist: 'Oasis', notes: '' }
+        ];
+
+        const results = window.searchSongs(songs, 'OASIS');
+        assertEqual(results.length, 1, 'Should match case insensitive');
+    });
+
+    test('searchSongs returns all songs when query is empty', () => {
+        const songs = [
+            { title: 'Song 1', artist: 'Artist 1', notes: '' },
+            { title: 'Song 2', artist: 'Artist 2', notes: '' }
+        ];
+
+        const results = window.searchSongs(songs, '');
+        assertEqual(results.length, 2, 'Should return all songs for empty query');
+    });
+
+    test('filterByDifficulty function exists', () => {
+        assertDefined(window.filterByDifficulty, 'filterByDifficulty should be defined');
+    });
+
+    test('filterByDifficulty filters correctly', () => {
+        const songs = [
+            { title: 'Easy Song', difficulty: 'Easy' },
+            { title: 'Hard Song', difficulty: 'Hard' }
+        ];
+
+        const results = window.filterByDifficulty(songs, 'Easy');
+        assertEqual(results.length, 1, 'Should find 1 easy song');
+        assertEqual(results[0].title, 'Easy Song', 'Should match difficulty');
+    });
+
+    test('filterByDifficulty returns all for "all" filter', () => {
+        const songs = [
+            { title: 'Easy Song', difficulty: 'Easy' },
+            { title: 'Hard Song', difficulty: 'Hard' }
+        ];
+
+        const results = window.filterByDifficulty(songs, 'all');
+        assertEqual(results.length, 2, 'Should return all songs for "all" filter');
+    });
+
+    test('filterByTuning function exists', () => {
+        assertDefined(window.filterByTuning, 'filterByTuning should be defined');
+    });
+
+    test('filterByTuning filters correctly', () => {
+        const songs = [
+            { title: 'Standard Song', tuning: 'Standard' },
+            { title: 'DADGAD Song', tuning: 'DADGAD' }
+        ];
+
+        const results = window.filterByTuning(songs, 'Standard');
+        assertEqual(results.length, 1, 'Should find 1 standard tuning song');
+        assertEqual(results[0].title, 'Standard Song', 'Should match tuning');
+    });
+
+    test('filterByTuning returns all for "all" filter', () => {
+        const songs = [
+            { title: 'Standard Song', tuning: 'Standard' },
+            { title: 'DADGAD Song', tuning: 'DADGAD' }
+        ];
+
+        const results = window.filterByTuning(songs, 'all');
+        assertEqual(results.length, 2, 'Should return all songs for "all" filter');
+    });
+
     // ==================== UI Multi-Guitar Support ====================
     console.log('\n🎸 UI Multi-Guitar Support Tests');
 
