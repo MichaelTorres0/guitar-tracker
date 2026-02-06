@@ -344,6 +344,94 @@ async function runTests() {
         assertEqual(window.ALL_GUITAR_TASKS['prs-ce24'], window.PRS_MAINTENANCE_TASKS, 'prs-ce24 should map to PRS_MAINTENANCE_TASKS');
     });
 
+    // ==================== Migration Tests ====================
+    console.log('\n🔄 Migration Tests');
+
+    test('v5 to v6 migration - basic structure', () => {
+        const v5Data = {
+            version: 5,
+            guitars: [{
+                id: 'default',
+                settings: { stringChangeWeeks: 8, playingHoursPerWeek: 2.5 }
+            }],
+            maintenanceStates: {
+                daily: [{ id: 'daily-1', completed: true, lastCompleted: '2026-01-01' }]
+            },
+            humidityReadings: [{ id: 'h1', humidity: 47, timestamp: '2026-01-01' }],
+            playingSessions: [{ timestamp: '2026-01-01', duration: 30 }],
+            onboardingComplete: true
+        };
+
+        const v6Data = window.migrateV5ToV6(v5Data);
+
+        assertEqual(v6Data.version, 6, 'Should migrate to version 6');
+        assertEqual(v6Data.activeGuitarId, 'gs-mini', 'Should set default active guitar');
+        assertTrue(v6Data.guitars['gs-mini'] !== undefined, 'Should have GS Mini data');
+        assertTrue(v6Data.guitars['prs-ce24'] !== undefined, 'Should have PRS data');
+    });
+
+    test('v5 to v6 migration - data preservation', () => {
+        const v5Data = {
+            version: 5,
+            guitars: [{
+                id: 'default',
+                settings: { stringChangeWeeks: 8, playingHoursPerWeek: 2.5 }
+            }],
+            maintenanceStates: {
+                daily: [{ id: 'daily-1', completed: true, lastCompleted: '2026-01-01' }]
+            },
+            humidityReadings: [{ id: 'h1', humidity: 47, timestamp: '2026-01-01' }],
+            playingSessions: [{ timestamp: '2026-01-01', duration: 30 }],
+            onboardingComplete: true
+        };
+
+        const v6Data = window.migrateV5ToV6(v5Data);
+
+        const gsMini = v6Data.guitars['gs-mini'];
+        assertEqual(gsMini.humidityReadings.length, 1, 'Should migrate humidity readings');
+        assertEqual(gsMini.playingSessions.length, 1, 'Should migrate sessions');
+        assertTrue(gsMini.onboardingComplete, 'Should migrate onboarding state');
+    });
+
+    test('v5 to v6 migration - task ID remapping', () => {
+        const v5Data = {
+            version: 5,
+            guitars: [{
+                id: 'default',
+                settings: { stringChangeWeeks: 8 }
+            }],
+            maintenanceStates: {
+                daily: [{ id: 'daily-1', completed: true, lastCompleted: '2026-01-01' }],
+                weekly: [{ id: 'weekly-1', completed: false, lastCompleted: null }],
+                eightweek: [{ id: '8w-1', completed: true, lastCompleted: '2026-01-01' }],
+                quarterly: [{ id: 'q-1', completed: false, lastCompleted: null }],
+                annual: [{ id: 'annual-1', completed: false, lastCompleted: null }]
+            }
+        };
+
+        const v6Data = window.migrateV5ToV6(v5Data);
+
+        const gsMini = v6Data.guitars['gs-mini'];
+        assertEqual(gsMini.maintenanceStates.daily[0].id, 'gs-mini-daily-1', 'Should remap daily task IDs');
+        assertEqual(gsMini.maintenanceStates.weekly[0].id, 'gs-mini-weekly-1', 'Should remap weekly task IDs');
+        assertEqual(gsMini.maintenanceStates.eightweek[0].id, 'gs-mini-string-1', 'Should remap eightweek task IDs');
+        assertEqual(gsMini.maintenanceStates.quarterly[0].id, 'gs-mini-quarterly-1', 'Should remap quarterly task IDs');
+        assertEqual(gsMini.maintenanceStates.annual[0].id, 'gs-mini-annual-1', 'Should remap annual task IDs');
+    });
+
+    test('v5 to v6 migration - sync queue initialization', () => {
+        const v5Data = {
+            version: 5,
+            guitars: [{ id: 'default', settings: {} }],
+            maintenanceStates: {}
+        };
+
+        const v6Data = window.migrateV5ToV6(v5Data);
+
+        assertTrue(Array.isArray(v6Data.syncQueue), 'Should initialize sync queue as array');
+        assertEqual(v6Data.syncQueue.length, 0, 'Sync queue should start empty');
+    });
+
     // ==================== localStorage Tests ====================
     console.log('\n💾 localStorage Tests');
 

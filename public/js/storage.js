@@ -51,34 +51,44 @@ export function migrateData() {
                 return verifyDataIntegrity(parsed);
             }
 
-            // Migrate from v4 to v5
+            // Migrate from v5 to v6
+            if (parsed.version === 5) {
+                console.log('Migrating from v5 to v6 - multi-guitar nested structure');
+                return migrateV5ToV6(parsed);
+            }
+
+            // Migrate from v4 to v6 (through v5 first)
             if (parsed.version === 4) {
-                console.log('Migrating from v4 to v5 - consolidating all data');
-                return migrateV4ToV5(parsed);
+                console.log('Migrating from v4 to v6 - consolidating all data');
+                const v5Data = migrateV4ToV5(parsed);
+                return migrateV5ToV6(v5Data);
             }
 
-            // Migrate from v3 to v5 (through v4 first)
+            // Migrate from v3 to v6 (through v4 and v5 first)
             if (parsed.version === 3) {
-                console.log('Migrating from v3 to v5 - adding practice stopwatch, inventory, and consolidating');
+                console.log('Migrating from v3 to v6 - adding practice stopwatch, inventory, and consolidating');
                 const v4Data = migrateV3ToV4(parsed);
-                return migrateV4ToV5(v4Data);
+                const v5Data = migrateV4ToV5(v4Data);
+                return migrateV5ToV6(v5Data);
             }
 
-            // Migrate from v2 to v5 (through v3 and v4 first)
+            // Migrate from v2 to v6 (through v3, v4, and v5 first)
             if (parsed.version === 2) {
-                console.log('Migrating from v2 to v5 - consolidating fragmented keys');
+                console.log('Migrating from v2 to v6 - consolidating fragmented keys');
                 const v3Data = migrateV2ToV3(parsed);
                 const v4Data = migrateV3ToV4(v3Data);
-                return migrateV4ToV5(v4Data);
+                const v5Data = migrateV4ToV5(v4Data);
+                return migrateV5ToV6(v5Data);
             }
 
-            // Migrate from v1 to v5 (through v2, v3, and v4 first)
+            // Migrate from v1 to v6 (through v2, v3, v4, and v5 first)
             if (parsed.version === 1 || !parsed.version) {
-                console.log('Migrating from v1 to v5');
+                console.log('Migrating from v1 to v6');
                 const v2Data = migrateV1ToV2(parsed);
                 const v3Data = migrateV2ToV3(v2Data);
                 const v4Data = migrateV3ToV4(v3Data);
-                return migrateV4ToV5(v4Data);
+                const v5Data = migrateV4ToV5(v4Data);
+                return migrateV5ToV6(v5Data);
             }
         }
 
@@ -203,6 +213,79 @@ export function migrateV4ToV5(v4Data) {
     console.log('✓ Migration to v5 complete - all data consolidated into single versioned structure');
 
     return data;
+}
+
+// Migrate from v5 to v6 - multi-guitar nested structure
+export function migrateV5ToV6(v5Data) {
+    console.log('Migrating v5 → v6: Multi-guitar nested structure');
+
+    const TASK_ID_MAP = {
+        'daily-1': 'gs-mini-daily-1',
+        'daily-2': 'gs-mini-daily-2',
+        'daily-3': 'gs-mini-daily-3',
+        'weekly-1': 'gs-mini-weekly-1',
+        'weekly-2': 'gs-mini-weekly-2',
+        'weekly-3': 'gs-mini-weekly-3',
+        '8w-1': 'gs-mini-string-1',
+        '8w-2': 'gs-mini-string-2',
+        '8w-3': 'gs-mini-string-3',
+        '8w-4': 'gs-mini-string-4',
+        '8w-5': 'gs-mini-string-5',
+        '8w-6': 'gs-mini-string-6',
+        '8w-7': 'gs-mini-string-7',
+        '8w-8': 'gs-mini-string-8',
+        'q-1': 'gs-mini-quarterly-1',
+        'q-2': 'gs-mini-quarterly-2',
+        'q-3': 'gs-mini-quarterly-3',
+        'annual-1': 'gs-mini-annual-1'
+    };
+
+    const v6Data = createDefaultData();
+
+    // Migrate GS Mini data (was the only guitar in v5)
+    const gsMini = v6Data.guitars['gs-mini'];
+
+    // Migrate settings from first guitar in v5 array
+    if (v5Data.guitars && v5Data.guitars[0]) {
+        const oldGuitar = v5Data.guitars[0];
+        if (oldGuitar.settings) {
+            gsMini.settings = { ...gsMini.settings, ...oldGuitar.settings };
+        }
+    }
+
+    // Migrate maintenance states with ID remapping
+    if (v5Data.maintenanceStates) {
+        Object.keys(v5Data.maintenanceStates).forEach(category => {
+            const oldStates = v5Data.maintenanceStates[category] || [];
+            const newCategory = category === 'eightweek' ? 'eightweek' : category;
+
+            gsMini.maintenanceStates[newCategory] = oldStates.map(state => ({
+                ...state,
+                id: TASK_ID_MAP[state.id] || state.id
+            }));
+        });
+    }
+
+    // Migrate other fields
+    gsMini.humidityReadings = v5Data.humidityReadings || [];
+    gsMini.playingSessions = v5Data.playingSessions || [];
+    gsMini.stringChangeHistory = v5Data.stringChangeHistory || [];
+    gsMini.lastStringChangeDate = v5Data.lastStringChangeDate || null;
+    gsMini.currentStringType = v5Data.currentStringType || null;
+    gsMini.onboardingComplete = v5Data.onboardingComplete || false;
+    gsMini.playingFrequency = v5Data.playingFrequency || 'weekly';
+    gsMini.playingHoursPerWeek = v5Data.playingHoursPerWeek || 2.5;
+    gsMini.hasHygrometer = v5Data.hasHygrometer || null;
+    gsMini.timerState = v5Data.timerState || { running: false, startTimestamp: null };
+    gsMini.practiceHistory = v5Data.practiceHistory || [];
+    gsMini.inventory = v5Data.inventory || { items: [] };
+
+    v6Data.inspectionData = v5Data.inspectionData || {};
+    v6Data.syncQueue = [];
+
+    console.log('✓ Migration to v6 complete - multi-guitar structure created');
+
+    return v6Data;
 }
 
 // Migrate from v2 to v3 - consolidate separate localStorage keys into versioned structure
@@ -330,64 +413,86 @@ export function migrateLegacyData(maintenanceJson, humidityJson, inspectionJson)
     data.version = 2;
     saveVersionedData(data);
 
-    // Now migrate v2 → v3 → v4 → v5 to pick up any v2.0 separate keys and consolidate
+    // Now migrate v2 → v3 → v4 → v5 → v6 to pick up any v2.0 separate keys and consolidate
     const v3Data = migrateV2ToV3(data);
     const v4Data = migrateV3ToV4(v3Data);
     const v5Data = migrateV4ToV5(v4Data);
+    const v6Data = migrateV5ToV6(v5Data);
 
     // Clean up legacy keys (commented out for safety - can be enabled after verification)
     // storage.removeItem(STORAGE_KEYS.legacy.maintenance);
     // storage.removeItem(STORAGE_KEYS.legacy.humidity);
     // storage.removeItem(STORAGE_KEYS.legacy.inspection);
 
-    return v5Data;
+    return v6Data;
 }
 
 export function createDefaultData() {
     return {
         version: DATA_VERSION,
-        guitars: [DEFAULT_GUITAR],
-        activeGuitarId: 'default',
-        maintenanceStates: {},
-        humidityReadings: [],
-        inspectionData: {},
-        // v2.0+ features - now in versioned structure
-        onboardingComplete: false,
-        playingFrequency: 'weekly',
-        playingHoursPerWeek: 2.5,
-        hasHygrometer: null,
-        playingSessions: [],
-        stringChangeHistory: [],
-        // v3.1+ features - equipment list (now editable)
-        equipmentList: [
-            'MusicNomad MN290 Ultimate Work Station (36" x 17" mat with gel cradle)',
-            'Guitar ONE Polish & Cleaner',
-            'F-ONE Fretboard Oil & Cleaner',
-            'String Fuel string cleaner',
-            'FRINE Fret Polishing Kit (5-piece micro-fine kit)',
-            'Tune-It nut/saddle lubricant',
-            'GRIP String Winder, Cutter, and Puller',
-            '26-piece guitar tech screwdriver/wrench set',
-            'Premium microfiber cloths',
-            'D\'Addario EJ16 Phosphor Bronze Light (.012-.053)',
-            'Kyser Quick-Change Capo (KG6BA)',
-            'Levy\'s MSSC8 Cotton Strap + D\'Addario Flex Lock Blocks',
-            'Gator GC-GSMINI Molded Case',
-            'D\'Addario Humidipak Restore Kit',
-            'Inkbird ITH-10 Hygrometer'
-        ],
-        // String type and last change date
-        currentStringType: 'D\'Addario EJ16 Phosphor Bronze Light (.012-.053)',
-        lastStringChangeDate: null,
-        // v4+ features - practice stopwatch and inventory
-        timerState: {
-            running: false,
-            startTimestamp: null
+        activeGuitarId: 'gs-mini', // Default to acoustic
+        guitars: {
+            'gs-mini': {
+                id: 'gs-mini',
+                name: 'Taylor GS Mini Sapele',
+                settings: {
+                    targetHumidity: { min: 45, max: 50 },
+                    safeHumidity: { min: 40, max: 55 },
+                    dangerHumidity: { low: 35, high: 60 },
+                    stringChangeWeeks: 8,
+                    playingHoursPerWeek: 2.5
+                },
+                maintenanceStates: {
+                    daily: [],
+                    weekly: [],
+                    eightweek: [],
+                    quarterly: [],
+                    annual: []
+                },
+                humidityReadings: [],
+                playingSessions: [],
+                stringChangeHistory: [],
+                lastStringChangeDate: null,
+                currentStringType: null,
+                onboardingComplete: false,
+                playingFrequency: 'weekly',
+                hasHygrometer: null,
+                timerState: { running: false, startTimestamp: null },
+                practiceHistory: [],
+                inventory: { items: [] }
+            },
+            'prs-ce24': {
+                id: 'prs-ce24',
+                name: 'PRS SE CE24',
+                settings: {
+                    targetHumidity: { min: 40, max: 60 },
+                    safeHumidity: { min: 30, max: 70 },
+                    dangerHumidity: { low: 20, high: 80 },
+                    stringChangeWeeks: 12,
+                    playingHoursPerWeek: 3.5
+                },
+                maintenanceStates: {
+                    daily: [],
+                    weekly: [],
+                    monthly: [],
+                    quarterly: [],
+                    annual: []
+                },
+                humidityReadings: [],
+                playingSessions: [],
+                stringChangeHistory: [],
+                lastStringChangeDate: null,
+                currentStringType: null,
+                onboardingComplete: false,
+                playingFrequency: 'weekly',
+                hasHygrometer: null,
+                timerState: { running: false, startTimestamp: null },
+                practiceHistory: [],
+                inventory: { items: [] }
+            }
         },
-        practiceHistory: [],
-        inventory: {
-            items: []
-        }
+        syncQueue: [],
+        inspectionData: {}
     };
 }
 
@@ -667,6 +772,52 @@ export function syncTasksToVersionedData() {
         }));
     }
     storage.setItem(STORAGE_KEYS.legacy.maintenance, JSON.stringify(legacyData));
+}
+
+// ============================================================
+// MULTI-GUITAR DATA ACCESS - V6+ Helper Functions
+// ============================================================
+
+// Get current active guitar ID
+export function getActiveGuitarId() {
+    return getVersionedField('activeGuitarId', 'gs-mini');
+}
+
+// Set active guitar
+export function setActiveGuitarId(guitarId) {
+    updateVersionedField('activeGuitarId', guitarId);
+}
+
+// Get specific guitar's data
+export function getGuitarData(guitarId) {
+    const data = getVersionedData();
+    return data.guitars?.[guitarId] || null;
+}
+
+// Update specific guitar's data
+export function updateGuitarData(guitarId, updates) {
+    const data = getVersionedData();
+    if (data.guitars && data.guitars[guitarId]) {
+        data.guitars[guitarId] = { ...data.guitars[guitarId], ...updates };
+        saveVersionedData(data);
+    }
+}
+
+// Get sync queue
+export function getSyncQueue() {
+    return getVersionedField('syncQueue', []);
+}
+
+// Add to sync queue
+export function addToSyncQueue(item) {
+    const queue = getSyncQueue();
+    queue.push({ ...item, queuedAt: new Date().toISOString() });
+    updateVersionedField('syncQueue', queue);
+}
+
+// Clear sync queue
+export function clearSyncQueue() {
+    updateVersionedField('syncQueue', []);
 }
 
 // ============================================================

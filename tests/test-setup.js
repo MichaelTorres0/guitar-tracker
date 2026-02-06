@@ -14,7 +14,7 @@ export async function setupWindow(win) {
 
     // Now dynamically import modules after globals are set
     const { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS, DATA_VERSION, GUITARS, PRS_MAINTENANCE_TASKS, ALL_GUITAR_TASKS } = await import('../public/js/config.js');
-    const { migrateData, loadData, saveData } = await import('../public/js/storage.js');
+    const { migrateData, loadData, saveData, migrateV5ToV6 } = await import('../public/js/storage.js');
     const { toggleTask, quickActionJustPlayed, calculateNextDue, resetDailyTasks, resetWeeklyTasks, confirmReset, recordInspection, getAllNextDueDates, calculateSmartStringLife, getDetailedDueDates } = await import('../public/js/tasks.js');
     const { validateHumidity, validateTemperature } = await import('../public/js/validators.js');
     const { addHumidityReadingSimplified, deleteHumidityReading, checkForAlerts, drawHumidityChart } = await import('../public/js/humidity.js');
@@ -46,6 +46,7 @@ export async function setupWindow(win) {
     window.mergeBackupData = mergeBackupData;
     window.mergeFromBackup = mergeFromBackup;
     window.migrateData = migrateData;
+    window.migrateV5ToV6 = migrateV5ToV6;
     window.renderCalendar = renderCalendar;
     window.toggleTheme = toggleTheme;
     window.quickActionJustPlayed = quickActionJustPlayed;
