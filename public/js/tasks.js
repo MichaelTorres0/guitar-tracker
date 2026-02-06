@@ -1,7 +1,7 @@
 // Task management functions
-import { MAINTENANCE_TASKS } from './config.js';
+import { MAINTENANCE_TASKS, ALL_GUITAR_TASKS } from './config.js';
 import { saveData } from './storage.js';
-import { getVersionedField, getPlayingSessions } from './storage.js';
+import { getVersionedField, getPlayingSessions, getActiveGuitarId, getGuitarData, updateGuitarData } from './storage.js';
 import { ls } from './localStorage.js';
 
 // Constants for string life calculation
@@ -9,6 +9,15 @@ const BASE_STRING_LIFE_DAYS = 56; // 8 weeks
 const DEFAULT_HOURS_PER_WEEK = 2.5;
 const MIN_STRING_LIFE_DAYS = 28; // 4 weeks minimum
 const MAX_STRING_LIFE_DAYS = 112; // 16 weeks maximum
+
+/**
+ * Get task definitions for a specific guitar
+ * @param {string} guitarId - Guitar ID (e.g., 'gs-mini', 'prs-ce24')
+ * @returns {Object} Task definitions for the guitar
+ */
+export function getTasksForGuitar(guitarId) {
+    return ALL_GUITAR_TASKS[guitarId] || MAINTENANCE_TASKS;
+}
 
 /**
  * Calculate smart string life based on actual playing sessions
@@ -19,9 +28,14 @@ export function calculateSmartStringLife() {
     const now = Date.now();
     const twoWeeksAgo = now - (14 * 24 * 60 * 60 * 1000);
 
+    // Get active guitar's tasks and settings
+    const activeGuitarId = getActiveGuitarId();
+    const guitarTasks = getTasksForGuitar(activeGuitarId);
+    const guitarData = getGuitarData(activeGuitarId);
+
     // Calculate actual hours per week from recent sessions
     const recentSessions = sessions.filter(s => s.timestamp > twoWeeksAgo);
-    let actualHoursPerWeek = DEFAULT_HOURS_PER_WEEK;
+    let actualHoursPerWeek = guitarData?.settings?.playingHoursPerWeek || DEFAULT_HOURS_PER_WEEK;
 
     if (recentSessions.length >= 2) {
         const totalMinutes = recentSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
@@ -29,7 +43,7 @@ export function calculateSmartStringLife() {
     }
 
     // Calculate daily cleaning compliance rate
-    const dailyCleaningTask = MAINTENANCE_TASKS.daily.find(t => t.id === 'daily-1');
+    const dailyCleaningTask = guitarTasks.daily?.find(t => t.id === 'daily-1' || t.id === 'prs-daily-1');
     let cleaningRate = 0.6; // Default to 60%
     if (dailyCleaningTask && dailyCleaningTask.lastCompleted) {
         // Check how often cleaning has been done in last 2 weeks
@@ -48,10 +62,12 @@ export function calculateSmartStringLife() {
 
     // Calculate target days based on playtime ratio
     // Formula: baseDays * (defaultHours / actualHours) * cleaningMultiplier
-    const playtimeRatio = DEFAULT_HOURS_PER_WEEK / Math.max(actualHoursPerWeek, 0.5);
+    const defaultHours = guitarData?.settings?.playingHoursPerWeek || DEFAULT_HOURS_PER_WEEK;
+    const baseDays = (guitarData?.settings?.stringChangeWeeks || 8) * 7;
+    const playtimeRatio = defaultHours / Math.max(actualHoursPerWeek, 0.5);
     const cleaningMultiplier = cleaningRate >= 0.6 ? 1.0 : 0.75;
 
-    let targetDays = Math.round(BASE_STRING_LIFE_DAYS * playtimeRatio * cleaningMultiplier);
+    let targetDays = Math.round(baseDays * playtimeRatio * cleaningMultiplier);
 
     // Clamp to reasonable range
     targetDays = Math.max(MIN_STRING_LIFE_DAYS, Math.min(MAX_STRING_LIFE_DAYS, targetDays));
@@ -69,8 +85,12 @@ export function calculateSmartStringLife() {
 }
 
 export function toggleTask(taskId) {
-    for (let category in MAINTENANCE_TASKS) {
-        const task = MAINTENANCE_TASKS[category].find(t => t.id === taskId);
+    // Get active guitar's tasks
+    const activeGuitarId = getActiveGuitarId();
+    const guitarTasks = getTasksForGuitar(activeGuitarId);
+
+    for (let category in guitarTasks) {
+        const task = guitarTasks[category].find(t => t.id === taskId);
         if (task) {
             // Check if task was already completed within its period
             if (!task.completed && task.lastCompleted) {
@@ -93,7 +113,8 @@ export function toggleTask(taskId) {
                 checkAndPromptInventoryDecrement(taskId);
 
                 // If this is the string change task, show brand prompt
-                if (taskId === '8w-8' && window.showStringBrandPrompt) {
+                // Check for both GS Mini and PRS string change tasks
+                if ((taskId === '8w-8' || taskId === 'gs-mini-string-8' || taskId === 'prs-monthly-8') && window.showStringBrandPrompt) {
                     window.showStringBrandPrompt();
                 }
             }
@@ -143,7 +164,10 @@ function checkAndPromptInventoryDecrement(taskId) {
 
 // Set custom completion date for backdating
 export function setCustomCompletionDate(taskId, category) {
-    const task = MAINTENANCE_TASKS[category].find(t => t.id === taskId);
+    const activeGuitarId = getActiveGuitarId();
+    const guitarTasks = getTasksForGuitar(activeGuitarId);
+
+    const task = guitarTasks[category]?.find(t => t.id === taskId);
     if (!task) return false;
 
     const dateInput = document.getElementById(`customDate-${taskId}`);
@@ -208,6 +232,10 @@ export function isCompletedWithinPeriod(task, category) {
         // Check if completed within last 56 days
         const daysDiff = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
         return daysDiff < 56;
+    } else if (category === 'monthly') {
+        // Check if completed within last 30 days
+        const daysDiff = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+        return daysDiff < 30;
     } else if (category === 'quarterly') {
         // Check if completed within last 84 days
         const daysDiff = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
@@ -264,10 +292,15 @@ function getMostRecentSession() {
 
 export function quickActionJustPlayed() {
     const now = new Date().toISOString();
-    MAINTENANCE_TASKS.daily.forEach(task => {
-        task.completed = true;
-        task.lastCompleted = now;
-    });
+    const activeGuitarId = getActiveGuitarId();
+    const guitarTasks = getTasksForGuitar(activeGuitarId);
+
+    if (guitarTasks.daily) {
+        guitarTasks.daily.forEach(task => {
+            task.completed = true;
+            task.lastCompleted = now;
+        });
+    }
     saveData();
 
     // Show confirmation feedback - look for button by ID or class
@@ -336,6 +369,8 @@ export function calculateNextDue(task, category) {
 
     if (category === 'weekly') {
         nextDate.setDate(nextDate.getDate() + 7);
+    } else if (category === 'monthly') {
+        nextDate.setDate(nextDate.getDate() + 30);
     } else if (category === 'eightweek') {
         nextDate.setDate(nextDate.getDate() + 56);
     } else if (category === 'quarterly') {
@@ -355,9 +390,11 @@ export function calculateNextDue(task, category) {
 export function getAllNextDueDates() {
     const dates = [];
     const today = new Date();
+    const activeGuitarId = getActiveGuitarId();
+    const guitarTasks = getTasksForGuitar(activeGuitarId);
 
-    for (let category in MAINTENANCE_TASKS) {
-        MAINTENANCE_TASKS[category].forEach(task => {
+    for (let category in guitarTasks) {
+        guitarTasks[category].forEach(task => {
             if (!task.lastCompleted) {
                 dates.push(today);
                 return;
@@ -370,6 +407,8 @@ export function getAllNextDueDates() {
                 nextDate.setDate(nextDate.getDate() + 1);
             } else if (category === 'weekly') {
                 nextDate.setDate(nextDate.getDate() + 7);
+            } else if (category === 'monthly') {
+                nextDate.setDate(nextDate.getDate() + 30);
             } else if (category === 'eightweek') {
                 nextDate.setDate(nextDate.getDate() + 56);
             } else if (category === 'quarterly') {
@@ -398,6 +437,7 @@ export function getDetailedDueDates(daysAhead = 14) {
         daily: 'daily',
         weekly: 'weekly',
         eightweek: '8week',
+        monthly: 'monthly',
         quarterly: 'quarterly',
         annual: 'annual'
     };
@@ -406,12 +446,16 @@ export function getDetailedDueDates(daysAhead = 14) {
         daily: 'Daily',
         weekly: 'Weekly',
         eightweek: '8-Week',
+        monthly: 'Monthly',
         quarterly: 'Quarterly',
         annual: 'Annual'
     };
 
-    for (let category in MAINTENANCE_TASKS) {
-        MAINTENANCE_TASKS[category].forEach(task => {
+    const activeGuitarId = getActiveGuitarId();
+    const guitarTasks = getTasksForGuitar(activeGuitarId);
+
+    for (let category in guitarTasks) {
+        guitarTasks[category].forEach(task => {
             let nextDate;
 
             if (!task.lastCompleted) {
@@ -425,6 +469,8 @@ export function getDetailedDueDates(daysAhead = 14) {
                     nextDate.setDate(nextDate.getDate() + 1);
                 } else if (category === 'weekly') {
                     nextDate.setDate(nextDate.getDate() + 7);
+                } else if (category === 'monthly') {
+                    nextDate.setDate(nextDate.getDate() + 30);
                 } else if (category === 'eightweek') {
                     nextDate.setDate(nextDate.getDate() + 56);
                 } else if (category === 'quarterly') {
@@ -464,9 +510,14 @@ export function getDetailedDueDates(daysAhead = 14) {
 
 export function resetDailyTasks() {
     if (confirm('Reset all daily tasks? This will uncheck them for today.')) {
-        MAINTENANCE_TASKS.daily.forEach(task => {
-            task.completed = false;
-        });
+        const activeGuitarId = getActiveGuitarId();
+        const guitarTasks = getTasksForGuitar(activeGuitarId);
+
+        if (guitarTasks.daily) {
+            guitarTasks.daily.forEach(task => {
+                task.completed = false;
+            });
+        }
         saveData();
         return true;
     }
@@ -475,9 +526,14 @@ export function resetDailyTasks() {
 
 export function resetWeeklyTasks() {
     if (confirm('Reset all weekly tasks? This will uncheck them for this week.')) {
-        MAINTENANCE_TASKS.weekly.forEach(task => {
-            task.completed = false;
-        });
+        const activeGuitarId = getActiveGuitarId();
+        const guitarTasks = getTasksForGuitar(activeGuitarId);
+
+        if (guitarTasks.weekly) {
+            guitarTasks.weekly.forEach(task => {
+                task.completed = false;
+            });
+        }
         saveData();
         return true;
     }

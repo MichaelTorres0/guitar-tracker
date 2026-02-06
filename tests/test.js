@@ -1265,6 +1265,15 @@ async function runTests() {
         assertEqual(window.getActiveGuitarId(), 'gs-mini', 'Should switch back to GS Mini');
     });
 
+    test('Get tasks for different guitars', () => {
+        const gsTasks = window.getTasksForGuitar('gs-mini');
+        const prsTasks = window.getTasksForGuitar('prs-ce24');
+
+        assertDefined(gsTasks.eightweek, 'GS Mini should have eightweek tasks');
+        assertDefined(prsTasks.monthly, 'PRS should have monthly tasks');
+        assertTrue(!prsTasks.eightweek || prsTasks.eightweek.length === 0, 'PRS should not have eightweek tasks');
+    });
+
     // ==================== Summary ====================
     console.log('\n' + '='.repeat(50));
     console.log(`\n📊 Test Results: ${passed} passed, ${failed} failed\n`);
