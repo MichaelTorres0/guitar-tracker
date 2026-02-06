@@ -1223,6 +1223,48 @@ async function runTests() {
         assertDefined(result.error, 'Should return error message');
     });
 
+    // ==================== UI Multi-Guitar Support ====================
+    console.log('\n🎸 UI Multi-Guitar Support Tests');
+
+    test('UI uses active guitar data', () => {
+        // Setup: Create v6 data with multiple guitars
+        const mockData = window.createDefaultData();
+        mockData.activeGuitarId = 'prs-ce24';
+        mockData.guitars['prs-ce24'].playingSessions = [
+            { timestamp: Date.now() - 1000000, duration: 30 }
+        ];
+        mockData.guitars['prs-ce24'].humidityReadings = [
+            { id: 'test1', humidity: 48, temp: 70, timestamp: Date.now(), location: 'Studio', source: 'manual' }
+        ];
+        mockData.guitars['prs-ce24'].settings.playingHoursPerWeek = 3.5;
+
+        window.saveVersionedData(mockData);
+
+        // Verify we can get the correct guitar data
+        const activeId = window.getActiveGuitarId();
+        assertEqual(activeId, 'prs-ce24', 'Should get PRS as active guitar');
+
+        const guitarData = window.getGuitarData('prs-ce24');
+        assertDefined(guitarData, 'Should retrieve guitar data');
+        assertEqual(guitarData.playingSessions.length, 1, 'Should get PRS playing sessions');
+        assertEqual(guitarData.humidityReadings.length, 1, 'Should get PRS humidity readings');
+        assertEqual(guitarData.settings.playingHoursPerWeek, 3.5, 'Should get PRS playing hours');
+    });
+
+    test('Guitar selector changes active guitar', () => {
+        // Start with GS Mini
+        window.setActiveGuitarId('gs-mini');
+        assertEqual(window.getActiveGuitarId(), 'gs-mini', 'Should start with GS Mini');
+
+        // Switch to PRS
+        window.setActiveGuitarId('prs-ce24');
+        assertEqual(window.getActiveGuitarId(), 'prs-ce24', 'Should change to PRS CE24');
+
+        // Switch back to GS Mini
+        window.setActiveGuitarId('gs-mini');
+        assertEqual(window.getActiveGuitarId(), 'gs-mini', 'Should switch back to GS Mini');
+    });
+
     // ==================== Summary ====================
     console.log('\n' + '='.repeat(50));
     console.log(`\n📊 Test Results: ${passed} passed, ${failed} failed\n`);

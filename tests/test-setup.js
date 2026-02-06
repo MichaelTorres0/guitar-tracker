@@ -14,7 +14,7 @@ export async function setupWindow(win) {
 
     // Now dynamically import modules after globals are set
     const { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS, DATA_VERSION, GUITARS, PRS_MAINTENANCE_TASKS, ALL_GUITAR_TASKS } = await import('../public/js/config.js');
-    const { migrateData, loadData, saveData, migrateV5ToV6 } = await import('../public/js/storage.js');
+    const { migrateData, loadData, saveData, migrateV5ToV6, createDefaultData, saveVersionedData, getActiveGuitarId, getGuitarData, setActiveGuitarId } = await import('../public/js/storage.js');
     const { toggleTask, quickActionJustPlayed, calculateNextDue, resetDailyTasks, resetWeeklyTasks, confirmReset, recordInspection, getAllNextDueDates, calculateSmartStringLife, getDetailedDueDates } = await import('../public/js/tasks.js');
     const { validateHumidity, validateTemperature } = await import('../public/js/validators.js');
     const { addHumidityReadingSimplified, deleteHumidityReading, checkForAlerts, drawHumidityChart } = await import('../public/js/humidity.js');
@@ -33,6 +33,11 @@ export async function setupWindow(win) {
     window.ALL_GUITAR_TASKS = ALL_GUITAR_TASKS;
     window.saveData = saveData;
     window.loadData = loadData;
+    window.createDefaultData = createDefaultData;
+    window.saveVersionedData = saveVersionedData;
+    window.getActiveGuitarId = getActiveGuitarId;
+    window.setActiveGuitarId = setActiveGuitarId;
+    window.getGuitarData = getGuitarData;
     window.toggleTask = toggleTask;
     window.calculateNextDue = calculateNextDue;
     window.validateHumidity = validateHumidity;
