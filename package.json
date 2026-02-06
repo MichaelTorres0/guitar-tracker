@@ -4,7 +4,12 @@
   "description": "Taylor GS Mini Maintenance Tracker PWA",
   "type": "module",
   "scripts": {
-    "test": "node tests/test.js"
+    "test": "node tests/test.js",
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@notionhq/client": "^2.2.15"
   },
   "devDependencies": {
     "jsdom": "^24.1.3",
