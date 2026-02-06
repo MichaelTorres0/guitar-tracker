@@ -4,6 +4,7 @@ import { quickActionJustPlayed } from './tasks.js';
 import { renderMaintenanceTasks } from './ui.js';
 import { checkForAlerts } from './humidity.js';
 import { getVersionedData, saveVersionedData, getVersionedField } from './storage.js';
+import { syncManager } from './sync.js';
 
 // Timer state
 let timerInterval = null;
@@ -44,6 +45,12 @@ export function logPlayingSession(durationMinutes, sessionDate = null) {
 
     saveVersionedData(data);
     updateWeeklyHours();
+
+    // Sync to Notion (async, don't block UI)
+    const date = new Date(timestamp).toISOString().split('T')[0];
+    syncManager.logPracticeSession(durationMinutes, '', '').catch(err => {
+        console.error('Failed to sync practice session to Notion:', err);
+    });
 
     // Close modal
     hideSessionModal();
