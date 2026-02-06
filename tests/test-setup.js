@@ -13,7 +13,7 @@ export async function setupWindow(win) {
     const window = win;
 
     // Now dynamically import modules after globals are set
-    const { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS, DATA_VERSION } = await import('../public/js/config.js');
+    const { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS, DATA_VERSION, GUITARS, PRS_MAINTENANCE_TASKS, ALL_GUITAR_TASKS } = await import('../public/js/config.js');
     const { migrateData, loadData, saveData } = await import('../public/js/storage.js');
     const { toggleTask, quickActionJustPlayed, calculateNextDue, resetDailyTasks, resetWeeklyTasks, confirmReset, recordInspection, getAllNextDueDates, calculateSmartStringLife, getDetailedDueDates } = await import('../public/js/tasks.js');
     const { validateHumidity, validateTemperature } = await import('../public/js/validators.js');
@@ -28,6 +28,9 @@ export async function setupWindow(win) {
     window.EQUIPMENT_ITEMS = EQUIPMENT_ITEMS;
     window.STORAGE_KEYS = STORAGE_KEYS;
     window.DATA_VERSION = DATA_VERSION;
+    window.GUITARS = GUITARS;
+    window.PRS_MAINTENANCE_TASKS = PRS_MAINTENANCE_TASKS;
+    window.ALL_GUITAR_TASKS = ALL_GUITAR_TASKS;
     window.saveData = saveData;
     window.loadData = loadData;
     window.toggleTask = toggleTask;

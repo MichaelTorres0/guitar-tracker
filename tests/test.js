@@ -243,6 +243,107 @@ async function runTests() {
         assertEqual(window.EQUIPMENT_ITEMS.length, 15);
     });
 
+    // ==================== Multi-Guitar Configuration Tests ====================
+    console.log('\n🎸 Multi-Guitar Configuration Tests');
+
+    test('GUITARS constant is defined', () => {
+        assertDefined(window.GUITARS, 'GUITARS should be defined');
+    });
+
+    test('GUITARS has 2 guitar definitions', () => {
+        assertEqual(Object.keys(window.GUITARS).length, 2, 'Should have 2 guitars defined');
+    });
+
+    test('GS Mini configuration is correct', () => {
+        const gsMini = window.GUITARS['gs-mini'];
+        assertDefined(gsMini, 'GS Mini should exist');
+        assertEqual(gsMini.type, 'acoustic', 'GS Mini should be acoustic');
+        assertEqual(gsMini.settings.stringChangeWeeks, 8, 'GS Mini string change is 8 weeks');
+        assertEqual(gsMini.make, 'Taylor', 'GS Mini make should be Taylor');
+    });
+
+    test('PRS CE24 configuration is correct', () => {
+        const prs = window.GUITARS['prs-ce24'];
+        assertDefined(prs, 'PRS should exist');
+        assertEqual(prs.type, 'electric', 'PRS should be electric');
+        assertEqual(prs.settings.stringChangeWeeks, 12, 'PRS string change is 12 weeks');
+        assertEqual(prs.make, 'PRS', 'PRS make should be PRS');
+    });
+
+    test('Electric guitar has more lenient humidity thresholds', () => {
+        const gsMini = window.GUITARS['gs-mini'];
+        const prs = window.GUITARS['prs-ce24'];
+        assertTrue(prs.settings.safeHumidity.min < gsMini.settings.safeHumidity.min,
+                   'Electric guitar should be less humidity sensitive (lower min)');
+        assertTrue(prs.settings.safeHumidity.max > gsMini.settings.safeHumidity.max,
+                   'Electric guitar should be less humidity sensitive (higher max)');
+    });
+
+    test('PRS_MAINTENANCE_TASKS is defined', () => {
+        assertDefined(window.PRS_MAINTENANCE_TASKS, 'PRS_MAINTENANCE_TASKS should be defined');
+    });
+
+    test('PRS has all task categories', () => {
+        const tasks = window.PRS_MAINTENANCE_TASKS;
+        assertDefined(tasks.daily, 'PRS should have daily tasks');
+        assertDefined(tasks.weekly, 'PRS should have weekly tasks');
+        assertDefined(tasks.monthly, 'PRS should have monthly tasks');
+        assertDefined(tasks.quarterly, 'PRS should have quarterly tasks');
+        assertDefined(tasks.annual, 'PRS should have annual tasks');
+    });
+
+    test('PRS daily tasks has 2 items', () => {
+        assertArrayLength(window.PRS_MAINTENANCE_TASKS.daily, 2, 'PRS should have 2 daily tasks');
+    });
+
+    test('PRS weekly tasks has 3 items', () => {
+        assertArrayLength(window.PRS_MAINTENANCE_TASKS.weekly, 3, 'PRS should have 3 weekly tasks');
+    });
+
+    test('PRS monthly tasks has 3 items', () => {
+        assertArrayLength(window.PRS_MAINTENANCE_TASKS.monthly, 3, 'PRS should have 3 monthly tasks');
+    });
+
+    test('PRS quarterly tasks has 4 items', () => {
+        assertArrayLength(window.PRS_MAINTENANCE_TASKS.quarterly, 4, 'PRS should have 4 quarterly tasks');
+    });
+
+    test('PRS annual tasks has 1 item', () => {
+        assertArrayLength(window.PRS_MAINTENANCE_TASKS.annual, 1, 'PRS should have 1 annual task');
+    });
+
+    test('All PRS task IDs have prs- prefix', () => {
+        const allTasks = [
+            ...window.PRS_MAINTENANCE_TASKS.daily,
+            ...window.PRS_MAINTENANCE_TASKS.weekly,
+            ...window.PRS_MAINTENANCE_TASKS.monthly,
+            ...window.PRS_MAINTENANCE_TASKS.quarterly,
+            ...window.PRS_MAINTENANCE_TASKS.annual
+        ];
+        allTasks.forEach(task => {
+            assertTrue(task.id.startsWith('prs-'), `Task ID ${task.id} should have prs- prefix`);
+        });
+    });
+
+    test('PRS tasks have required properties', () => {
+        const task = window.PRS_MAINTENANCE_TASKS.daily[0];
+        assertDefined(task.id, 'PRS task should have id');
+        assertDefined(task.name, 'PRS task should have name');
+        assertDefined(task.duration, 'PRS task should have duration');
+        assertDefined(task.why, 'PRS task should have why');
+        assertDefined(task.how, 'PRS task should have how');
+    });
+
+    test('ALL_GUITAR_TASKS lookup object is defined', () => {
+        assertDefined(window.ALL_GUITAR_TASKS, 'ALL_GUITAR_TASKS should be defined');
+        assertEqual(Object.keys(window.ALL_GUITAR_TASKS).length, 2, 'Should have 2 guitar task sets');
+    });
+
+    test('ALL_GUITAR_TASKS maps to correct task sets', () => {
+        assertEqual(window.ALL_GUITAR_TASKS['gs-mini'], window.MAINTENANCE_TASKS, 'gs-mini should map to MAINTENANCE_TASKS');
+        assertEqual(window.ALL_GUITAR_TASKS['prs-ce24'], window.PRS_MAINTENANCE_TASKS, 'prs-ce24 should map to PRS_MAINTENANCE_TASKS');
+    });
+
     // ==================== localStorage Tests ====================
     console.log('\n💾 localStorage Tests');
 
