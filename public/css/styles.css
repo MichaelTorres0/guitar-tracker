@@ -1798,6 +1798,21 @@
             color: var(--color-text-light);
         }
 
+        .difficulty-badge.easy {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .difficulty-badge.medium {
+            background: var(--color-warning);
+            color: white;
+        }
+
+        .difficulty-badge.hard {
+            background: var(--color-danger);
+            color: white;
+        }
+
         /* Print styles */
         @media print {
             body {

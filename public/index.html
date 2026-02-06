@@ -50,6 +50,7 @@
             <button class="tab-btn">💧 Humidity Log</button>
             <button class="tab-btn">🔍 Inspections</button>
             <button class="tab-btn">📦 Equipment</button>
+            <button class="tab-btn">🎵 Songs</button>
             <button class="tab-btn">⬇️ Export & Settings</button>
         </div>
 
@@ -528,6 +529,42 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- SONGS TAB -->
+        <div id="songs" class="tab-content">
+            <h2>Song Library</h2>
+
+            <!-- Search and Filters -->
+            <div style="margin-bottom: 16px;">
+                <input type="text" id="songSearch" placeholder="Search songs, artists, notes..."
+                       style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 8px;">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <select id="difficultyFilter" style="padding: 8px; border: 1px solid var(--border); border-radius: 4px;">
+                        <option value="all">All Difficulties</option>
+                        <option value="Easy">Easy</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Hard">Hard</option>
+                    </select>
+
+                    <select id="tuningFilter" style="padding: 8px; border: 1px solid var(--border); border-radius: 4px;">
+                        <option value="all">All Tunings</option>
+                        <option value="Standard">Standard</option>
+                        <option value="Drop D">Drop D</option>
+                        <option value="Open G">Open G</option>
+                        <option value="DADGAD">DADGAD</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Song List -->
+            <div id="songList"></div>
+
+            <!-- Refresh Button -->
+            <button id="refreshSongs" class="btn-secondary" style="width: 100%; margin-top: 16px;">
+                🔄 Refresh from Notion
+            </button>
         </div>
 
         <!-- EXPORT & SETTINGS TAB -->

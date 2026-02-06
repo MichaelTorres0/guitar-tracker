@@ -3,7 +3,7 @@ import { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS, DATA_VERSION } from '
 import { migrateData, loadData, saveData, getActiveGuitarId, setActiveGuitarId } from './storage.js';
 import { toggleTask, quickActionJustPlayed, resetDailyTasks, resetWeeklyTasks, confirmReset, recordInspection, setDefaultDate, calculateNextDue, setCustomCompletionDate, calculateSmartStringLife, getDetailedDueDates } from './tasks.js';
 import { addHumidityReading, addHumidityReadingSimplified, deleteHumidityReading, renderHumidityTable, checkForAlerts, drawHumidityChart, applyHumidityFilters, clearHumidityFilters, getFilteredReadings } from './humidity.js';
-import { renderMaintenanceTasks, renderInventoryChecklist, updateDashboard, switchTab, toggleTheme, toggleExpand, openBridgeRecommendations, closeBridgeModal, openActionRecommendations, closeActionModal, openFretRecommendations, closeFretModal } from './ui.js';
+import { renderMaintenanceTasks, renderInventoryChecklist, updateDashboard, switchTab, toggleTheme, toggleExpand, openBridgeRecommendations, closeBridgeModal, openActionRecommendations, closeActionModal, openFretRecommendations, closeFretModal, renderSongs } from './ui.js';
 import { exportAsCSV, exportAsJSON, createBackup, initBackupRestore } from './export.js';
 import { validateHumidity, validateTemperature } from './validators.js';
 import { initOnboarding } from './onboarding.js';
@@ -11,6 +11,7 @@ import { initSessions, showSessionModal } from './sessions.js';
 import { initStringHistory } from './stringHistory.js';
 import { renderInventory, updateRestockAlerts } from './inventory.js';
 import { initHistory, renderHistoryTimeline } from './history.js';
+import { getSongs, searchSongs, filterByDifficulty, filterByTuning } from './songs.js';
 import { ls } from './localStorage.js';
 
 // Guitar settings functions
@@ -150,8 +151,23 @@ function setupEventHandlers() {
 
     // Tab buttons
     document.querySelectorAll('.tab-btn').forEach((btn, index) => {
-        const tabs = ['dashboard', 'maintenance', 'humidity', 'inspection', 'inventory', 'export'];
-        btn.addEventListener('click', () => switchTab(tabs[index]));
+        const tabs = ['dashboard', 'maintenance', 'humidity', 'inspection', 'inventory', 'songs', 'export'];
+        btn.addEventListener('click', () => {
+            switchTab(tabs[index]);
+
+            // Load songs when Songs tab is opened
+            if (tabs[index] === 'songs') {
+                getSongs().then(songs => {
+                    renderSongs(songs);
+                }).catch(error => {
+                    console.error('Error loading songs:', error);
+                    const songList = document.getElementById('songList');
+                    if (songList) {
+                        songList.innerHTML = '<p style="text-align: center; color: var(--color-error);">Error loading songs. Check console for details.</p>';
+                    }
+                });
+            }
+        });
     });
 
     // Task checkboxes - use event delegation
@@ -315,7 +331,7 @@ function setupEventHandlers() {
 
     // Load guitar settings on tab switch to export
     document.querySelectorAll('.tab-btn').forEach((btn, index) => {
-        const tabs = ['dashboard', 'maintenance', 'humidity', 'inspection', 'inventory', 'export'];
+        const tabs = ['dashboard', 'maintenance', 'humidity', 'inspection', 'inventory', 'songs', 'export'];
         btn.addEventListener('click', () => {
             if (tabs[index] === 'export') {
                 loadGuitarSettings();
@@ -343,6 +359,69 @@ function setupEventHandlers() {
                 return;
             }
             exportAsCSV(filtered);
+        });
+    }
+
+    // Song search and filters
+    const songSearch = document.getElementById('songSearch');
+    if (songSearch) {
+        songSearch.addEventListener('input', async (e) => {
+            const allSongs = await getSongs();
+            let filtered = searchSongs(allSongs, e.target.value);
+
+            const diffFilter = document.getElementById('difficultyFilter').value;
+            const tuningFilter = document.getElementById('tuningFilter').value;
+
+            filtered = filterByDifficulty(filtered, diffFilter);
+            filtered = filterByTuning(filtered, tuningFilter);
+
+            renderSongs(filtered);
+        });
+    }
+
+    const difficultyFilter = document.getElementById('difficultyFilter');
+    if (difficultyFilter) {
+        difficultyFilter.addEventListener('change', async () => {
+            const allSongs = await getSongs();
+            const searchQuery = document.getElementById('songSearch').value;
+
+            let filtered = searchSongs(allSongs, searchQuery);
+            filtered = filterByDifficulty(filtered, difficultyFilter.value);
+            filtered = filterByTuning(filtered, document.getElementById('tuningFilter').value);
+
+            renderSongs(filtered);
+        });
+    }
+
+    const tuningFilter = document.getElementById('tuningFilter');
+    if (tuningFilter) {
+        tuningFilter.addEventListener('change', async () => {
+            const allSongs = await getSongs();
+            const searchQuery = document.getElementById('songSearch').value;
+
+            let filtered = searchSongs(allSongs, searchQuery);
+            filtered = filterByDifficulty(filtered, document.getElementById('difficultyFilter').value);
+            filtered = filterByTuning(filtered, tuningFilter.value);
+
+            renderSongs(filtered);
+        });
+    }
+
+    const refreshSongs = document.getElementById('refreshSongs');
+    if (refreshSongs) {
+        refreshSongs.addEventListener('click', async () => {
+            refreshSongs.textContent = '⏳ Loading...';
+            refreshSongs.disabled = true;
+
+            try {
+                const songs = await getSongs(true); // Force refresh
+                renderSongs(songs);
+            } catch (error) {
+                alert('Failed to fetch songs: ' + error.message);
+            } finally {
+                refreshSongs.textContent = '🔄 Refresh from Notion';
+                refreshSongs.disabled = false;
+            }
         });
     }
 

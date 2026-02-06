@@ -164,9 +164,9 @@ async function runTests() {
         assertEqual(themeColor.getAttribute('content'), '#3b82f6');
     });
 
-    test('All 6 tab buttons exist', () => {
+    test('All 7 tab buttons exist', () => {
         const tabBtns = document.querySelectorAll('.tab-btn');
-        assertEqual(tabBtns.length, 6, 'Should have 6 tab buttons');
+        assertEqual(tabBtns.length, 7, 'Should have 7 tab buttons');
     });
 
     test('Dashboard tab is active by default', () => {

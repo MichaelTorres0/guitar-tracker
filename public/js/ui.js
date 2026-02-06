@@ -656,7 +656,7 @@ export function switchTab(tabName) {
 
     // Find and activate the corresponding tab button by index
     // This is more reliable than text matching (e.g., 'inventory' tab has 'Equipment' button text)
-    const tabs = ['dashboard', 'maintenance', 'humidity', 'inspection', 'inventory', 'export'];
+    const tabs = ['dashboard', 'maintenance', 'humidity', 'inspection', 'inventory', 'songs', 'export'];
     const tabIndex = tabs.indexOf(tabName);
     const tabBtns = document.querySelectorAll('.tab-btn');
     if (tabIndex >= 0 && tabBtns[tabIndex]) {
@@ -704,4 +704,45 @@ export function openFretRecommendations() {
 export function closeFretModal() {
     const modal = document.getElementById('fretModal');
     if (modal) modal.classList.remove('show');
+}
+
+export function renderSongs(songs) {
+    const songList = document.getElementById('songList');
+    if (!songList) return;
+
+    if (songs.length === 0) {
+        songList.innerHTML = '<p style="text-align: center; color: var(--color-text-light);">No songs found</p>';
+        return;
+    }
+
+    songList.innerHTML = songs.map(song => `
+        <div class="song-card" style="
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        ">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                <div style="flex: 1;">
+                    <h3 style="margin: 0 0 4px 0; font-size: 16px;">${song.title}</h3>
+                    <p style="margin: 0; color: var(--color-text-light); font-size: 14px;">${song.artist}</p>
+                </div>
+                <span class="difficulty-badge ${song.difficulty.toLowerCase()}" style="
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    font-weight: 600;
+                ">${song.difficulty}</span>
+            </div>
+
+            <div style="display: flex; gap: 16px; font-size: 14px; color: var(--color-text-light); margin-bottom: 8px;">
+                <span>🎸 ${song.tuning}</span>
+                ${song.capo > 0 ? `<span>🎯 Capo ${song.capo}</span>` : ''}
+                ${song.lastPlayed ? `<span>🕐 ${new Date(song.lastPlayed).toLocaleDateString()}</span>` : ''}
+            </div>
+
+            ${song.notes ? `<p style="margin: 8px 0 0 0; font-size: 14px; color: var(--color-text-light);">${song.notes}</p>` : ''}
+        </div>
+    `).join('');
 }
