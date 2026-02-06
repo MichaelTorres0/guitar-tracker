@@ -13,7 +13,7 @@ If you haven't already created the Notion databases:
 
 ```bash
 # Create .env file with your Notion API key
-echo "NOTION_API_KEY=REDACTED_NOTION_KEY" > .env
+echo "NOTION_API_KEY=ntn_YOUR_TOKEN_HERE" > .env
 
 # Run setup script
 node scripts/setup-notion-databases.js
@@ -54,7 +54,7 @@ vercel --prod
 In Vercel Dashboard → Settings → Environment Variables, add:
 
 ```
-NOTION_API_KEY=REDACTED_NOTION_KEY
+NOTION_API_KEY=ntn_YOUR_TOKEN_HERE
 NOTION_SONG_LIBRARY_ID=4d5f9175-74fa-429e-aaf7-9ee54e35251a
 NOTION_PRACTICE_JOURNAL_ID=d92cecec-3b62-4e37-9796-ba8c8791b1f3
 NOTION_STRING_CHANGE_LOG_ID=63310750-12c2-4117-a737-71aabba87c3f
