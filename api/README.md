@@ -85,6 +85,83 @@ Fetch all songs from Notion Song Library database.
 }
 ```
 
+### POST /api/practice
+
+Log a practice session to Notion Practice Journal.
+
+**Request Body:**
+```json
+{
+  "guitarId": "gs-mini",
+  "duration": 30,
+  "date": "2026-02-06",
+  "notes": "Worked on fingerpicking",
+  "songsPlayed": "Blackbird, Wonderwall"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "pageId": "notion-page-id",
+  "url": "https://notion.so/...",
+  "timestamp": "2026-02-06T12:00:00.000Z"
+}
+```
+
+### POST /api/strings
+
+Log a string change to Notion String Change Log.
+
+**Request Body:**
+```json
+{
+  "guitarId": "gs-mini",
+  "date": "2026-02-06",
+  "brand": "D'Addario EJ16",
+  "notes": "Frets polished first",
+  "daysSinceLast": 56
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "pageId": "notion-page-id",
+  "url": "https://notion.so/...",
+  "timestamp": "2026-02-06T12:00:00.000Z"
+}
+```
+
+### POST /api/humidity
+
+Log a humidity reading to Notion Humidity Log.
+
+**Request Body:**
+```json
+{
+  "guitarId": "gs-mini",
+  "humidity": 47,
+  "temperature": 70,
+  "location": "Case",
+  "source": "Manual",
+  "timestamp": "2026-02-06T12:00:00.000Z"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "pageId": "notion-page-id",
+  "url": "https://notion.so/...",
+  "alertLevel": "Normal",
+  "timestamp": "2026-02-06T12:00:00.000Z"
+}
+```
+
 ## Local Development
 
 ```bash
