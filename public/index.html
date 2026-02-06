@@ -17,7 +17,19 @@
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-    <div class="container">
+    <div id="loginScreen" class="login-screen">
+        <div class="login-card">
+            <h1>Guitar Tracker</h1>
+            <p>Enter your password to continue</p>
+            <form id="loginForm">
+                <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" required>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 12px;">Sign In</button>
+            </form>
+            <p id="loginError" class="login-error" style="display: none;"></p>
+        </div>
+    </div>
+
+    <div class="container" style="display: none;">
         <div class="header">
             <div>
                 <h1>🎸 Guitar Maintenance Tracker</h1>
@@ -37,6 +49,7 @@
                     <span>Offline Ready</span>
                 </div>
                 <button class="theme-toggle">🌙 Dark Mode</button>
+                <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
         </div>
 

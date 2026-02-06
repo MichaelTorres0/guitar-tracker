@@ -1,10 +1,13 @@
 // POST /api/strings - Log string change to Notion
 import { Client } from '@notionhq/client';
+import { requireAuth } from './lib/auth.js';
 
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
 const STRING_CHANGE_LOG_DB_ID = process.env.NOTION_STRING_CHANGE_LOG_ID;
 
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return;
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

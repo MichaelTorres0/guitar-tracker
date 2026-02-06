@@ -1,4 +1,5 @@
 // Main application entry point
+import { checkAuth, login } from './auth.js';
 import { MAINTENANCE_TASKS, EQUIPMENT_ITEMS, STORAGE_KEYS, DATA_VERSION } from './config.js';
 import { migrateData, loadData, saveData, getActiveGuitarId, setActiveGuitarId } from './storage.js';
 import { toggleTask, quickActionJustPlayed, resetDailyTasks, resetWeeklyTasks, confirmReset, recordInspection, setDefaultDate, calculateNextDue, setCustomCompletionDate, calculateSmartStringLife, getDetailedDueDates } from './tasks.js';
@@ -86,7 +87,54 @@ function saveGuitarSettings() {
 }
 
 // Initialize the application
-export function init() {
+export async function init() {
+    // Check authentication before loading app
+    const isAuthenticated = await checkAuth();
+    const loginScreen = document.getElementById('loginScreen');
+    const container = document.querySelector('.container');
+
+    if (!isAuthenticated) {
+        // Show login, hide app
+        if (loginScreen) loginScreen.style.display = 'flex';
+        if (container) container.style.display = 'none';
+
+        // Wire up login form
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const password = document.getElementById('loginPassword').value;
+                const errorEl = document.getElementById('loginError');
+                try {
+                    const result = await login(password);
+                    if (result.authenticated) {
+                        if (loginScreen) loginScreen.style.display = 'none';
+                        if (container) container.style.display = '';
+                        initApp();
+                    } else {
+                        if (errorEl) {
+                            errorEl.textContent = 'Wrong password. Try again.';
+                            errorEl.style.display = 'block';
+                        }
+                    }
+                } catch {
+                    if (errorEl) {
+                        errorEl.textContent = 'Connection error. Try again.';
+                        errorEl.style.display = 'block';
+                    }
+                }
+            });
+        }
+        return;
+    }
+
+    // Authenticated - hide login, show app
+    if (loginScreen) loginScreen.style.display = 'none';
+    if (container) container.style.display = '';
+    initApp();
+}
+
+function initApp() {
     // Migrate data if needed
     const migratedData = migrateData();
 
@@ -115,6 +163,16 @@ export function init() {
                 console.error('Service Worker registration failed:', error);
             });
     }
+
+    // Post-init setup (was previously at module level after init())
+    setupEventHandlers();
+    checkForAlerts();
+    renderHumidityTable();
+    drawHumidityChart();
+    initSessions();
+    initStringHistory();
+    initHistory();
+    initOnboarding();
 }
 
 // Set up event handlers
@@ -524,11 +582,3 @@ if (closeHumidityTrendBtn) closeHumidityTrendBtn.addEventListener('click', windo
 
 // Initialize app
 init();
-setupEventHandlers();
-checkForAlerts();
-renderHumidityTable();
-drawHumidityChart();
-initSessions();
-initStringHistory();
-initHistory();
-initOnboarding();

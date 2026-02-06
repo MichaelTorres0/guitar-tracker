@@ -1,10 +1,13 @@
 // GET /api/songs - Fetch all songs from Notion Song Library
 import { Client } from '@notionhq/client';
+import { requireAuth } from './lib/auth.js';
 
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
 const SONG_LIBRARY_DB_ID = process.env.NOTION_SONG_LIBRARY_ID;
 
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return;
+
   // Only allow GET requests
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });

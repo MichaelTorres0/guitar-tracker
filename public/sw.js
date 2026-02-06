@@ -1,8 +1,8 @@
 // Service Worker for Guitar Tracker PWA
 // Provides offline caching and network-first strategies
 
-const CACHE_NAME = 'guitar-tracker-v6';
-const STATIC_CACHE = 'guitar-tracker-static-v6';
+const CACHE_NAME = 'guitar-tracker-v7';
+const STATIC_CACHE = 'guitar-tracker-static-v7';
 
 // Files to cache immediately
 const STATIC_FILES = [
@@ -25,6 +25,7 @@ const STATIC_FILES = [
   '/js/history.js',
   '/js/inventory.js',
   '/js/localStorage.js',
+  '/js/auth.js',
   '/manifest.json',
   '/icon.png',
   '/icon-192.png',
@@ -81,6 +82,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
+
+  // Auth endpoint - always network, never cache
+  if (url.pathname === '/api/auth') {
+    event.respondWith(fetch(request));
+    return;
+  }
 
   // API requests - network-first with fallback
   if (url.pathname.startsWith('/api/')) {
